@@ -1,0 +1,58 @@
+---
+const currYear = new Date().getFullYear();
+---
+
+<header class="header">
+	<a href="/" class="wordmark">ficelo<span class="wordmark-dot">.</span></a>
+	<nav>
+		<a href="#work">Work</a>
+		<a href="#contact">Contact</a>
+	</nav>
+
+	<span class="indicator">PORTFOLIO / {currYear}</span>
+</header>
+
+<style>
+	.header {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		font-family: var(--font-display);
+		padding: 5px 34px;
+		border-bottom: 2px solid rgba(83, 121, 112, 0.34);
+		font-size: 24px;
+		line-height: 50px;
+	}
+
+	.indicator {
+		font-size: 20px;
+		letter-spacing: 0.18em;
+		color: rgba(243, 246, 246, 0.62);
+	}
+
+	nav {
+		display: flex;
+		gap: 40px;
+	}
+
+	nav a{
+		color: var(--color-text);
+		letter-spacing: 0.2em;
+		text-transform: uppercase;
+		text-decoration: none;
+	}
+
+	.wordmark {
+		letter-spacing: 0.1em;
+		text-decoration: none;
+		color: var(--color-text);
+		font-size: 30px;
+	}
+	.wordmark-dot {
+		color: var(--color-accent);
+		font-size: 60px;
+		position: relative;
+		top: -2px;
+	}
+
+</style>
