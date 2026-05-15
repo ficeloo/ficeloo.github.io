@@ -15,24 +15,23 @@ const currYear = new Date().getFullYear();
 <style>
 	.header {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
 		justify-content: space-between;
 		font-family: var(--font-display);
-		padding: 5px 34px;
+		padding: 1rem 3%;
 		border-bottom: 2px solid rgba(83, 121, 112, 0.34);
-		font-size: 24px;
-		line-height: 50px;
+		line-height: 1;
 	}
 
 	.indicator {
-		font-size: 20px;
+		font-size: clamp(0.95rem, 2vw, 1.6rem);
 		letter-spacing: 0.18em;
 		color: rgba(243, 246, 246, 0.62);
 	}
 
 	nav {
 		display: flex;
-		gap: 40px;
+		gap: 2rem;
 	}
 
 	nav a{
@@ -40,19 +39,20 @@ const currYear = new Date().getFullYear();
 		letter-spacing: 0.2em;
 		text-transform: uppercase;
 		text-decoration: none;
+		font-size: clamp(1.25rem, 2vw, 2rem);
 	}
 
 	.wordmark {
 		letter-spacing: 0.1em;
 		text-decoration: none;
 		color: var(--color-text);
-		font-size: 30px;
+		font-size: clamp(1.75rem, 2vw, 5rem);
 	}
 	.wordmark-dot {
 		color: var(--color-accent);
-		font-size: 60px;
+		font-size: clamp(1.2em, 2vw, 2em);
 		position: relative;
-		top: -2px;
+		top: -0.03em;
 	}
 
 </style>
