@@ -1,0 +1,64 @@
+---
+const currYear = new Date().getFullYear();
+---
+
+<footer id="contact" class="footer">
+	<h2>Let's <span class="accent">Talk</span> !</h2>
+	<div class="external-link">
+		<a href="https://github.com/ficeloo" target="_blank" rel="noopener noreferrer">GitHub</a>
+		<span>·</span>
+		<a href="https://bsky.app/profile/ficelo.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
+		<span>·</span>
+		<a href="https://www.linkedin.com/in/th%C3%A9ophile-cros-61a292336/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+		<span>·</span>
+		<a href="https://ficelo.itch.io/" target="_blank" rel="noopener noreferrer">Itch.io</a>
+	</div>
+	<div class="foot-line">
+		<span>© {currYear} · Made with Astro · <a href="/legal">Legal Notices</a></span>
+	</div>
+</footer>
+
+<style>
+	.footer {
+		color: var(--color-text);
+		font-family: var(--font-body);
+
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 2rem;
+		padding: 1rem 5%;
+	}
+
+	.footer h2 {
+		font-size: clamp(1.5rem, 2.5vw, 7rem);
+	}
+
+	.external-link {
+		display: flex;
+		flex-direction: row;
+		gap: 1rem;
+		font-size: clamp(1rem, 1.25vw, 1.5rem);
+	}
+
+	.external-link a {
+		color: var(--color-text);
+		text-decoration: none;
+		margin-bottom: 3rem;
+	}
+	.accent {
+		color: var(--color-accent);
+	}
+
+	.foot-line {
+		font-size: clamp(0.5rem, 0.75vw, 1rem);
+		letter-spacing: 0.1em;
+		opacity: 0.85;
+	}
+
+	.foot-line a {
+		color: var(--color-text);
+		text-decoration: none;
+	}
+
+</style>
