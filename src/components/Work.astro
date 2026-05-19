@@ -1,0 +1,49 @@
+---
+import ProjectCard from '../components/ProjectCard.astro'
+import placeholder from '../assets/placeholder.jpeg'
+
+---
+
+<section id="work">
+	<div class="work-title">
+		<h2><span class="accent">Discover</span> my Work</h2>
+	</div>
+
+	<ProjectCard
+		title="Stellar Drift"
+		description="A minimalist project in Rust and Bevy that recreates Atari's Asteroids game."
+		tag="Game  ·  Rust/Bevy"
+		year={2025}
+		link="https://github.com/ficeloo/stellar_drift"
+		image={placeholder}
+		alt="Little spaceship shooting at asteroids in 2D space game."
+	/>
+
+	<ProjectCard
+		title="Ft_Transcendence"
+		description="A minimalist project in Rust and Bevy that recreates Atari's Asteroids game."
+		tag="Web  ·  TypeScript  ·  Full-stack"
+		year={2026}
+		link="https://github.com/pixel-fight42/ft_transcendance/"
+		image={placeholder}
+		alt="Little spaceship shooting at asteroids in 2D space game."
+	/>
+</section>
+
+<style>
+
+	.work-title {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.work-title h2 {
+		font-size: clamp(1.5rem, 2.5vw, 7rem);
+	}
+
+	.accent {
+		color: var(--color-accent);
+	}
+
+</style>
