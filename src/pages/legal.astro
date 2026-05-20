@@ -2,6 +2,67 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout>
-	<h1>En construction !</h1>
+<Layout title="Legal Notices">
+	<main class="legal">
+		<h1>Legal Notices</h1>
+
+		<section>
+			<h2>Publisher</h2>
+			<address>
+				<p>Théophile CROS</p>
+				<p>Non-commercial individual</p>
+				<!-- <p>crostheophile@gmail.com </p>-->
+			</address>
+		</section>
+
+		<section>
+			<h2>Host</h2>
+			<p>GitHub Pages</p>
+			<p>GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA</p>
+			<p><a href="https://github.com" target="_blank" rel="noopener noreferrer">https://github.com</a></p>
+		</section>
+
+		<section>
+			<h2>Personal Data</h2>
+			<p>No data is collected in this website.</p>
+			<p>There is no analytics, cookies or form whatsoever.</p>
+		</section>
+
+		<section>
+			<h2>Intellectual property</h2>
+			<p>
+				All content on this website—including texts, graphics, logos, and source code—is the exclusive property of the website owner, unless otherwise stated.
+			</p>
+			<p>© 2026 Théophile Cros. All rights reserved.</p>
+		</section>
+		
+		<section>
+			<h2>Credits</h2>
+			<p>Syne and Syne Mono (Open Font License, by <a href="https://www.bonjourmonde.net" target="_blank" rel="noopener noreferrer">Bonjour Monde</a>)</p>
+			<p>The framework I used for this portfolio is Astro.</p>
+			<p><a href="https://generalistprogrammer.com/tutorials/game-development-portfolio-complete-career-guide-2025" target="_blank" rel="noopener noreferrer">Portfolio Guide</a></p>
+		</section>
+	</main>
 </Layout>
+
+<style>
+	.legal {
+		display: flex;
+		flex-direction: column;
+
+		max-width: 700px;
+		margin: 0 10%;
+		padding-left: 1.5rem;
+
+		line-height: 1;
+	}
+
+	.legal a {
+		text-decoration: none;
+		color: var(--color-secondary);
+	}
+
+	.legal section {
+		font-size: clamp(0.5rem, 1vw, 2rem);
+	}
+</style>
