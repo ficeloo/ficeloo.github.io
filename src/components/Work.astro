@@ -6,28 +6,30 @@ import placeholder from '../assets/placeholder.jpeg'
 
 <section id="work">
 	<div class="work-title">
-		<h2><span class="accent">Discover</span> my Work</h2>
+		<h1><span class="accent">Discover</span> my Work</h1>
 	</div>
 
-	<ProjectCard
-		title="Stellar Drift"
-		description="A minimalist project in Rust and Bevy that recreates Atari's Asteroids game."
-		tag="Game  ·  Rust/Bevy"
-		year={2025}
-		link="https://github.com/ficeloo/stellar_drift"
-		image={placeholder}
-		alt="Little spaceship shooting at asteroids in 2D space game."
-	/>
+	<div class="core">
+		<ProjectCard
+			title="Stellar Drift"
+			description="A minimalist project in Rust and Bevy that recreates Atari's Asteroids game."
+			tag="Game  ·  Rust"
+			year={2025}
+			link="https://github.com/ficeloo/stellar_drift"
+			image={placeholder}
+			alt="placeholder"
+		/>
 
-	<ProjectCard
-		title="Ft_Transcendence"
-		description="A minimalist project in Rust and Bevy that recreates Atari's Asteroids game."
-		tag="Web  ·  TypeScript  ·  Full-stack"
-		year={2026}
-		link="https://github.com/pixel-fight42/ft_transcendance/"
-		image={placeholder}
-		alt="Little spaceship shooting at asteroids in 2D space game."
-	/>
+		<ProjectCard
+			title="Ft_Transcendence"
+			description="A multiplayer web platform built around our custom game, Pixel Fight. Full-stack project exploring real-time networking and authentication."
+			tag="Web  ·  TypeScript  ·  Full-stack"
+			year={2026}
+			link="https://github.com/pixel-fight42/ft_transcendance/"
+			image={placeholder}
+			alt="placeholder."
+		/>
+	</div>
 </section>
 
 <style>
@@ -38,10 +40,17 @@ import placeholder from '../assets/placeholder.jpeg'
 		align-items: center;
 	}
 
-	.work-title h2 {
-		font-size: clamp(1.5rem, 2.5vw, 7rem);
+	.work-title h1 {
+		font-size: clamp(2rem, 3vw, 4rem);
 	}
 
+	:global(.project-card:nth-child(even)) {
+		flex-direction: row-reverse;
+	}
+
+	.core {
+		border-bottom: 2px solid rgba(83, 121, 112, 0.4);
+	}
 	.accent {
 		color: var(--color-accent);
 	}

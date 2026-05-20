@@ -3,17 +3,21 @@ const currYear = new Date().getFullYear();
 ---
 
 <header class="header">
-	<a href="/" class="wordmark">ficelo<span class="wordmark-dot">.</span></a>
+	<div class="wordmark">
+		<a href="/">ficelo<span class="wordmark-dot">.</span></a>
+	</div>
 	<nav>
 		<a href="#work">Work</a>
 		<a href="#contact">Contact</a>
 	</nav>
 
-	<span class="indicator">PORTFOLIO / {currYear}</span>
+	<div class="indicator">
+		PORTFOLIO / {currYear}
+	</div>
 </header>
 
 <style>
-	.header {
+	header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -21,6 +25,7 @@ const currYear = new Date().getFullYear();
 		padding: 1rem 3%;
 		border-bottom: 2px solid rgba(83, 121, 112, 0.34);
 		line-height: 1;
+		background-color: #131224;
 	}
 
 	.indicator {
@@ -31,6 +36,7 @@ const currYear = new Date().getFullYear();
 
 	nav {
 		display: flex;
+		flex: 1;
 		gap: 2rem;
 	}
 
@@ -39,15 +45,22 @@ const currYear = new Date().getFullYear();
 		letter-spacing: 0.2em;
 		text-transform: uppercase;
 		text-decoration: none;
-		font-size: clamp(1.25rem, 2vw, 2rem);
+		font-size: clamp(1.25rem, 2vw, 3rem);
 	}
 
 	.wordmark {
 		letter-spacing: 0.1em;
+		flex: 1;
 		text-decoration: none;
 		color: var(--color-text);
 		font-size: clamp(1.75rem, 2vw, 5rem);
 	}
+
+	.wordmark a {
+		text-decoration: none;
+		color: var(--color-text);
+	}
+
 	.wordmark-dot {
 		color: var(--color-accent);
 		font-size: clamp(1.2em, 2vw, 2em);
