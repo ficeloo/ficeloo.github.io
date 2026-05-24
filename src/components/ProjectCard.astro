@@ -50,12 +50,17 @@ const { title, description, tag, year, image, alt, link } = Astro.props;
 	}
 
 	.image {
-		display: block;
 		aspect-ratio: 16/9;
-		max-width: 100%;
 		width: 100%;
 		height: auto;
 	}
+
+	.image img {
+		display: block;
+		max-width: 100%;
+		height: auto;
+	}
+
 
 	.accent {
 		color: var(--color-accent);
