@@ -50,7 +50,9 @@ const { title, description, tag, year, image, alt, link } = Astro.props;
 	}
 
 	.image {
+		display: block;
 		aspect-ratio: 16/9;
+		max-width: 100%;
 		width: 100%;
 		height: auto;
 	}
@@ -120,5 +122,9 @@ const { title, description, tag, year, image, alt, link } = Astro.props;
 		flex-direction: row;
 		opacity: 0.6;
 		gap: 1rem;
+	}
+
+	@media( max-width: 768px) {
+		.project-card { flex-direction: column; }
 	}
 </style>

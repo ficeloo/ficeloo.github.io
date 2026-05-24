@@ -55,4 +55,10 @@ import placeholder from '../assets/placeholder.jpeg'
 		color: var(--color-accent);
 	}
 
+	@media (max-width: 768px) {
+		:global(.project-card:nth-child(even)) {
+			flex-direction: column;
+		}
+	}
+
 </style>
