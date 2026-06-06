@@ -1,6 +1,8 @@
 ---
 import ProjectCard from '../components/ProjectCard.astro'
 import placeholder from '../assets/placeholder.jpeg'
+import transcendence from '../assets/ft_transcendance.png'
+import stellardrift from '../../public/stellar_drift.gif'
 
 ---
 
@@ -16,7 +18,7 @@ import placeholder from '../assets/placeholder.jpeg'
 			tag="Game  ·  Rust"
 			year={2025}
 			link="https://github.com/ficeloo/stellar_drift"
-			image={placeholder}
+			image={stellardrift}
 			alt="placeholder"
 		/>
 
@@ -26,7 +28,7 @@ import placeholder from '../assets/placeholder.jpeg'
 			tag="Web  ·  TypeScript  ·  Full-stack"
 			year={2026}
 			link="https://github.com/pixel-fight42/ft_transcendance/"
-			image={placeholder}
+			image={transcendence}
 			alt="placeholder."
 		/>
 	</div>
@@ -49,6 +51,8 @@ import placeholder from '../assets/placeholder.jpeg'
 	}
 
 	.core {
+		max-width: auto;
+		margin-inline: auto;
 		border-bottom: 2px solid rgba(83, 121, 112, 0.4);
 	}
 	.accent {

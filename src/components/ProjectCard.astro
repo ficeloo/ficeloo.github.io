@@ -45,20 +45,21 @@ const { title, description, tag, year, image, alt, link } = Astro.props;
 		justify-content: center;
 		
 		font-size: clamp(1rem, 1.8vw, 3rem);
-		min-height: 80vh;
+		min-height: 70vh;
 		border-top: 1px solid rgba(83, 121, 112, 0.4);
 	}
 
 	.image {
+		flex: 0 0 40%;
 		aspect-ratio: 16/9;
-		width: 100%;
 		height: auto;
 	}
 
 	.image img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
 		display: block;
-		max-width: 100%;
-		height: auto;
 	}
 
 
@@ -69,6 +70,7 @@ const { title, description, tag, year, image, alt, link } = Astro.props;
 	.content {
 		display: flex;
 		flex-direction: column;
+		flex: 1;
 		gap: 1rem;
 		padding: 1.5rem 2%;
 	}
