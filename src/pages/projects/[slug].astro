@@ -20,9 +20,9 @@ const { project } = Astro.props;
 			{project.tag} <span class="accent">—</span> {project.year}
 		</div>
 		<div class="links">
-			<a class="first" href={project.links.itch}>&#9655; Play in browser</a>
-			<a class="second" href={project.links.github}>&lt;/&gt; Code</a>
-			<a class="second" href={project.links.gdd}>🗎 GDD</a>
+			{project.links?.itch && <a class="first" href={project.links.itch}>&#9655; Play in browser</a>}
+			{project.links?.github && <a class={project.links.itch ? "second" : "first"} href={project.links.github}>&lt;/&gt; Code</a>}
+			{project.links?.gdd && <a class="second" href={project.links.gdd}>🗎 GDD</a>}
 		</div>
 		<div class="main-img">
 			<img id="main" src={project.image.src} alt={project.alt} />
@@ -111,7 +111,7 @@ const { project } = Astro.props;
 	.main-img img {
 		width: 100%;
 		border-radius: 5px;
-		border: 1px solid rgba(83, 121, 112, 0.44);
+		border: 1px solid rgba(83, 121, 112, 0.4);
 		transition: opacity 0.15s ease-in-out;
 	}
 
@@ -128,9 +128,8 @@ const { project } = Astro.props;
 		aspect-ratio: 16/9;
 		object-fit: cover;
 		scroll-snap-align: start;
-		border: 1px solid rgba(83, 121, 112, 0.44);
+		border: 1px solid rgba(83, 121, 112, 0.4);
 		border-radius: 5px;
-		border-opacity: 
 	}
 
 	.thumb {
