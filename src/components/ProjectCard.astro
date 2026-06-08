@@ -6,7 +6,7 @@ interface Props {
 	title:	string;
 	description:	string;
 	tag:	string;
-	year:	number;
+	year:	string;
 	image:	ImageMetadata;
 	alt:	string;
 	link:	string;
@@ -32,7 +32,7 @@ const { title, description, tag, year, image, alt, link } = Astro.props;
 			<span>{year}</span>
 		</div>
 		<div class="cta">
-			<a href={link} target="_blank" rel="noopener noreferrer">View project <span class="arrow">→</span></a>
+			<a href={link} rel="noopener noreferrer">View project <span class="arrow">→</span></a>
 		</div>
 	</div>
 </article>

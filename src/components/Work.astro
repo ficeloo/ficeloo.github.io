@@ -1,9 +1,6 @@
 ---
 import ProjectCard from '../components/ProjectCard.astro'
-import placeholder from '../assets/placeholder.jpeg'
-import transcendence from '../assets/ft_transcendance.png'
-import stellardrift from '../../public/stellar_drift.gif'
-
+import { projects } from '../data/projects';
 ---
 
 <section id="work">
@@ -12,25 +9,17 @@ import stellardrift from '../../public/stellar_drift.gif'
 	</div>
 
 	<div class="core">
-		<ProjectCard
-			title="Stellar Drift"
-			description="A minimalist project in Rust and Bevy that recreates Atari's Asteroids game."
-			tag="Game  ·  Rust"
-			year={2025}
-			link="https://github.com/ficeloo/stellar_drift"
-			image={stellardrift}
-			alt="placeholder"
-		/>
-
-		<ProjectCard
-			title="Ft_Transcendence"
-			description="A multiplayer web platform built around our custom game, Pixel Fight. Full-stack project exploring real-time networking and authentication."
-			tag="Web  ·  TypeScript  ·  Full-stack"
-			year={2026}
-			link="https://github.com/pixel-fight42/ft_transcendance/"
-			image={transcendence}
-			alt="placeholder."
-		/>
+		{projects.map((project) => (
+			<ProjectCard
+				title={project.title}
+				description={project.description}
+				tag={project.tag}
+				year={project.year}
+				image={project.image}
+				alt={project.alt}
+				link={ `/projects/${project.slug}` }
+			/>
+		))}
 	</div>
 </section>
 
