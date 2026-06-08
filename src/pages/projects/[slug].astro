@@ -1,0 +1,176 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { projects } from '../../data/projects';
+import { Image } from 'astro:assets';
+
+export function getStaticPaths() {
+	return projects.map((project) => ({
+		params: { slug: project.slug },
+		props: { project },
+	}));
+}
+
+const { project } = Astro.props;
+---
+
+<Layout title={project.title}>
+	<div class="project">
+		<h1>{project.title}</h1>
+		<div class="tag">
+			{project.tag} <span class="accent">—</span> {project.year}
+		</div>
+		<div class="links">
+			<a class="first" href={project.links.itch}>&#9655; Play in browser</a>
+			<a class="second" href={project.links.github}>&lt;/&gt; Code</a>
+			<a class="second" href={project.links.gdd}>🗎 GDD</a>
+		</div>
+		<div class="main-img">
+			<img id="main" src={project.image.src} alt={project.alt} />
+		</div>
+		{project.screenshots && project.screenshots.length > 0 && 
+			(<div class="gallery">
+				{project.screenshots.map((shot) => (
+					<Image class="thumb" src={shot} alt="" />
+				))}
+			</div>
+		)}
+		<div class="description" set:html={project.longDescription}>
+		</div>
+		{project.embedUrl && <iframe src={project.embedUrl}/>}
+	</div>
+</Layout>
+
+<style>
+
+	.project {
+		display: flex;
+		flex-direction: column;
+		padding: 1em;
+		font-size: clamp(0.5rem, 1rem, 3rem);
+		gap: 1em;
+	}
+
+	h1 {
+		letter-spacing: 0.1em;
+		font-weight: normal;
+	}
+
+	.tag {
+		text-transform: uppercase;
+		font-family: var(--font-display);
+		color: rgba(243,246,246, 0.62);
+	}
+
+	.links {
+		display: flex;
+
+		font-family: var(--font-display);
+		font-size: 0.95em;;
+		text-transform: uppercase;
+		gap: 1em;
+
+	}
+
+	.links a {
+		display: inline-flex;
+		text-decoration: none;
+		align-items: center;
+
+		border-radius: 5px;
+		padding: 0.4rem 0.5rem;
+
+		transition: transform 0.25s,
+		background-color 0.25s;
+	}
+
+	.links a:hover {
+		transform: scale(1.05);
+	}
+
+	.first {
+		align-items: center;
+
+		background-color: var(--color-accent);
+		
+		color: var(--color-bg);
+	}
+
+	.first:hover {
+		background-color: color-mix(in srgb, var(--color-accent) 85%, white);
+	}
+
+	.second {
+		color: var(--color-text);
+		border: 1px solid;
+	}
+
+	.second:hover {
+		background-color: color-mix(in srgb, var(--color-bg) 85%, white);
+	}
+
+	.main-img img {
+		width: 100%;
+		border-radius: 5px;
+		border: 1px solid rgba(83, 121, 112, 0.44);
+		transition: opacity 0.15s ease-in-out;
+	}
+
+	.gallery {
+		display: flex;
+		gap: 12px;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		border-radius: 5px;
+		flex: 0 0 30%;
+	}
+
+	.gallery img {
+		aspect-ratio: 16/9;
+		object-fit: cover;
+		scroll-snap-align: start;
+		border: 1px solid rgba(83, 121, 112, 0.44);
+		border-radius: 5px;
+		border-opacity: 
+	}
+
+	.thumb {
+		width: 27%;
+		height: auto;
+	}
+
+	.description {
+	}
+
+</style>
+<script>
+	const mainImage = document.getElementById('main') as HTMLImageElement;
+	const thumbnails = document.querySelectorAll('.thumb') as NodeListOf<HTMLImageElement>;
+
+	const originalSrc = mainImage.src;
+
+	let revertTimer = 0;
+
+	thumbnails.forEach(thumb => {
+		thumb.addEventListener('click', () => {
+			if (!mainImage)
+				return;
+
+			
+			mainImage.style.opacity = '0.6';
+
+			setTimeout(() => {
+				mainImage.src = thumb.src;
+				mainImage.style.opacity = '1';
+			}, 150);
+
+			clearTimeout(revertTimer);
+			revertTimer = setTimeout(() => {
+				mainImage.style.opacity = '0.6';
+				setTimeout(() => {
+					mainImage.src = originalSrc;
+					mainImage.style.opacity = '1';
+				}, 150);
+			}, 10000);
+		});
+	});
+</script>
