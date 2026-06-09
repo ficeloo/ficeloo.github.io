@@ -24,19 +24,27 @@ const { project } = Astro.props;
 			{project.links?.github && <a class={project.links.itch ? "second" : "first"} href={project.links.github}>&lt;/&gt; Code</a>}
 			{project.links?.gdd && <a class="second" href={project.links.gdd}>🗎 GDD</a>}
 		</div>
-		<div class="main-img">
+		<div class="main-img" >
 			<img id="main" src={project.image.src} alt={project.alt} />
 		</div>
-		{project.screenshots && project.screenshots.length > 0 && 
+		{project.screenshots && project.screenshots.length > 0 &&
 			(<div class="gallery">
 				{project.screenshots.map((shot) => (
 					<Image class="thumb" src={shot} alt="" />
 				))}
 			</div>
 		)}
-		<div class="description" set:html={project.longDescription}>
+		<div class="description" >
+			<h3><span class="accent">Project description</span></h3>
+			<span set:html={project.longDescription}/>
 		</div>
-		{project.embedUrl && <iframe src={project.embedUrl}/>}
+		{project.embedUrl &&
+			(<div class="embed">
+				Play it here
+				<iframe src={project.embedUrl} width="1280"/>
+				<p class="on-mobile">This game is not designed to run on your device. Try it on a computer !</p>
+			</div>
+		)}
 	</div>
 </Layout>
 
@@ -48,6 +56,8 @@ const { project } = Astro.props;
 		padding: 1em;
 		font-size: clamp(0.5rem, 1rem, 3rem);
 		gap: 1em;
+		max-width: 80rem;
+		margin: 0 auto;
 	}
 
 	h1 {
@@ -121,7 +131,8 @@ const { project } = Astro.props;
 		overflow-x: auto;
 		scroll-snap-type: x mandatory;
 		border-radius: 5px;
-		flex: 0 0 30%;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(83,121,112,0.6) transparent;
 	}
 
 	.gallery img {
@@ -138,6 +149,81 @@ const { project } = Astro.props;
 	}
 
 	.description {
+		padding: 1rem 0rem;
+		color: var(--color-text);
+		border-bottom: 1px solid rgba(83, 121, 112, 0.4);
+	}
+
+	.description span:nth-child(1) {
+		font-size: 1.1em;
+	}
+
+	.description :global(p) {
+		line-height: 1.4;
+	}
+
+	.description :global(div){
+		font-size: 0.9em;
+		color:  color-mix(in srgb, var(--color-text) 80%, black);
+	}
+
+	.description :global(ul){
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.description h3 {
+		font-weight: normal;
+	}
+
+	.embed {
+		display: flex;
+		flex-direction: column;
+		text-transform: uppercase;
+		font-family: var(--font-display);
+		color:  color-mix(in srgb, var(--color-text) 70%, black);
+		gap: 1rem;
+	}
+
+	.embed iframe {
+		display: none;
+	}
+
+	.on-mobile {
+		display: flex;
+		justify-content: center;
+		color: white;
+	}
+
+
+	@media(min-width: 1280px) {
+		.on-mobile {display: none;}
+		.embed iframe {
+			display: flex;
+			align-items: start;
+			border: 1px solid;
+			aspect-ratio: 16/9;
+			margin: 1rem auto;
+			allow: autoplay;
+		}
+	}
+
+	@media(min-width: 768px) {
+
+		.project {
+			font-size: clamp(1em, 1.15em, 4em);
+			padding: 2em 3em;
+			gap: 2em;
+		}
+
+		.main-img img {
+			width: 100%;
+		}
+
+		.gallery {
+			width: 100%;
+		}
 	}
 
 </style>
