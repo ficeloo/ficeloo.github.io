@@ -1,0 +1,19 @@
+.legal {
+	display: flex;
+	flex-direction: column;
+
+	max-width: 700px;
+	margin: 0 10%;
+	padding-left: 1.5rem;
+
+	line-height: 1;
+}
+
+.legal a {
+	text-decoration: none;
+	color: var(--color-secondary);
+}
+
+.legal section {
+	font-size: clamp(0.5rem, 1vw, 2rem);
+}

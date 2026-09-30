@@ -1,0 +1,50 @@
+@font-face {
+	font-family: 'Syne';
+	src: url('/fonts/Syne-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Syne';
+	src: url('/fonts/Syne-Bold.woff2') format('woff2');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Syne Mono';
+	src: url('/fonts/SyneMono-Regular.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+body {
+	margin: 0;
+	background: var(--color-bg);
+	color: var(--color-text);
+	font-family: var(--font-body);
+}
+
+h1, h2, h3 {
+	font-family: var(--font-display);
+}
+
+h1 {
+	font-size: clamp(2rem, 3vw, 4rem);
+}
+
+h2 {
+	font-size: clamp(1.5rem, 2vw, 3rem);
+}
+
+.accent {
+	color: var(--color-accent);
+}
+
+html {
+	scroll-behavior: smooth;
+}

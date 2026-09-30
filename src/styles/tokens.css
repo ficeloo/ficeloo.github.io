@@ -1,0 +1,12 @@
+:root {
+	/* Palette */
+	--color-bg: #131254;
+	--color-accent: #FD6035;
+	--color-text: #F3F6F6;
+	--color-text-muted: #A5A99E;
+	--color-secondary: #537970;
+
+	/* Typo */
+	--font-display: 'Syne Mono', monospace;
+	--font-body: 'Syne', sans-serif;
+}

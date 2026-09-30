@@ -1,0 +1,58 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-family: var(--font-display);
+	padding: 1rem 3%;
+	border-bottom: 1px solid rgba(83, 121, 112, 0.34);
+	line-height: 1;
+	background-color: #131240;
+	font-size: clamp(0.95rem, 2vw, 1.6rem);
+}
+
+.indicator {
+	letter-spacing: 0.18em;
+	color: rgba(243, 246, 246, 0.62);
+}
+
+.header nav {
+	display: flex;
+	flex: 1;
+	gap: 2rem;
+}
+
+.header nav a {
+	color: var(--color-text);
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	text-decoration: none;
+}
+
+.wordmark {
+	letter-spacing: 0.1em;
+	flex: 1;
+	text-decoration: none;
+	color: var(--color-text);
+}
+
+.wordmark a {
+	text-decoration: none;
+	color: var(--color-text);
+}
+
+.wordmark-dot {
+	color: var(--color-accent);
+	position: relative;
+	top: -0.03em;
+}
+
+@media(max-width: 768px) {
+	.header {
+		line-height: 0.5;
+	}
+	.indicator { display: none; }
+	.header nav {
+		flex: 0;
+		gap: 1rem;
+	}
+}
