@@ -1,0 +1,82 @@
+---
+import { projects } from '../data/projects';
+import styles from '../styles/components/star-map.module.css';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const data = projects.map((p) => ({
+	slug: p.slug,
+	title: p.title,
+	description: p.description,
+	tag: p.tag,
+	year: p.year,
+	img: p.image.src,
+	alt: p.alt,
+}));
+
+const cats = [...new Set(projects.map((p) => p.tag.split('·')[0].trim()))];
+const systems = cats.map((c, g) => ({
+	num: pad(g + 1),
+	label: c,
+	count: pad(projects.filter((p) => p.tag.split('·')[0].trim() === c).length),
+}));
+---
+
+<section id="work" class={styles.stage} data-starmap>
+	<div class={styles.sticky}>
+		<div class={styles.viewport}>
+			<div class={styles['stars-layer']} data-stars aria-hidden="true"></div>
+			<div class={styles['map-layer']} data-map></div>
+
+			<div class={styles.topbar}>
+				<div class={styles.counter} data-counter>01 / {pad(projects.length)}</div>
+				<h2 class={styles.title}><span class="accent">Discover</span> my Work</h2>
+				<button class={styles['see-all']} type="button">Tout voir ☰</button>
+			</div>
+
+			<div class={styles.nav}>
+				<div class={styles['nav-heading']}>Systems</div>
+				{systems.map((sys) => (
+					<button class={styles['nav-row']} type="button" data-nav-row>
+						<span>{sys.num}. {sys.label} System</span>
+						<span class={styles['nav-count']}>{sys.count}</span>
+						<span class={styles['nav-bar']} data-nav-bar></span>
+					</button>
+				))}
+			</div>
+
+			<div class={styles.hud}>
+				<div class={styles['hud-label']} data-hud-cat>Selected</div>
+				<div class={styles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
+				<h3 class={styles['hud-title']} data-hud-title></h3>
+				<div class={styles['hud-meta']}>
+					<span data-hud-tag></span>
+					<span class="sep">-</span>
+					<span data-hud-year></span>
+				</div>
+				<div class={styles['hud-hint']}>Scroll · Drag · ← → · Enter to open</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Repli sémantique : visible sans JS / reduced-motion, masqué quand la carte est active. -->
+	<ul class={styles.fallback}>
+		{projects.map((p, i) => (
+			<li>
+				<a href={`/projects/${p.slug}`}>
+					<span class={styles['f-num']}>{pad(i + 1)}</span>
+					<span>{p.title}</span>
+					<span class={styles['f-tag']}>{p.tag}</span>
+				</a>
+			</li>
+		))}
+	</ul>
+
+	<script type="application/json" id="starmap-data" set:html={JSON.stringify(data)} />
+</section>
+
+<script>
+	import styles from '../styles/components/star-map.module.css';
+	import { initStarMap } from '../scripts/star-map';
+	initStarMap(styles as unknown as Record<string, string>);
+</script>
