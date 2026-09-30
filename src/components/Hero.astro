@@ -2,25 +2,131 @@
 import styles from '../styles/components/hero.module.css'
 ---
 
-<section class={styles.hero}>
-	<div class={styles["status-pill"]}>
+<section class={styles.hero} data-hero>
+	<canvas id="hero-stars" class={styles.stars} aria-hidden="true"></canvas>
+
+	<div class={`${styles["status-pill"]} ${styles.reveal}`} style="--i:0">
 		<span class={styles.dot}></span>Currently learning · 42 School · Paris
 	</div>
-	<div class={styles["hero-content"]}>
-		<h1>I'm <span class="accent">ficelo</span>,<br /> a junior game designer & developer.</h1>
-		<p>With my games, I'm exploring ways to leave a mark. Small projects and a lot of fun — trying to do better every time.</p>
+
+	<h1 class={styles.reveal} style="--i:1">I'm <span class={styles.name}>ficelo</span>, <br /> a junior game designer & developer.</h1>
+
+	<p class={`${styles.lede} ${styles.reveal}`} style="--i:2">With my games, I'm exploring ways to leave a mark. Small projects and a lot of fun — trying to do better every time.</p>
+
+	<div class={`${styles["hero-meta"]} ${styles.reveal}`} style="--i:3">
+		<span><span class={styles.label}>Based</span><strong>Paris, Fr</strong></span>
+		<span class={styles.sep}>/</span>
+		<span><span class={styles.label}>School</span><strong>42 (In progress)</strong></span>
+		<span class={styles.sep}>/</span>
+		<span><span class={styles.label}>Currently</span><strong>Rust · Bevy · Ts</strong></span>
+		<span class={styles.sep}>/</span>
+		<span><span class={styles.label}>Looking for</span><strong>First internship</strong></span>
 	</div>
-	<div class={styles["hero-meta"]}>
-		<span><strong>Based</strong>&nbsp;&nbsp;Paris, Fr</span>
-		<span class={styles.separator}>|</span>
-		<span><strong>School</strong>&nbsp;&nbsp;42 (In progress)</span>
-		<span class={styles.separator}>|</span>
-		<span><strong>Currently</strong>&nbsp;&nbsp;Rust · Bevy · Ts</span>
-		<span class={styles.separator}>|</span>
-		<span><strong>Looking for</strong>&nbsp;&nbsp;First internship</span>
-	</div>
-	<div class={styles["hero-cta"]}>
+
+	<div class={`${styles["hero-cta"]} ${styles.reveal}`} style="--i:4">
 		<a href="#work" class={styles.primary}>See my work <span class={styles.arrow}>→</span></a>
 		<a href="#contact" class={styles.secondary}>Say hi ! <span class={styles.arrow}>→</span></a>
 	</div>
 </section>
+
+<script>
+	const hero = document.querySelector('[data-hero]') as HTMLElement | null;
+
+	// Entrée en cascade — déclenchée dès que possible (avant le canvas,
+	// pour que le contenu reste visible même si le canvas échoue).
+	hero?.setAttribute('data-ready', '');
+
+	const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const canvas = document.getElementById('hero-stars') as HTMLCanvasElement | null;
+
+	if (hero && canvas && !reduce) {
+		const ctx = canvas.getContext('2d')!;
+
+		type Star = { x: number; y: number; r: number; base: number; tw: number; tws: number; depth: number };
+		type Shot = { x: number; y: number; vx: number; vy: number; life: number; max: number; len: number };
+
+		let stars: Star[] = [];
+		let shooting: Shot[] = [];
+		let W = 0, H = 0, dpr = 1;
+		let mx = 0, my = 0, sinceShoot = 0;
+
+		function resize() {
+			dpr = Math.min(window.devicePixelRatio || 1, 2);
+			const rect = hero!.getBoundingClientRect();
+			W = canvas!.width = Math.floor(rect.width * dpr);
+			H = canvas!.height = Math.floor(rect.height * dpr);
+			canvas!.style.width = rect.width + 'px';
+			canvas!.style.height = rect.height + 'px';
+			const count = Math.floor((rect.width * rect.height) / 6500);
+			stars = Array.from({ length: count }, () => ({
+				x: Math.random() * W,
+				y: Math.random() * H,
+				r: (Math.random() * 1.3 + 0.3) * dpr,
+				base: Math.random() * 0.5 + 0.2,
+				tw: Math.random() * Math.PI * 2,
+				tws: Math.random() * 0.02 + 0.005,
+				depth: Math.random() * 0.5 + 0.5,
+			}));
+		}
+		resize();
+		window.addEventListener('resize', resize);
+		window.addEventListener('pointermove', (e) => {
+			mx = e.clientX / window.innerWidth - 0.5;
+			my = e.clientY / window.innerHeight - 0.5;
+		});
+
+		function spawnShooting() {
+			shooting.push({
+				x: Math.random() * W * 0.6,
+				y: Math.random() * H * 0.4,
+				vx: (6 + Math.random() * 4) * dpr,
+				vy: (3 + Math.random() * 2) * dpr,
+				life: 0,
+				max: 60 + Math.random() * 30,
+				len: (120 + Math.random() * 80) * dpr,
+			});
+		}
+
+		function loop() {
+			ctx.clearRect(0, 0, W, H);
+			for (const s of stars) {
+				s.tw += s.tws;
+				const a = s.base + Math.sin(s.tw) * 0.3;
+				const px = s.x + mx * 30 * dpr * s.depth;
+				const py = s.y + my * 30 * dpr * s.depth;
+				ctx.beginPath();
+				ctx.arc(px, py, s.r, 0, Math.PI * 2);
+				ctx.fillStyle = `rgba(243,246,246,${Math.max(0, a)})`;
+				ctx.fill();
+			}
+			sinceShoot++;
+			if (sinceShoot > 90 && Math.random() < 0.03) {
+				spawnShooting();
+				sinceShoot = 0;
+			}
+			for (let i = shooting.length - 1; i >= 0; i--) {
+				const sh = shooting[i];
+				sh.life++;
+				sh.x += sh.vx;
+				sh.y += sh.vy;
+				const t = sh.life / sh.max;
+				const alpha = t < 0.15 ? t / 0.15 : 1 - t;
+				const norm = Math.hypot(sh.vx, sh.vy);
+				const tailX = sh.x - (sh.vx / norm) * sh.len;
+				const tailY = sh.y - (sh.vy / norm) * sh.len;
+				const grad = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
+				grad.addColorStop(0, `rgba(253,96,53,${Math.max(0, alpha)})`);
+				grad.addColorStop(1, 'rgba(253,96,53,0)');
+				ctx.strokeStyle = grad;
+				ctx.lineWidth = 2 * dpr;
+				ctx.beginPath();
+				ctx.moveTo(sh.x, sh.y);
+				ctx.lineTo(tailX, tailY);
+				ctx.stroke();
+				if (sh.life >= sh.max) shooting.splice(i, 1);
+			}
+			requestAnimationFrame(loop);
+		}
+		requestAnimationFrame(loop);
+	}
+</script>
