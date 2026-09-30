@@ -1,19 +1,46 @@
 .legal {
 	display: flex;
 	flex-direction: column;
+	gap: 2rem;
 
-	max-width: 700px;
-	margin: 0 10%;
-	padding-left: 1.5rem;
+	max-width: 720px;
+	margin: 0 auto;
+	padding: 4rem 6%;
 
-	line-height: 1;
+	line-height: 1.5;
+}
+
+.legal h1 {
+	margin: 0;
+}
+
+.legal section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: 1rem;
+}
+
+.legal h2 {
+	margin: 0;
+	font-size: clamp(1.2rem, 2vw, 1.6rem);
+}
+
+.legal address {
+	font-style: normal;
+}
+
+.legal p {
+	margin: 0;
+	color: rgba(243, 246, 246, 0.72);
 }
 
 .legal a {
 	text-decoration: none;
 	color: var(--color-secondary);
+	transition: color 0.2s ease;
 }
 
-.legal section {
-	font-size: clamp(0.5rem, 1vw, 2rem);
+.legal a:hover {
+	color: var(--color-accent);
 }

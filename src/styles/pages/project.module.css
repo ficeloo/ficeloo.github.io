@@ -111,7 +111,7 @@
 
 .description :global(div){
 	font-size: 0.9em;
-	color:  color-mix(in srgb, var(--color-text) 80%, black);
+	color: rgba(243, 246, 246, 0.6);
 }
 
 .description :global(ul){
@@ -129,7 +129,7 @@
 	flex-direction: column;
 	text-transform: uppercase;
 	font-family: var(--font-display);
-	color:  color-mix(in srgb, var(--color-text) 70%, black);
+	color: rgba(243, 246, 246, 0.6);
 	gap: 1rem;
 }
 
@@ -140,7 +140,7 @@
 .on-mobile {
 	display: flex;
 	justify-content: center;
-	color: white;
+	color: var(--color-text);
 }
 
 @media(min-width: 1280px) {
