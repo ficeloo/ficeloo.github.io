@@ -22,10 +22,16 @@ const systems = cats.map((c, g) => ({
 }));
 ---
 
-<section id="work" class={styles.stage} data-starmap>
+<section class={styles.stage} data-starmap>
+	<div id="work" class={styles['work-anchor']} data-work-anchor></div>
 	<div class={styles.sticky}>
-		<div class={styles.viewport}>
-			<div class={styles['stars-layer']} data-stars aria-hidden="true"></div>
+		<div class={styles['stars-layer']} data-stars aria-hidden="true"></div>
+
+		<div class={styles['hero-slot']} data-hero-wrap>
+			<slot />
+		</div>
+
+		<div class={styles['map-ui']} data-map-ui>
 			<div class={styles['map-layer']} data-map></div>
 
 			<div class={styles.topbar}>
@@ -45,7 +51,7 @@ const systems = cats.map((c, g) => ({
 				))}
 			</div>
 
-			<div class={styles.hud}>
+			<div class={styles.hud} data-hud>
 				<div class={styles['hud-label']} data-hud-cat>Selected</div>
 				<div class={styles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
 				<h3 class={styles['hud-title']} data-hud-title></h3>
@@ -56,6 +62,8 @@ const systems = cats.map((c, g) => ({
 				</div>
 				<div class={styles['hud-hint']}>Scroll · Drag · ← → · Enter to open</div>
 			</div>
+
+			<a class={styles['about-link']} href="#about">About me ↓</a>
 		</div>
 	</div>
 

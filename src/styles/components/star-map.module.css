@@ -1,4 +1,4 @@
-/* ===== Stage ===== */
+/* ===== Stage (haut, pilote le scroll) ===== */
 .stage {
 	position: relative;
 	isolation: isolate;
@@ -10,12 +10,18 @@
 }
 .stage[data-ready] .sticky {
 	display: block;
-}
-
-.viewport {
-	position: relative;
+	position: sticky;
+	top: 0;
 	height: 100vh;
 	overflow: hidden;
+}
+
+.work-anchor {
+	position: absolute;
+	left: 0;
+	width: 1px;
+	height: 1px;
+	pointer-events: none;
 }
 
 /* ===== Couches ===== */
@@ -32,10 +38,26 @@
 	transform: translate(-50%, -50%);
 }
 
-.map-layer {
+/* Le Hero est injecté ici (slot) ; le moteur l'anime (transform/opacity). */
+.hero-slot {
 	position: absolute;
 	inset: 0;
 	z-index: 2;
+	transform-origin: 50% 0;
+}
+
+/* Carte + chrome : apparaissent au scroll (opacité/pointer-events pilotés par le JS). */
+.map-ui {
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.map-layer {
+	position: absolute;
+	inset: 0;
 }
 
 .paths {
@@ -250,6 +272,27 @@
 	letter-spacing: 0.2em;
 	text-transform: uppercase;
 	color: var(--color-secondary);
+}
+
+/* ===== About me ↓ ===== */
+.about-link {
+	position: absolute;
+	right: 3%;
+	bottom: 1.6rem;
+	z-index: 30;
+	font-family: var(--font-display);
+	font-size: 0.95rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-text);
+	text-decoration: none;
+	padding: 0.5rem 0.9rem;
+	border: 1px solid rgba(83, 121, 112, 0.7);
+	transition: all 0.2s ease;
+}
+.about-link:hover {
+	border-color: var(--color-accent);
+	color: var(--color-accent);
 }
 
 /* ===== Repli sémantique (sans JS / reduced-motion) ===== */

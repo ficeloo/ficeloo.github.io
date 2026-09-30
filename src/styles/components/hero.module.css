@@ -1,8 +1,4 @@
 .hero {
-	position: relative;
-	isolation: isolate;
-	overflow: hidden;
-
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -10,14 +6,8 @@
 
 	gap: 2rem;
 	padding: 6rem 6% 5rem;
-	min-height: calc(100vh - 80px);
-}
-
-.stars {
-	position: absolute;
-	inset: 0;
-	z-index: -1;
-	pointer-events: none;
+	height: 100%;
+	box-sizing: border-box;
 }
 
 .status-pill {
@@ -203,8 +193,5 @@
 		opacity: 1 !important;
 		transform: none !important;
 		animation: none !important;
-	}
-	.stars {
-		display: none !important;
 	}
 }

@@ -1,6 +1,7 @@
 // Moteur de la "star map" — porté du prototype de design (design_handoff_star_map).
-// Phase A : rendu statique de la carte (systèmes, nœuds, étoiles) à caméra fixe.
-// Les phases suivantes ajouteront le scroll, les sauts hyperspace, la popup, etc.
+// Phase A : rendu statique. Phase B : modèle de scroll, fusion Hero↔carte, snap,
+// nav cliquable, HUD/compteur pilotés par le scroll.
+// Phases suivantes : sauts hyperspace (C), popup + clavier + drag (D), overlay (E).
 
 type Raw = {
 	slug: string | null;
@@ -30,7 +31,10 @@ export function initStarMap(styles: Record<string, string>) {
 	const dataEl = document.getElementById('starmap-data');
 	const starsLayer = root?.querySelector<HTMLElement>('[data-stars]');
 	const mapLayer = root?.querySelector<HTMLElement>('[data-map]');
-	if (!root || !dataEl || !starsLayer || !mapLayer) return;
+	const heroWrap = root?.querySelector<HTMLElement>('[data-hero-wrap]');
+	const mapUi = root?.querySelector<HTMLElement>('[data-map-ui]');
+	const workAnchor = root?.querySelector<HTMLElement>('[data-work-anchor]');
+	if (!root || !dataEl || !starsLayer || !mapLayer || !mapUi) return;
 
 	const raw = JSON.parse(dataEl.textContent || '[]') as Raw[];
 	const projects: Proj[] = raw.map((p, i) => ({
@@ -108,7 +112,7 @@ export function initStarMap(styles: Record<string, string>) {
 		return { ring, label };
 	});
 
-	const nodeEls = projects.map((pr) => {
+	const nodeEls = projects.map((pr, idx) => {
 		const dot = document.createElement('div');
 		dot.className = styles.node;
 		const label = document.createElement('div');
@@ -116,7 +120,10 @@ export function initStarMap(styles: Record<string, string>) {
 		const numSpan = document.createElement('span');
 		numSpan.className = styles.num;
 		numSpan.textContent = pr.num;
-		label.append(numSpan, document.createTextNode('  ' + pr.title));
+		label.append(numSpan, document.createTextNode('  ' + pr.title));
+		const travel = () => goTo(idx);
+		dot.addEventListener('click', travel);
+		label.addEventListener('click', travel);
 		mapLayer.appendChild(dot);
 		mapLayer.appendChild(label);
 		return { dot, label };
@@ -124,6 +131,7 @@ export function initStarMap(styles: Record<string, string>) {
 
 	// Références du chrome (rendu côté serveur dans StarMap.astro).
 	const counterEl = root.querySelector<HTMLElement>('[data-counter]');
+	const hudEl = root.querySelector<HTMLElement>('[data-hud]');
 	const hud = {
 		cat: root.querySelector<HTMLElement>('[data-hud-cat]'),
 		img: root.querySelector<HTMLImageElement>('[data-hud-img]'),
@@ -168,9 +176,90 @@ export function initStarMap(styles: Record<string, string>) {
 		return { P, cats, ord, G, W, U, N: ord.length };
 	}
 
-	function render(u: number) {
-		const { P, ord, G, W, U, N } = layout();
-		const k = 0; // popup fermée (phase D)
+	type Metrics = ReturnType<typeof layout> & {
+		stageTop: number; T: number; STEP: number; Utot: number; local: number; u: number; p: number; kN: number;
+	};
+	function metrics(): Metrics {
+		const L = layout();
+		const stageTop = root!.getBoundingClientRect().top + window.scrollY;
+		const T = vh * 0.9;
+		const STEP = vh * 0.28;
+		const Utot = L.U[L.N - 1] || 0;
+		const local = window.scrollY - stageTop;
+		const u = cl((local - T) / STEP, 0, Utot);
+		const p = cl(local / T, 0, 1);
+		let kN = 0;
+		L.U.forEach((v, k) => {
+			if (Math.abs(v - u) < Math.abs(L.U[kN] - u)) kN = k;
+		});
+		return { ...L, stageTop, T, STEP, Utot, local, u, p, kN };
+	}
+
+	function updateGeometry() {
+		const L = layout();
+		const T = vh * 0.9;
+		const STEP = vh * 0.28;
+		const Utot = L.U[L.N - 1] || 0;
+		root!.style.height = vh + T + Utot * STEP + 'px';
+		if (workAnchor) workAnchor.style.top = T + 'px';
+	}
+
+	// --- Scroll animé + snap ---
+	let animating = false;
+	let sRaf = 0;
+	function animScroll(target: number) {
+		cancelAnimationFrame(sRaf);
+		const from = window.scrollY;
+		const d = target - from;
+		if (Math.abs(d) < 2) {
+			animating = false;
+			return;
+		}
+		const units = Math.abs(d) / (vh * 0.28);
+		const dur = cl(450 + units * 300, 450, 3600);
+		const t0 = performance.now();
+		animating = true;
+		const step = (t: number) => {
+			const q = cl((t - t0) / dur, 0, 1);
+			const e = q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
+			window.scrollTo({ top: from + d * e, behavior: 'instant' as ScrollBehavior });
+			if (q < 1) sRaf = requestAnimationFrame(step);
+			else animating = false;
+		};
+		sRaf = requestAnimationFrame(step);
+	}
+
+	function snap() {
+		if (animating) return;
+		const m = metrics();
+		if (m.local < m.T * 0.98 || m.local > m.T + m.Utot * m.STEP + 2) return;
+		const target = m.stageTop + m.T + m.U[m.kN] * m.STEP;
+		if (Math.abs(target - window.scrollY) > 2) animScroll(target);
+	}
+
+	function goTo(i: number) {
+		const m = metrics();
+		const k = Math.max(0, m.ord.indexOf(i));
+		animScroll(m.stageTop + m.T + m.U[k] * m.STEP);
+	}
+
+	function render() {
+		const m = metrics();
+		const { P, ord, G, W, U, N } = m;
+		const u = m.u;
+		const p = m.p;
+		const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+
+		// Transition Hero → carte
+		if (heroWrap) {
+			heroWrap.style.transform = `translateY(${(-ease * vh * 0.35).toFixed(1)}px) scale(${(1 - ease * 0.12).toFixed(3)})`;
+			heroWrap.style.opacity = cl(1 - p * 1.6, 0, 1).toFixed(3);
+			heroWrap.style.pointerEvents = p < 0.3 ? 'auto' : 'none';
+		}
+		const wheelOp = cl((p - 0.35) / 0.5, 0, 1);
+		mapUi!.style.opacity = wheelOp.toFixed(3);
+		mapUi!.style.pointerEvents = p > 0.8 ? 'auto' : 'none';
+
 		let j = 0;
 		while (j < N - 1 && U[j + 1] <= u) j++;
 		const last = j >= N - 1;
@@ -192,17 +281,14 @@ export function initStarMap(styles: Record<string, string>) {
 		}
 		const wave = leg ? Math.sin(Math.PI * f) : 0;
 		const z = 1 - wave * 0.5;
-		const dip = vh * 0.2 * k;
+		const dip = 0; // popup (phase D)
 		const hudW = Math.min(300, vw * 0.3);
 		const ox = vw >= 1200 ? vw / 2 + hudW * 0.3 - 60 : vw / 2;
 		const navW = vw >= 1200 ? 280 : 120;
-		const oy = vh * 0.45;
+		const oy = vh * 0.45 + (1 - ease) * vh * 0.9;
 		const S = (q: Pt, dp: number): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + dp + (q.y - cam.y) * z });
 
-		let kN = 0;
-		U.forEach((v, q) => {
-			if (Math.abs(v - u) < Math.abs(U[kN] - u)) kN = q;
-		});
+		const kN = m.kN;
 		const ai = ord[kN];
 		const curG = leg ? (f < 0.5 ? W[j].g : W[j + 1].g) : W[kN].g;
 
@@ -280,9 +366,12 @@ export function initStarMap(styles: Record<string, string>) {
 
 		// Compteur + HUD + nav
 		if (counterEl) counterEl.textContent = pad(kN + 1) + ' / ' + pad(N);
+		const inWheel = p > 0.96;
+		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
+		if (hudEl) hudEl.style.opacity = hudOp.toFixed(3);
 		const cur = P[ai];
 		if (hud.cat) hud.cat.textContent = 'Selected · ' + cur.num + ' · ' + cur.cat;
-		if (hud.img) hud.img.src = cur.img;
+		if (hud.img && hud.img.getAttribute('src') !== cur.img) hud.img.src = cur.img;
 		if (hud.title) hud.title.textContent = cur.title;
 		if (hud.tag) hud.tag.textContent = cur.tag;
 		if (hud.year) hud.year.textContent = cur.year;
@@ -297,11 +386,44 @@ export function initStarMap(styles: Record<string, string>) {
 		});
 	}
 
-	readVp();
-	render(0);
-	window.addEventListener('resize', () => {
-		readVp();
-		render(0);
+	// Nav : clic → voyage vers le premier projet du système.
+	navRows.forEach((rowEl, gi) => {
+		rowEl.addEventListener('click', () => {
+			const g0 = layout().G[gi];
+			if (g0) goTo(g0.mem[0]);
+		});
 	});
+
+	// --- Boucle de scroll ---
+	let raf = 0;
+	let snapT = 0;
+	const onScroll = () => {
+		if (!raf) raf = requestAnimationFrame(() => {
+			raf = 0;
+			render();
+		});
+		clearTimeout(snapT);
+		snapT = window.setTimeout(snap, 170);
+	};
+	const onWheel = () => {
+		if (animating) {
+			cancelAnimationFrame(sRaf);
+			animating = false;
+		}
+	};
+	const onResize = () => {
+		readVp();
+		updateGeometry();
+		render();
+	};
+
+	window.addEventListener('scroll', onScroll, { passive: true });
+	window.addEventListener('wheel', onWheel, { passive: true });
+	window.addEventListener('touchstart', onWheel, { passive: true });
+	window.addEventListener('resize', onResize);
+
+	readVp();
+	updateGeometry();
+	render();
 	root.setAttribute('data-ready', '');
 }
