@@ -24,7 +24,7 @@
 
 body {
 	margin: 0;
-	background: var(--color-bg);
+	background: var(--color-bg-deep);
 	color: var(--color-text);
 	font-family: var(--font-body);
 }
