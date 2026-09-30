@@ -528,7 +528,9 @@ export function initStarMap(styles: Record<string, string>) {
 		const rot = leg ? (Math.atan2(W[j + 1].y - W[j].y, W[j + 1].x - W[j].x) * 180) / Math.PI : 0;
 		// Progression d'arrivée dans le sens du voyage (f en avant, 1-f en arrière).
 		const fArr = dir >= 0 ? f : 1 - f;
-		const arrOp = leg ? Math.sin(Math.PI * cl((fArr - 0.2) / 0.72, 0, 1)) : 0;
+		// Carte système en plateau : apparaît tôt (dès 5% du saut), pleine opacité
+		// de 20% à 78%, puis fond — laisse le temps de lire le nom du système.
+		const arrOp = leg ? Math.min(cl((fArr - 0.05) / 0.15, 0, 1), cl((0.88 - fArr) / 0.1, 0, 1)) : 0;
 		const dim = 1 - arrOp * 0.9;
 
 		// Chemins (+ portions parcourues en orange)
