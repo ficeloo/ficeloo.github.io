@@ -82,8 +82,11 @@ export function initStarMap(styles: Record<string, string>) {
 		const d = document.createElement('div');
 		d.className = styles.star;
 		d.style.background = s.c;
-		d.style.opacity = String(s.o);
+		d.style.setProperty('--o', String(s.o));
 		d.style.height = s.d + 'px';
+		// Scintillement désynchronisé (durée + décalage aléatoires).
+		d.style.animationDuration = (3 + Math.random() * 4).toFixed(2) + 's';
+		d.style.animationDelay = (-Math.random() * 5).toFixed(2) + 's';
 		starsLayer.appendChild(d);
 		return d;
 	});
