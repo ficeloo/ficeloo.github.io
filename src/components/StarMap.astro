@@ -14,12 +14,14 @@ const data = projects.map((p) => ({
 	alt: p.alt,
 }));
 
-const cats = [...new Set(projects.map((p) => p.tag.split('·')[0].trim()))];
+const catOf = (tag: string) => tag.split('·')[0].trim();
+const cats = [...new Set(projects.map((p) => catOf(p.tag)))];
 const systems = cats.map((c, g) => ({
 	num: pad(g + 1),
 	label: c,
-	count: pad(projects.filter((p) => p.tag.split('·')[0].trim() === c).length),
+	count: pad(projects.filter((p) => catOf(p.tag) === c).length),
 }));
+const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...systems.map((s) => ({ key: s.label, label: s.label, count: s.count }))];
 ---
 
 <section class={styles.stage} data-starmap>
@@ -37,7 +39,7 @@ const systems = cats.map((c, g) => ({
 			<div class={styles.topbar}>
 				<div class={styles.counter} data-counter>01 / {pad(projects.length)}</div>
 				<h2 class={styles.title}><span class="accent">Discover</span> my Work</h2>
-				<button class={styles['see-all']} type="button">Tout voir ☰</button>
+				<button class={styles['see-all']} type="button" data-see-all>Tout voir ☰</button>
 			</div>
 
 			<div class={styles.nav}>
@@ -99,6 +101,41 @@ const systems = cats.map((c, g) => ({
 					<div class={styles['popup-link-wrap']}>
 						<a class={styles['popup-link']} data-popup-link href="#">View project →</a>
 					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Overlay "Tout voir" -->
+	<div class={styles.overlay} data-overlay>
+		<div class={styles['overlay-inner']}>
+			<div class={styles['overlay-head']}>
+				<h2 class={styles['overlay-title']}>All <span class="accent">projects</span></h2>
+				<button class={styles['overlay-close']} type="button" data-list-close>Fermer ✕</button>
+			</div>
+			<div class={styles['overlay-filters']}>
+				{filters.map((fl) => (
+					<button class={styles.chip} type="button" data-filter={fl.key}>
+						{fl.label} <span class={styles['chip-count']}>{fl.count}</span>
+					</button>
+				))}
+			</div>
+			<div class={styles['overlay-grid']}>
+				<div class={styles['overlay-rows']}>
+					{projects.map((p, i) => (
+						<div class={styles.row} data-row-idx={i} data-cat={catOf(p.tag)}>
+							<span class={styles['row-num']}>{pad(i + 1)}</span>
+							<div class={styles['row-main']}>
+								<span class={styles['row-title']}>{p.title}</span>
+								<span class={styles['row-tag']}>{p.tag}</span>
+							</div>
+							<span class={styles['row-year']}>{p.year} →</span>
+						</div>
+					))}
+				</div>
+				<div class={styles['overlay-preview']}>
+					<div class={styles['preview-img']}><img data-preview-img src="" alt="" /></div>
+					<p class={styles['preview-desc']} data-preview-desc></p>
 				</div>
 			</div>
 		</div>

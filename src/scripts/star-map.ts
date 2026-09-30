@@ -198,6 +198,15 @@ export function initStarMap(styles: Record<string, string>) {
 	const popLink = root.querySelector<HTMLAnchorElement>('[data-popup-link]');
 	const popClose = root.querySelector<HTMLElement>('[data-popup-close]');
 
+	// Overlay "Tout voir"
+	const overlayEl = root.querySelector<HTMLElement>('[data-overlay]');
+	const seeAllBtn = root.querySelector<HTMLElement>('[data-see-all]');
+	const listClose = root.querySelector<HTMLElement>('[data-list-close]');
+	const chips = Array.from(root.querySelectorAll<HTMLElement>('[data-filter]'));
+	const rows = Array.from(root.querySelectorAll<HTMLElement>('[data-row-idx]'));
+	const previewImg = root.querySelector<HTMLImageElement>('[data-preview-img]');
+	const previewDesc = root.querySelector<HTMLElement>('[data-preview-desc]');
+
 	function layout() {
 		const P = projects;
 		const cats = [...new Set(P.map((p) => p.cat))];
@@ -271,6 +280,11 @@ export function initStarMap(styles: Record<string, string>) {
 	let animEnd = 0;
 	let navK: number | null = null;
 
+	// --- État overlay "Tout voir" ---
+	let listOpen = false;
+	let filter = 'All';
+	let hovIdx = 0;
+
 	// --- Scroll animé + snap ---
 	let animating = false;
 	let sRaf = 0;
@@ -305,10 +319,12 @@ export function initStarMap(styles: Record<string, string>) {
 		if (Math.abs(target - window.scrollY) > 2) animScroll(target);
 	}
 
-	function goTo(i: number) {
+	function goTo(i: number, instant = false) {
 		const m = metrics();
 		const k = Math.max(0, m.ord.indexOf(i));
-		animScroll(m.stageTop + m.T + m.U[k] * m.STEP);
+		const target = m.stageTop + m.T + m.U[k] * m.STEP;
+		if (instant) window.scrollTo({ top: target, behavior: 'instant' as ScrollBehavior });
+		else animScroll(target);
 	}
 
 	function fillPopup(idx: number) {
@@ -355,8 +371,10 @@ export function initStarMap(styles: Record<string, string>) {
 	function onKey(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			setOpen(false);
+			closeList();
 			return;
 		}
+		if (listOpen) return;
 		const m = metrics();
 		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return;
 		if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
@@ -397,6 +415,50 @@ export function initStarMap(styles: Record<string, string>) {
 		};
 		window.addEventListener('pointermove', mv);
 		window.addEventListener('pointerup', up);
+	}
+
+	function applyFilter() {
+		chips.forEach((ch) => {
+			const on = ch.dataset.filter === filter;
+			ch.style.background = on ? '#FD6035' : 'transparent';
+			ch.style.color = on ? '#131254' : '#F3F6F6';
+			ch.style.borderColor = on ? '#FD6035' : 'rgba(83,121,112,0.7)';
+		});
+		rows.forEach((r) => {
+			const show = filter === 'All' || r.dataset.cat === filter;
+			r.style.display = show ? 'grid' : 'none';
+		});
+	}
+	function applyHover() {
+		rows.forEach((r) => {
+			r.style.color = Number(r.dataset.rowIdx) === hovIdx ? '#FD6035' : '#F3F6F6';
+		});
+		const pr = projects[hovIdx] || projects[0];
+		if (previewImg && previewImg.getAttribute('src') !== pr.img) {
+			previewImg.src = pr.img;
+			previewImg.alt = pr.alt;
+		}
+		if (previewDesc) previewDesc.textContent = pr.description;
+	}
+	function openList() {
+		setOpen(false);
+		const m = metrics();
+		hovIdx = m.ord[m.kN];
+		filter = 'All';
+		listOpen = true;
+		if (overlayEl) {
+			overlayEl.style.opacity = '1';
+			overlayEl.style.pointerEvents = 'auto';
+		}
+		applyFilter();
+		applyHover();
+	}
+	function closeList() {
+		listOpen = false;
+		if (overlayEl) {
+			overlayEl.style.opacity = '0';
+			overlayEl.style.pointerEvents = 'none';
+		}
 	}
 
 	function render() {
@@ -673,6 +735,27 @@ export function initStarMap(styles: Record<string, string>) {
 		if (moved) return;
 		const m = metrics();
 		setOpen(true, m.ord[m.kN]);
+	});
+
+	seeAllBtn?.addEventListener('click', openList);
+	listClose?.addEventListener('click', closeList);
+	chips.forEach((ch) => {
+		ch.addEventListener('click', () => {
+			filter = ch.dataset.filter || 'All';
+			applyFilter();
+		});
+	});
+	rows.forEach((r) => {
+		const i = Number(r.dataset.rowIdx);
+		r.addEventListener('mouseenter', () => {
+			hovIdx = i;
+			applyHover();
+		});
+		r.addEventListener('click', () => {
+			closeList();
+			goTo(i, true);
+			setTimeout(() => setOpen(true, i), 120);
+		});
 	});
 
 	readVp();

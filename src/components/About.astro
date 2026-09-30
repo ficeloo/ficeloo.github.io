@@ -1,0 +1,20 @@
+---
+import styles from '../styles/components/about.module.css'
+
+// NOTE (Théophile) : copie = BROUILLON à réécrire à ta voix.
+const skills = ['Rust', 'Bevy', 'TypeScript', 'Nuxt 3', 'Game design'];
+---
+
+<section id="about" class={styles.about}>
+	<div class={styles.head}>
+		<div class={styles.label}>About</div>
+		<h2 class={styles.title}>About <span class="accent">me</span></h2>
+	</div>
+	<div class={styles.body}>
+		<p>I'm a student at 42 Paris, learning game design and development through small, focused projects.</p>
+		<p>On the game side I work with <span class="accent">Rust</span> and <span class="accent">Bevy</span>; on the web side with TypeScript and Nuxt. I'm looking for a first internship.</p>
+		<div class={styles.tags}>
+			{skills.map((s) => <span class={styles.tag}>{s}</span>)}
+		</div>
+	</div>
+</section>
