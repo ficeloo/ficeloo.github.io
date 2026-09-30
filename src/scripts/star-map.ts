@@ -129,9 +129,9 @@ export function initStarMap(styles: Record<string, string>) {
 		numSpan.className = styles.num;
 		numSpan.textContent = pr.num;
 		label.append(numSpan, document.createTextNode('  ' + pr.title));
-		const travel = () => goTo(idx);
-		dot.addEventListener('click', travel);
-		label.addEventListener('click', travel);
+		const onClick = () => clickItem(idx);
+		dot.addEventListener('click', onClick);
+		label.addEventListener('click', onClick);
 		mapLayer.appendChild(dot);
 		mapLayer.appendChild(label);
 		return { dot, label };
@@ -183,6 +183,20 @@ export function initStarMap(styles: Record<string, string>) {
 		year: root.querySelector<HTMLElement>('[data-hud-year]'),
 	};
 	const navRows = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-row]'));
+
+	// Popup
+	const backdropEl = root.querySelector<HTMLElement>('[data-backdrop]');
+	const beamSvg = root.querySelector<SVGSVGElement>('[data-beam]');
+	const beamPoly = root.querySelector<SVGPolygonElement>('[data-beam-poly]');
+	const popupEl = root.querySelector<HTMLElement>('[data-popup]');
+	const popImg = root.querySelector<HTMLImageElement>('[data-popup-img]');
+	const popMeta = root.querySelector<HTMLElement>('[data-popup-meta]');
+	const popTitle = root.querySelector<HTMLElement>('[data-popup-title]');
+	const popDesc = root.querySelector<HTMLElement>('[data-popup-desc]');
+	const popTag = root.querySelector<HTMLElement>('[data-popup-tag]');
+	const popYear = root.querySelector<HTMLElement>('[data-popup-year]');
+	const popLink = root.querySelector<HTMLAnchorElement>('[data-popup-link]');
+	const popClose = root.querySelector<HTMLElement>('[data-popup-close]');
 
 	function layout() {
 		const P = projects;
@@ -247,10 +261,20 @@ export function initStarMap(styles: Record<string, string>) {
 		if (workAnchor) workAnchor.style.top = T + 'px';
 	}
 
+	// --- État popup / navigation ---
+	let isOpen = false;
+	let openIdx = 0;
+	let kVal = 0;
+	let kRaf = 0;
+	let moved = false;
+	let dragging = false;
+	let animEnd = 0;
+	let navK: number | null = null;
+
 	// --- Scroll animé + snap ---
 	let animating = false;
 	let sRaf = 0;
-	function animScroll(target: number) {
+	function animScroll(target: number, fast = false) {
 		cancelAnimationFrame(sRaf);
 		const from = window.scrollY;
 		const d = target - from;
@@ -259,12 +283,13 @@ export function initStarMap(styles: Record<string, string>) {
 			return;
 		}
 		const units = Math.abs(d) / (vh * 0.28);
-		const dur = cl(450 + units * 300, 450, 3600);
+		const dur = fast ? cl(160 + units * 170, 160, 1400) : cl(450 + units * 300, 450, 3600);
 		const t0 = performance.now();
 		animating = true;
+		animEnd = t0 + dur;
 		const step = (t: number) => {
 			const q = cl((t - t0) / dur, 0, 1);
-			const e = q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
+			const e = fast ? 1 - Math.pow(1 - q, 2) : q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
 			window.scrollTo({ top: from + d * e, behavior: 'instant' as ScrollBehavior });
 			if (q < 1) sRaf = requestAnimationFrame(step);
 			else animating = false;
@@ -273,7 +298,7 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function snap() {
-		if (animating) return;
+		if (animating || dragging) return;
 		const m = metrics();
 		if (m.local < m.T * 0.98 || m.local > m.T + m.Utot * m.STEP + 2) return;
 		const target = m.stageTop + m.T + m.U[m.kN] * m.STEP;
@@ -284,6 +309,94 @@ export function initStarMap(styles: Record<string, string>) {
 		const m = metrics();
 		const k = Math.max(0, m.ord.indexOf(i));
 		animScroll(m.stageTop + m.T + m.U[k] * m.STEP);
+	}
+
+	function fillPopup(idx: number) {
+		const pr = projects[idx];
+		if (popMeta) popMeta.textContent = pr.num + ' / ' + pad(projects.length) + ' · ' + pr.cat;
+		if (popTitle) popTitle.textContent = pr.title;
+		if (popDesc) popDesc.textContent = pr.description;
+		if (popTag) popTag.textContent = pr.tag;
+		if (popYear) popYear.textContent = pr.year;
+		if (popLink) popLink.setAttribute('href', pr.link);
+		if (popImg) {
+			popImg.src = pr.img;
+			popImg.alt = pr.alt;
+		}
+	}
+
+	function setOpen(o: boolean, idx?: number) {
+		if (o === isOpen) return;
+		isOpen = o;
+		if (idx != null) openIdx = idx;
+		if (o) fillPopup(openIdx);
+		const from = kVal;
+		const to = o ? 1 : 0;
+		const t0 = performance.now();
+		const dur = o ? 520 : 320;
+		cancelAnimationFrame(kRaf);
+		const step = (t: number) => {
+			const q = cl((t - t0) / dur, 0, 1);
+			kVal = from + (to - from) * (1 - Math.pow(1 - q, 3));
+			render();
+			if (q < 1) kRaf = requestAnimationFrame(step);
+		};
+		kRaf = requestAnimationFrame(step);
+	}
+
+	function clickItem(i: number) {
+		if (moved) return;
+		const m = metrics();
+		const k = m.ord.indexOf(i);
+		if (Math.abs(m.u - m.U[k]) < 0.08) setOpen(true, i);
+		else goTo(i);
+	}
+
+	function onKey(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			setOpen(false);
+			return;
+		}
+		const m = metrics();
+		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return;
+		if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+			e.preventDefault();
+			const now = performance.now();
+			if (e.repeat && animating && animEnd - now > 90) return;
+			const base = animating && navK != null ? navK : m.kN;
+			const nk = cl(base + (e.key === 'ArrowRight' ? 1 : -1), 0, m.N - 1);
+			if (nk === base) return;
+			navK = nk;
+			setOpen(false);
+			animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, e.repeat);
+		} else if (e.key === 'Enter' && !isOpen && Math.abs(m.u - m.U[m.kN]) < 0.1) {
+			setOpen(true, m.ord[m.kN]);
+		}
+	}
+
+	function onDown(e: PointerEvent) {
+		if (e.button !== 0) return;
+		const startX = e.clientX;
+		const startS = window.scrollY;
+		const px = (vh * 0.28) / 150;
+		moved = false;
+		dragging = true;
+		const mv = (ev: PointerEvent) => {
+			const dx = ev.clientX - startX;
+			if (Math.abs(dx) > 6) moved = true;
+			if (moved) window.scrollTo({ top: startS - dx * px, behavior: 'instant' as ScrollBehavior });
+		};
+		const up = () => {
+			window.removeEventListener('pointermove', mv);
+			window.removeEventListener('pointerup', up);
+			dragging = false;
+			snap();
+			setTimeout(() => {
+				moved = false;
+			}, 0);
+		};
+		window.addEventListener('pointermove', mv);
+		window.addEventListener('pointerup', up);
 	}
 
 	function render() {
@@ -324,7 +437,7 @@ export function initStarMap(styles: Record<string, string>) {
 		}
 		const wave = leg ? Math.sin(Math.PI * f) : 0;
 		const z = 1 - wave * 0.5;
-		const dip = 0; // popup (phase D)
+		const dip = vh * 0.2 * kVal; // la carte descend quand la popup s'ouvre
 		const hudW = Math.min(300, vw * 0.3);
 		const ox = vw >= 1200 ? vw / 2 + hudW * 0.3 - 60 : vw / 2;
 		const navW = vw >= 1200 ? 280 : 120;
@@ -481,6 +594,34 @@ export function initStarMap(styles: Record<string, string>) {
 				bar.style.background = on ? '#FD6035' : 'rgba(83,121,112,0.5)';
 			}
 		});
+
+		// Popup + beam + backdrop
+		if (popupEl && beamSvg && beamPoly && backdropEl) {
+			const so = S(W[Math.max(0, ord.indexOf(openIdx))], vh * 0.2);
+			const popW = Math.min(640, vw - 32);
+			const itemTop = so.y - 8;
+			const pb = itemTop - 46;
+			const popL = cl(so.x - popW / 2, 16, vw - popW - 16);
+
+			backdropEl.style.opacity = kVal.toFixed(3);
+			backdropEl.style.pointerEvents = isOpen ? 'auto' : 'none';
+
+			beamSvg.setAttribute('width', String(vw));
+			beamSvg.setAttribute('height', String(vh));
+			beamSvg.style.opacity = kVal.toFixed(3);
+			beamPoly.setAttribute(
+				'points',
+				[popL + popW * 0.12, pb, popL + popW * 0.88, pb, so.x + 6, itemTop + 8, so.x - 6, itemTop + 8].map((v) => v.toFixed(1)).join(' '),
+			);
+
+			popupEl.style.left = popL + 'px';
+			popupEl.style.bottom = vh - pb + 'px';
+			popupEl.style.width = popW + 'px';
+			popupEl.style.opacity = kVal.toFixed(3);
+			popupEl.style.pointerEvents = isOpen ? 'auto' : 'none';
+			popupEl.style.transform = `translateY(${((1 - kVal) * 40).toFixed(1)}px) scale(${(0.3 + 0.7 * kVal).toFixed(3)})`;
+			popupEl.style.clipPath = `inset(${((1 - kVal) * 100).toFixed(1)}% 0 0 0)`;
+		}
 	}
 
 	// Nav : clic → voyage vers le premier projet du système.
@@ -498,11 +639,17 @@ export function initStarMap(styles: Record<string, string>) {
 		if (!raf) raf = requestAnimationFrame(() => {
 			raf = 0;
 			render();
+			if (isOpen) {
+				const m = metrics();
+				const k = m.ord.indexOf(openIdx);
+				if (Math.abs(m.u - m.U[k]) > 0.4) setOpen(false);
+			}
 		});
 		clearTimeout(snapT);
 		snapT = window.setTimeout(snap, 170);
 	};
 	const onWheel = () => {
+		navK = null;
 		if (animating) {
 			cancelAnimationFrame(sRaf);
 			animating = false;
@@ -518,6 +665,15 @@ export function initStarMap(styles: Record<string, string>) {
 	window.addEventListener('wheel', onWheel, { passive: true });
 	window.addEventListener('touchstart', onWheel, { passive: true });
 	window.addEventListener('resize', onResize);
+	window.addEventListener('keydown', onKey);
+	mapUi.addEventListener('pointerdown', onDown);
+	backdropEl?.addEventListener('click', () => setOpen(false));
+	popClose?.addEventListener('click', () => setOpen(false));
+	hudEl?.addEventListener('click', () => {
+		if (moved) return;
+		const m = metrics();
+		setOpen(true, m.ord[m.kN]);
+	});
 
 	readVp();
 	updateGeometry();

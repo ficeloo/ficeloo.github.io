@@ -65,6 +65,43 @@ const systems = cats.map((c, g) => ({
 
 			<a class={styles['about-link']} href="#about">About me ↓</a>
 		</div>
+
+		<div class={styles.backdrop} data-backdrop></div>
+		<svg class={styles.beam} data-beam aria-hidden="true">
+			<defs>
+				<linearGradient id="beamG" x1="0" y1="1" x2="0" y2="0">
+					<stop offset="0" stop-color="#FD6035" stop-opacity="0.5"></stop>
+					<stop offset="1" stop-color="#FD6035" stop-opacity="0.03"></stop>
+				</linearGradient>
+			</defs>
+			<polygon data-beam-poly points="" fill="url(#beamG)"></polygon>
+		</svg>
+		<div class={styles.popup} data-popup>
+			<div class={styles['popup-scanlines']}></div>
+			<div class={`${styles['popup-corner']} ${styles['corner-tl']}`}></div>
+			<div class={`${styles['popup-corner']} ${styles['corner-tr']}`}></div>
+			<div class={`${styles['popup-corner']} ${styles['corner-bl']}`}></div>
+			<div class={`${styles['popup-corner']} ${styles['corner-br']}`}></div>
+			<div class={styles['popup-row']}>
+				<div class={styles['popup-img']}><img data-popup-img src="" alt="" /></div>
+				<div class={styles['popup-body']}>
+					<div class={styles['popup-meta']}>
+						<span data-popup-meta></span>
+						<button class={styles['popup-close']} type="button" data-popup-close>✕</button>
+					</div>
+					<h3 class={styles['popup-title']} data-popup-title></h3>
+					<p class={styles['popup-desc']} data-popup-desc></p>
+					<div class={styles['popup-tagyear']}>
+						<span data-popup-tag></span>
+						<span class="sep">-</span>
+						<span data-popup-year></span>
+					</div>
+					<div class={styles['popup-link-wrap']}>
+						<a class={styles['popup-link']} data-popup-link href="#">View project →</a>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<!-- Repli sémantique : visible sans JS / reduced-motion, masqué quand la carte est active. -->
