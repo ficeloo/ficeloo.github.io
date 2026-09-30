@@ -1,10 +1,12 @@
 ---
+import styles from '../styles/components/footer.module.css'
+
 const currYear = new Date().getFullYear();
 ---
 
-<footer id="contact" class="footer">
+<footer id="contact" class={styles.footer}>
 	<h1>Let's <span class="accent">Talk</span> !</h1>
-	<div class="external-link">
+	<div class={styles["external-link"]}>
 		<a href="https://github.com/ficeloo" target="_blank" rel="noopener noreferrer">GitHub</a>
 		<span>·</span>
 		<a href="https://bsky.app/profile/ficelo.bsky.social" target="_blank" rel="noopener noreferrer">BlueSky</a>
@@ -13,54 +15,7 @@ const currYear = new Date().getFullYear();
 		<span>·</span>
 		<a href="https://ficelo.itch.io/" target="_blank" rel="noopener noreferrer">Itch.io</a>
 	</div>
-	<div class="foot-line">
+	<div class={styles["foot-line"]}>
 		<span>© {currYear} · Made with Astro · <a href="/legal">Legal Notices</a></span>
 	</div>
 </footer>
-
-<style>
-	.footer {
-		color: var(--color-text);
-		background-color: #131240;
-		font-family: var(--font-body);
-
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 2rem;
-		padding: 1rem 5%;
-		border-top: 1px solid rgba(83, 121, 112, 0.4);
-	}
-
-	.footer h1 {
-		font-size: clamp(2rem, 3vw, 4rem);
-	}
-
-	.external-link {
-		display: flex;
-		flex-direction: row;
-		gap: 1rem;
-		font-size: clamp(1rem, 1.25vw, 1.5rem);
-	}
-
-	.external-link a {
-		color: var(--color-text);
-		text-decoration: none;
-		margin-bottom: 3rem;
-	}
-	.accent {
-		color: var(--color-accent);
-	}
-
-	.foot-line {
-		font-size: clamp(0.5rem, 0.75vw, 1rem);
-		letter-spacing: 0.1em;
-		opacity: 0.85;
-	}
-
-	.foot-line a {
-		color: var(--color-text);
-		text-decoration: none;
-	}
-
-</style>

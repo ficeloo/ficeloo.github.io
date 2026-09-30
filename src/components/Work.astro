@@ -1,15 +1,16 @@
 ---
 import ProjectCard from '../components/ProjectCard.astro'
 import { projects } from '../data/projects';
+import styles from '../styles/components/work.module.css'
 ---
 
 <section id="work">
-	<div class="work-title">
+	<div class={styles["work-title"]}>
 		<h1><span class="accent">Discover</span> my Work</h1>
 	</div>
 
-	<div class="core">
-		{projects.map((project) => (
+	<div class={styles.core}>
+		{projects.map((project, i) => (
 			<ProjectCard
 				title={project.title}
 				description={project.description}
@@ -18,39 +19,8 @@ import { projects } from '../data/projects';
 				image={project.image}
 				alt={project.alt}
 				link={ `/projects/${project.slug}` }
+				reverse={i % 2 === 1}
 			/>
 		))}
 	</div>
 </section>
-
-<style>
-
-	.work-title {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.work-title h1 {
-		font-size: clamp(2rem, 3vw, 4rem);
-	}
-
-	:global(.project-card:nth-child(even)) {
-		flex-direction: row-reverse;
-	}
-
-	.core {
-		max-width: auto;
-		margin-inline: auto;
-	}
-	.accent {
-		color: var(--color-accent);
-	}
-
-	@media (max-width: 768px) {
-		:global(.project-card:nth-child(even)) {
-			flex-direction: column;
-		}
-	}
-
-</style>

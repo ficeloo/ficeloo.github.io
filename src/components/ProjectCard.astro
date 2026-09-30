@@ -1,6 +1,7 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
+import styles from '../styles/components/project-card.module.css'
 
 interface Props {
 	title:	string;
@@ -10,128 +11,30 @@ interface Props {
 	image:	ImageMetadata;
 	alt:	string;
 	link:	string;
+	reverse?:	boolean;
 }
 
-const { title, description, tag, year, image, alt, link } = Astro.props;
+const { title, description, tag, year, image, alt, link, reverse = false } = Astro.props;
 ---
 
-<article class="project-card">
+<article class={`${styles.card}${reverse ? ` ${styles.reverse}` : ''}`}>
 <!-- Zone Image -->
-	<div class="image">
+	<div class={styles.image}>
 		<Image src={image} alt={alt} />
 	</div>
 
 <!-- Zone Contenue -->
-	<div class="content">
+	<div class={styles.content}>
 		<h3>{title}</h3>
 
-		<p class="description">{description}</p>
-		<div class="meta">
+		<p class={styles.description}>{description}</p>
+		<div class={styles.meta}>
 			<span>{tag}</span>
 			<span class="accent">  -  </span>
 			<span>{year}</span>
 		</div>
-		<div class="cta">
-			<a href={link} rel="noopener noreferrer">View project <span class="arrow">→</span></a>
+		<div class={styles.cta}>
+			<a href={link} rel="noopener noreferrer">View project <span class={styles.arrow}>→</span></a>
 		</div>
 	</div>
 </article>
-
-<style>
-	.project-card {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: center;
-		
-		font-size: clamp(1rem, 1.8vw, 3rem);
-		min-height: 70vh;
-		border-top: 1px solid rgba(83, 121, 112, 0.4);
-	}
-
-	.image {
-		flex: 0 0 40%;
-		aspect-ratio: 16/9;
-		height: auto;
-	}
-
-	.image img {
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		display: block;
-	}
-
-
-	.accent {
-		color: var(--color-accent);
-	}
-
-	.content {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		gap: 1rem;
-		padding: 1.5rem 2%;
-	}
-
-	.content h3 {
-		font-size: clamp(0.5rem, 2vw, 3rem);
-	}
-
-	.cta {
-		display: flex;
-	}
-
-	.cta a {
-		display: inline-block;
-		color: var(--color-text);
-		position: relative;
-		text-decoration: none;
-		cursor: pointer;
-		padding-bottom: 4px;
-	}
-
-	.cta a::after {
-		content: "";
-		position: absolute;
-		width: 100%;
-		height: 2px;
-		background-color: var(--color-accent);
-		bottom: 0;
-		left: 0;
-
-		transform: scaleX(0);
-		transform-origin: left;
-		transition: transform 0.3s ease;
-	}
-
-	.cta a:hover {
-		color: var(--color-accent);
-	}
-
-
-	.cta a:hover::after {
-		transform: scaleX(1.035);
-	}
-
-	.cta a:hover .arrow {
-		transform: translateX(0.3em);
-	}
-
-	.arrow {
-		display: inline-block;
-		transition: transform 0.3s ease;
-	}
-
-	.meta {
-		display: flex;
-		flex-direction: row;
-		opacity: 0.6;
-		gap: 1rem;
-	}
-
-	@media( max-width: 768px) {
-		.project-card { flex-direction: column; }
-	}
-</style>

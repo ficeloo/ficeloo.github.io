@@ -1,9 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import styles from '../styles/pages/legal.module.css'
 ---
 
 <Layout title="Legal Notices">
-	<main class="legal">
+	<main class={styles.legal}>
 		<h1>Legal Notices</h1>
 
 		<section>
@@ -35,7 +36,7 @@ import Layout from '../layouts/Layout.astro';
 			</p>
 			<p>© 2026 Théophile Cros. All rights reserved.</p>
 		</section>
-		
+
 		<section>
 			<h2>Credits</h2>
 			<p>Syne and Syne Mono (Open Font License, by <a href="https://www.bonjourmonde.net" target="_blank" rel="noopener noreferrer">Bonjour Monde</a>)</p>
@@ -44,25 +45,3 @@ import Layout from '../layouts/Layout.astro';
 		</section>
 	</main>
 </Layout>
-
-<style>
-	.legal {
-		display: flex;
-		flex-direction: column;
-
-		max-width: 700px;
-		margin: 0 10%;
-		padding-left: 1.5rem;
-
-		line-height: 1;
-	}
-
-	.legal a {
-		text-decoration: none;
-		color: var(--color-secondary);
-	}
-
-	.legal section {
-		font-size: clamp(0.5rem, 1vw, 2rem);
-	}
-</style>
