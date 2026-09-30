@@ -3,6 +3,8 @@ import styles from '../styles/components/hero.module.css'
 ---
 
 <section class={styles.hero} data-hero>
+	<canvas class={styles['hero-stars']} data-hero-stars aria-hidden="true"></canvas>
+
 	<div class={`${styles["status-pill"]} ${styles.reveal}`} style="--i:0">
 		<span class={styles.dot}></span>Currently learning · 42 School · Paris
 	</div>
@@ -28,8 +30,74 @@ import styles from '../styles/components/hero.module.css'
 </section>
 
 <script>
-	// Entrée en cascade au chargement. Le champ d'étoiles est désormais fourni
-	// par la star map (le Hero se dissout dedans au scroll).
-	const hero = document.querySelector('[data-hero]');
+	// Entrée en cascade au chargement. Les étoiles fixes viennent de la star map ;
+	// ici on n'ajoute QUE des étoiles filantes propres au Hero (elles s'estompent
+	// avec le Hero au scroll via l'opacité du slot).
+	const hero = document.querySelector('[data-hero]') as HTMLElement | null;
 	hero?.setAttribute('data-ready', '');
+
+	const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const canvas = document.querySelector('[data-hero-stars]') as HTMLCanvasElement | null;
+
+	if (hero && canvas && !reduce) {
+		const ctx = canvas.getContext('2d')!;
+		type Shot = { x: number; y: number; vx: number; vy: number; life: number; max: number; len: number };
+		let shooting: Shot[] = [];
+		let W = 0, H = 0, dpr = 1, sinceShoot = 0;
+
+		function resize() {
+			dpr = Math.min(window.devicePixelRatio || 1, 2);
+			const rect = hero!.getBoundingClientRect();
+			W = canvas!.width = Math.floor(rect.width * dpr);
+			H = canvas!.height = Math.floor(rect.height * dpr);
+			canvas!.style.width = rect.width + 'px';
+			canvas!.style.height = rect.height + 'px';
+		}
+		resize();
+		window.addEventListener('resize', resize);
+
+		function spawn() {
+			shooting.push({
+				x: Math.random() * W * 0.7,
+				y: Math.random() * H * 0.45,
+				vx: (6 + Math.random() * 4) * dpr,
+				vy: (3 + Math.random() * 2) * dpr,
+				life: 0,
+				max: 60 + Math.random() * 30,
+				len: (120 + Math.random() * 80) * dpr,
+			});
+		}
+
+		function loop() {
+			ctx.clearRect(0, 0, W, H);
+			sinceShoot++;
+			if (sinceShoot > 70 && Math.random() < 0.035) {
+				spawn();
+				sinceShoot = 0;
+			}
+			for (let i = shooting.length - 1; i >= 0; i--) {
+				const sh = shooting[i];
+				sh.life++;
+				sh.x += sh.vx;
+				sh.y += sh.vy;
+				const t = sh.life / sh.max;
+				const alpha = t < 0.15 ? t / 0.15 : 1 - t;
+				const norm = Math.hypot(sh.vx, sh.vy);
+				const tailX = sh.x - (sh.vx / norm) * sh.len;
+				const tailY = sh.y - (sh.vy / norm) * sh.len;
+				const grad = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
+				grad.addColorStop(0, `rgba(253,96,53,${Math.max(0, alpha)})`);
+				grad.addColorStop(1, 'rgba(253,96,53,0)');
+				ctx.strokeStyle = grad;
+				ctx.lineWidth = 2 * dpr;
+				ctx.beginPath();
+				ctx.moveTo(sh.x, sh.y);
+				ctx.lineTo(tailX, tailY);
+				ctx.stroke();
+				if (sh.life >= sh.max) shooting.splice(i, 1);
+			}
+			requestAnimationFrame(loop);
+		}
+		requestAnimationFrame(loop);
+	}
 </script>

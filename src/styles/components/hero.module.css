@@ -1,4 +1,7 @@
 .hero {
+	position: relative;
+	isolation: isolate;
+
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -8,6 +11,14 @@
 	padding: 6rem 6% 5rem;
 	height: 100%;
 	box-sizing: border-box;
+}
+
+/* Étoiles filantes propres au Hero (les étoiles fixes viennent de la carte). */
+.hero-stars {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	pointer-events: none;
 }
 
 .status-pill {
@@ -193,5 +204,8 @@
 		opacity: 1 !important;
 		transform: none !important;
 		animation: none !important;
+	}
+	.hero-stars {
+		display: none !important;
 	}
 }
