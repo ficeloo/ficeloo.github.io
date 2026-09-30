@@ -20,11 +20,11 @@
 	content: "";
 	position: absolute;
 	left: 50%;
-	bottom: -30%;
-	width: 70%;
-	height: 130%;
+	bottom: -90%;
+	width: 150%;
+	height: 260%;
 	transform: translateX(-50%);
-	background: radial-gradient(50% 50% at 50% 50%, rgba(253, 96, 53, 0.08), transparent 70%);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(253, 96, 53, 0.05), transparent 80%);
 	pointer-events: none;
 	z-index: -1;
 }

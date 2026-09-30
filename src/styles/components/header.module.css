@@ -3,7 +3,7 @@
 	align-items: center;
 	justify-content: space-between;
 	font-family: var(--font-display);
-	padding: 1rem 3%;
+	padding: 1.35rem 4%;
 	border-bottom: 1px solid rgba(83, 121, 112, 0.34);
 	line-height: 1;
 	background: rgba(19, 18, 84, 0.72);
@@ -13,6 +13,8 @@
 }
 
 .indicator {
+	flex: 1;
+	text-align: right;
 	letter-spacing: 0.18em;
 	color: rgba(243, 246, 246, 0.62);
 }
@@ -20,6 +22,7 @@
 .header nav {
 	display: flex;
 	flex: 1;
+	justify-content: center;
 	gap: 2rem;
 }
 
