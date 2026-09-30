@@ -292,6 +292,10 @@ export function initStarMap(styles: Record<string, string>) {
 	let filter = 'All';
 	let hovIdx = 0;
 
+	// Direction du scroll (pour l'affichage inter-systèmes).
+	let lastU = 0;
+	let dir = 1;
+
 	// --- Scroll animé + snap ---
 	let animating = false;
 	let sRaf = 0;
@@ -453,6 +457,7 @@ export function initStarMap(styles: Record<string, string>) {
 		hovIdx = m.ord[m.kN];
 		filter = 'All';
 		listOpen = true;
+		document.body.style.overflow = 'hidden';
 		if (overlayEl) {
 			overlayEl.style.opacity = '1';
 			overlayEl.style.pointerEvents = 'auto';
@@ -462,6 +467,7 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 	function closeList() {
 		listOpen = false;
+		document.body.style.overflow = '';
 		if (overlayEl) {
 			overlayEl.style.opacity = '0';
 			overlayEl.style.pointerEvents = 'none';
@@ -473,6 +479,9 @@ export function initStarMap(styles: Record<string, string>) {
 		const { P, ord, G, W, U, N } = m;
 		const u = m.u;
 		const p = m.p;
+		if (u > lastU) dir = 1;
+		else if (u < lastU) dir = -1;
+		lastU = u;
 		const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
 
 		// Transition Hero → carte
@@ -517,7 +526,9 @@ export function initStarMap(styles: Record<string, string>) {
 		const ai = ord[kN];
 		const curG = W[kN].g; // système du projet le plus proche (stable au retour)
 		const rot = leg ? (Math.atan2(W[j + 1].y - W[j].y, W[j + 1].x - W[j].x) * 180) / Math.PI : 0;
-		const arrOp = leg ? Math.sin(Math.PI * cl((f - 0.2) / 0.72, 0, 1)) : 0;
+		// Progression d'arrivée dans le sens du voyage (f en avant, 1-f en arrière).
+		const fArr = dir >= 0 ? f : 1 - f;
+		const arrOp = leg ? Math.sin(Math.PI * cl((fArr - 0.2) / 0.72, 0, 1)) : 0;
 		const dim = 1 - arrOp * 0.9;
 
 		// Chemins (+ portions parcourues en orange)
@@ -623,11 +634,11 @@ export function initStarMap(styles: Record<string, string>) {
 		probeEl.style.top = pq.y + 'px';
 		probeEl.style.opacity = (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3);
 
-		// Pulse + carte d'arrivée
+		// Pulse + carte d'arrivée (système de destination selon la direction)
 		if (leg) {
-			const dg = G[W[j + 1].g];
+			const dg = G[dir >= 0 ? W[j + 1].g : W[j].g];
 			const ds = S({ x: dg.gx, y: dg.gy }, dip);
-			const qp = cl((f - 0.72) / 0.28, 0, 1);
+			const qp = cl((fArr - 0.72) / 0.28, 0, 1);
 			const pr = (dg.Rc + 20 + qp * 160) * z;
 			pulseEl.style.left = ds.x - pr + 'px';
 			pulseEl.style.top = ds.y - pr + 'px';
