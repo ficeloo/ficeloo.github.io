@@ -61,7 +61,7 @@
 /* Scintillement très léger, relatif à l'opacité propre de chaque étoile. */
 @keyframes twinkle {
 	0%, 100% { opacity: var(--o, 0.5); }
-	50% { opacity: calc(var(--o, 0.5) * 0.85); }
+	50% { opacity: calc(var(--o, 0.5) * 0.75); }
 }
 
 /* Le Hero est injecté ici (slot) ; le moteur l'anime (transform/opacity). */

@@ -53,8 +53,10 @@ import styles from '../styles/components/hero.module.css'
 			canvas!.style.width = rect.width + 'px';
 			canvas!.style.height = rect.height + 'px';
 		}
-		resize();
-		window.addEventListener('resize', resize);
+		// ResizeObserver : redimensionne dès que le Hero a une taille réelle
+		// (la couche sticky est display:none tant que la carte n'est pas prête).
+		const ro = new ResizeObserver(() => resize());
+		ro.observe(hero);
 
 		function spawn() {
 			shooting.push({
