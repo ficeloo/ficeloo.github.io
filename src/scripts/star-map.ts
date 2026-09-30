@@ -515,7 +515,7 @@ export function initStarMap(styles: Record<string, string>) {
 
 		const kN = m.kN;
 		const ai = ord[kN];
-		const curG = leg ? (f < 0.5 ? W[j].g : W[j + 1].g) : W[kN].g;
+		const curG = W[kN].g; // système du projet le plus proche (stable au retour)
 		const rot = leg ? (Math.atan2(W[j + 1].y - W[j].y, W[j + 1].x - W[j].x) * 180) / Math.PI : 0;
 		const arrOp = leg ? Math.sin(Math.PI * cl((f - 0.2) / 0.72, 0, 1)) : 0;
 		const dim = 1 - arrOp * 0.9;
