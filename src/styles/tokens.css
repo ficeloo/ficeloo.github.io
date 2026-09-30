@@ -21,4 +21,8 @@
 	/* Typo */
 	--font-display: 'Syne Mono', monospace;
 	--font-body: 'Syne', sans-serif;
+
+	/* Mise en page — hauteur du bandeau "Discover my Work", recopiée sur le header.
+	   = padding vertical (1.2rem + 1rem) + ligne du titre (line-height 1.2 × taille du titre). */
+	--band-height: calc(2.2rem + 1.2 * clamp(1.5rem, 3vw, 3.2rem));
 }

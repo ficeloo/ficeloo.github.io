@@ -3,7 +3,8 @@
 	align-items: center;
 	justify-content: space-between;
 	font-family: var(--font-display);
-	padding: 1.35rem 4%;
+	min-height: var(--band-height);
+	padding: 0 3%;
 	border-bottom: 1px solid rgba(83, 121, 112, 0.34);
 	line-height: 1;
 	background: rgba(19, 18, 84, 0.72);
@@ -85,9 +86,6 @@
 }
 
 @media(max-width: 768px) {
-	.header {
-		line-height: 0.5;
-	}
 	.indicator { display: none; }
 	.header nav {
 		flex: 0;
