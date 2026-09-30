@@ -97,8 +97,16 @@ export function initStarMap(styles: Record<string, string>) {
 	};
 	const legPath = mkPath('2 7', '1.2');
 	const sysPath = mkPath();
+	const sysTPath = mkPath(undefined, '1.5');
+	sysTPath.setAttribute('stroke', '#FD6035');
+	sysTPath.setAttribute('stroke-opacity', '0.75');
+	const legTPath = mkPath('2 7', '1.2');
+	legTPath.setAttribute('stroke', '#FD6035');
+	legTPath.setAttribute('stroke-opacity', '0.8');
 	svg.appendChild(legPath);
 	svg.appendChild(sysPath);
+	svg.appendChild(sysTPath);
+	svg.appendChild(legTPath);
 	mapLayer.appendChild(svg);
 
 	const cats0 = [...new Set(projects.map((p) => p.cat))];
@@ -128,6 +136,41 @@ export function initStarMap(styles: Record<string, string>) {
 		mapLayer.appendChild(label);
 		return { dot, label };
 	});
+
+	// Poussière (16 grains par système).
+	const dustEls: { el: HTMLElement; g: number; d: number }[] = [];
+	for (let g = 0; g < cats0.length; g++) {
+		for (let d = 0; d < 16; d++) {
+			const el = document.createElement('div');
+			el.className = styles.dust;
+			mapLayer.appendChild(el);
+			dustEls.push({ el, g, d });
+		}
+	}
+
+	// Saut hyperspace : sonde, pulse d'arrivée, carte d'arrivée.
+	const probeEl = document.createElement('div');
+	probeEl.className = styles.probe;
+	const pulseEl = document.createElement('div');
+	pulseEl.className = styles.pulse;
+	mapLayer.appendChild(probeEl);
+	mapLayer.appendChild(pulseEl);
+
+	const arrivalEl = document.createElement('div');
+	arrivalEl.className = styles.arrival;
+	const arrLabel = document.createElement('div');
+	arrLabel.className = styles['arrival-label'];
+	arrLabel.textContent = 'Entering system';
+	const arrTitle = document.createElement('div');
+	arrTitle.className = styles['arrival-title'];
+	const arrNum = document.createElement('span');
+	arrNum.className = styles.num;
+	const arrName = document.createTextNode('');
+	arrTitle.append(arrNum, arrName);
+	const arrCount = document.createElement('div');
+	arrCount.className = styles['arrival-count'];
+	arrivalEl.append(arrLabel, arrTitle, arrCount);
+	mapLayer.appendChild(arrivalEl);
 
 	// Références du chrome (rendu côté serveur dans StarMap.astro).
 	const counterEl = root.querySelector<HTMLElement>('[data-counter]');
@@ -291,22 +334,34 @@ export function initStarMap(styles: Record<string, string>) {
 		const kN = m.kN;
 		const ai = ord[kN];
 		const curG = leg ? (f < 0.5 ? W[j].g : W[j + 1].g) : W[kN].g;
+		const rot = leg ? (Math.atan2(W[j + 1].y - W[j].y, W[j + 1].x - W[j].x) * 180) / Math.PI : 0;
+		const arrOp = leg ? Math.sin(Math.PI * cl((f - 0.2) / 0.72, 0, 1)) : 0;
+		const dim = 1 - arrOp * 0.9;
 
-		// Chemins
+		// Chemins (+ portions parcourues en orange)
 		const f1 = (v: number) => v.toFixed(1);
 		const D = (arr: Pt[]) => (arr.length ? 'M' + arr.map((s) => f1(s.x) + ' ' + f1(s.y)).join(' L') + ' ' : '');
 		let sysD = '';
 		let legD = '';
+		let sysT = '';
+		let legT = '';
 		for (let q = 0; q < N - 1; q++) {
 			const isLeg = W[q + 1].g !== W[q].g;
 			const scr = (isLeg ? Array.from({ length: 49 }, (_, s) => lp(q, s / 48)) : [W[q], W[q + 1]]).map((w) => S(w, dip));
 			if (isLeg) legD += D(scr);
 			else sysD += D(scr);
+			if (u > U[q]) {
+				const ff = cl((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
+				if (isLeg) legT += D(scr.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
+				else sysT += D([scr[0], { x: lerp(scr[0].x, scr[1].x, ff), y: lerp(scr[0].y, scr[1].y, ff) }]);
+			}
 		}
 		svg.setAttribute('width', String(vw));
 		svg.setAttribute('height', String(vh));
 		sysPath.setAttribute('d', sysD);
 		legPath.setAttribute('d', legD);
+		sysTPath.setAttribute('d', sysT);
+		legTPath.setAttribute('d', legT);
 
 		// Étoiles
 		const W0 = vw * 1.1;
@@ -318,6 +373,7 @@ export function initStarMap(styles: Record<string, string>) {
 			el.style.left = ((x / vw) * 100).toFixed(2) + '%';
 			el.style.top = s.y.toFixed(2) + '%';
 			el.style.width = len.toFixed(1) + 'px';
+			el.style.transform = 'translate(-50%, -50%) rotate(' + rot.toFixed(1) + 'deg)';
 		});
 
 		// Systèmes (anneaux + labels)
@@ -333,6 +389,7 @@ export function initStarMap(styles: Record<string, string>) {
 			label.style.left = s.x + 'px';
 			label.style.top = (g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12) + 'px';
 			label.style.color = g0.g === curG ? '#F3F6F6' : '#537970';
+			label.style.opacity = dim.toFixed(3);
 		});
 
 		// Nœuds
@@ -343,7 +400,7 @@ export function initStarMap(styles: Record<string, string>) {
 			const on = s.x > -240 && s.x < vw + 240 && s.y > -120 && s.y < vh + 120;
 			const { dot, label } = nodeEls[q];
 			const w = 8 + 8 * act;
-			const op = cl(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1);
+			const op = cl(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1) * dim;
 			dot.style.left = s.x + 'px';
 			dot.style.top = s.y + 'px';
 			dot.style.width = w + 'px';
@@ -363,6 +420,46 @@ export function initStarMap(styles: Record<string, string>) {
 			label.style.fontSize = (hi ? 15 : 12) + 'px';
 			label.style.color = hi ? '#FD6035' : 'rgba(243,246,246,0.62)';
 		});
+
+		// Poussière
+		dustEls.forEach(({ el, g, d }) => {
+			const g0 = G[g];
+			const a = hash(g0.g * 97 + d * 3.1) * Math.PI * 2;
+			const rr = Math.sqrt(hash(g0.g * 53 + d * 5.7)) * g0.Rc * 1.15;
+			const s = S({ x: g0.gx + Math.cos(a) * rr * 1.1, y: g0.gy + Math.sin(a) * rr * 0.8 }, dip);
+			const size = hash(d * 11.3 + g0.g) < 0.8 ? 2 : 3;
+			el.style.left = s.x + 'px';
+			el.style.top = s.y + 'px';
+			el.style.width = size + 'px';
+			el.style.height = size + 'px';
+			el.style.opacity = ((0.25 + hash(d * 7.9 + g0.g * 3) * 0.45) * dim).toFixed(3);
+		});
+
+		// Sonde
+		const pq = leg ? S(lp(j, f), dip) : { x: -99, y: -99 };
+		probeEl.style.left = pq.x + 'px';
+		probeEl.style.top = pq.y + 'px';
+		probeEl.style.opacity = (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3);
+
+		// Pulse + carte d'arrivée
+		if (leg) {
+			const dg = G[W[j + 1].g];
+			const ds = S({ x: dg.gx, y: dg.gy }, dip);
+			const qp = cl((f - 0.72) / 0.28, 0, 1);
+			const pr = (dg.Rc + 20 + qp * 160) * z;
+			pulseEl.style.left = ds.x - pr + 'px';
+			pulseEl.style.top = ds.y - pr + 'px';
+			pulseEl.style.width = pr * 2 + 'px';
+			pulseEl.style.height = pr * 2 + 'px';
+			pulseEl.style.opacity = (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3);
+			arrNum.textContent = pad(dg.g + 1);
+			arrName.textContent = ' ' + dg.c + ' system';
+			arrCount.textContent = pad(dg.mem.length) + ' projects';
+			arrivalEl.style.opacity = arrOp.toFixed(3);
+		} else {
+			pulseEl.style.opacity = '0';
+			arrivalEl.style.opacity = '0';
+		}
 
 		// Compteur + HUD + nav
 		if (counterEl) counterEl.textContent = pad(kN + 1) + ' / ' + pad(N);
