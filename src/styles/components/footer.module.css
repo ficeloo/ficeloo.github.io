@@ -1,4 +1,8 @@
 .footer {
+	position: relative;
+	isolation: isolate;
+	overflow: hidden;
+
 	color: var(--color-text);
 	background-color: #131240;
 	font-family: var(--font-body);
@@ -7,8 +11,22 @@
 	flex-direction: column;
 	align-items: center;
 	gap: 2rem;
-	padding: 1rem 5%;
+	padding: 4rem 5% 2rem;
 	border-top: 1px solid rgba(83, 121, 112, 0.4);
+}
+
+/* Lueur d'ambiance discrète derrière le contenu. */
+.footer::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -30%;
+	width: 70%;
+	height: 130%;
+	transform: translateX(-50%);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(253, 96, 53, 0.08), transparent 70%);
+	pointer-events: none;
+	z-index: -1;
 }
 
 .footer h1 {
@@ -18,14 +36,47 @@
 .external-link {
 	display: flex;
 	flex-direction: row;
+	align-items: center;
 	gap: 1rem;
 	font-size: clamp(1rem, 1.25vw, 1.5rem);
 }
 
 .external-link a {
+	position: relative;
 	color: var(--color-text);
 	text-decoration: none;
-	margin-bottom: 3rem;
+	transition: color 0.2s ease;
+}
+
+.external-link a::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: -0.3em;
+	width: 100%;
+	height: 2px;
+	background: var(--color-accent);
+	transform: scaleX(0);
+	transform-origin: left;
+	transition: transform 0.3s ease;
+}
+
+.external-link a:hover {
+	color: var(--color-accent);
+}
+
+.external-link a:hover::after {
+	transform: scaleX(1);
+}
+
+.external-link a:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 4px;
+}
+
+.external-link span {
+	color: var(--color-secondary);
+	opacity: 0.6;
 }
 
 .foot-line {
@@ -37,4 +88,9 @@
 .foot-line a {
 	color: var(--color-text);
 	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.foot-line a:hover {
+	color: var(--color-accent);
 }
