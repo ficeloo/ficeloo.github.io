@@ -46,6 +46,13 @@ export function initStarMap(styles: Record<string, string>) {
 	}));
 	if (!projects.length) return;
 
+	// Reduced-motion : pas de carte animée ni de scroll-jacking.
+	// On garde le Hero (statique) + la liste de repli sémantique.
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		root.setAttribute('data-reduced', '');
+		return;
+	}
+
 	let vw = 1280;
 	let vh = 800;
 	const readVp = () => {

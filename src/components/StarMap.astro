@@ -46,7 +46,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 				<div class={styles['nav-heading']}>Systems</div>
 				{systems.map((sys) => (
 					<button class={styles['nav-row']} type="button" data-nav-row>
-						<span>{sys.num}. {sys.label} System</span>
+						<span>{sys.num}<span class={styles['nav-name']}>. {sys.label} System</span></span>
 						<span class={styles['nav-count']}>{sys.count}</span>
 						<span class={styles['nav-bar']} data-nav-bar></span>
 					</button>

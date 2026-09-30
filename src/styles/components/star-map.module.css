@@ -16,6 +16,22 @@
 	overflow: hidden;
 }
 
+/* Reduced-motion : Hero statique + liste de repli, pas de carte animée. */
+.stage[data-reduced] .sticky {
+	display: block;
+	position: static;
+	height: auto;
+	overflow: visible;
+}
+.stage[data-reduced] .hero-slot {
+	position: static;
+	min-height: 100vh;
+}
+.stage[data-reduced] .stars-layer,
+.stage[data-reduced] .map-ui {
+	display: none;
+}
+
 .work-anchor {
 	position: absolute;
 	left: 0;
@@ -279,6 +295,21 @@
 	display: block;
 	height: 2px;
 	transition: width 0.3s ease;
+}
+
+/* Sous 1200px : la nav ne montre que numéros + barres (cf. navW dans le moteur). */
+@media (max-width: 1200px) {
+	.nav-name,
+	.nav-count {
+		display: none;
+	}
+}
+
+/* Écrans peu hauts : on masque la vignette du HUD. */
+@media (max-height: 640px) {
+	.hud-img {
+		display: none;
+	}
 }
 
 /* ===== Selected HUD ===== */
