@@ -39,7 +39,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			<div class={styles.topbar}>
 				<div class={styles.counter} data-counter>01 / {pad(projects.length)}</div>
 				<h2 class={styles.title}><span class="accent">Discover</span> my Work</h2>
-				<button class={styles['see-all']} type="button" data-see-all>Tout voir ☰</button>
+				<button class={styles['see-all']} type="button" data-see-all>View all ☰</button>
 			</div>
 
 			<div class={styles.nav}>
@@ -62,7 +62,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 					<span class="sep">-</span>
 					<span data-hud-year></span>
 				</div>
-				<div class={styles['hud-hint']}>← → · Enter to open</div>
+				<div class={styles['hud-hint']}>← →</div>
 			</div>
 
 			<a class={styles['about-link']} href="#about">About me ↓</a>
@@ -111,7 +111,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 		<div class={styles['overlay-inner']}>
 			<div class={styles['overlay-head']}>
 				<h2 class={styles['overlay-title']}>All <span class="accent">projects</span></h2>
-				<button class={styles['overlay-close']} type="button" data-list-close>Fermer ✕</button>
+				<button class={styles['overlay-close']} type="button" data-list-close>Close ✕</button>
 			</div>
 			<div class={styles['overlay-filters']}>
 				{filters.map((fl) => (

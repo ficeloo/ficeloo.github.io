@@ -42,7 +42,7 @@ export const projects: Project[] = [
 			<div>
 			I’m incorporating key concepts to gain a deep understanding of the stages of game development.<br>
 				<ul style="padding-left: 1.2rem;">
-					<li>A physics rendering system, using Rapier2D.</li>
+					<li>A physics system, using Rapier2D.</li>
 					<li>Game state management (Menu, Pause, Game).</li>
 					<li>Wave-based progression with increasing difficulty.</li>
 					<li>Asteroid fragmentation (large → medium → small).</li>
@@ -65,7 +65,7 @@ export const projects: Project[] = [
 				<p>
 					<em>This project was created as part of the 42 curriculum by dbhujoo, ocgraf, nbacconn, ebenoist, and tcros.</em><br>
 					<br>
-					In it, we explore <span class="accent">real-time multiplayer web development</span>. ft_transcendance centers around a custom game, Pixel Fight, serving as a playground to implement a robust, full-stack architecture.<br>
+					In it, we explore <span class="accent">real-time multiplayer web development</span>. ft_transcendence centers around a custom game, Pixel Fight, serving as a playground to implement a robust, full-stack architecture.<br>
 					<br>
 					It allowed our team to master the <strong class="accent">Nuxt 3</strong> framework (with SSR) for the frontend, while building a hardened, secure DevOps infrastructure.<br>
 				</p>

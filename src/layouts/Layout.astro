@@ -8,23 +8,27 @@ import '../styles/global.css'
 
 interface Props {
 	title: string;
+	/** Résumé de la page pour Google et les aperçus de partage. */
+	description: string;
 	/** Fil d'Ariane des sous-pages (ex. "Project / Stellar Drift") ; absent sur l'accueil. */
 	crumb?: string;
 	/** Cible du lien « ← Back » des sous-pages (par défaut : début de la carte). */
 	back?: string;
 }
 
-const { title, crumb, back } = Astro.props;
+const { title, description, crumb, back } = Astro.props;
 ---
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<!-- ?v= : à incrémenter quand le favicon change (les navigateurs le gardent longtemps en cache). -->
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+		<link rel="icon" href="/favicon.ico?v=2" sizes="32x32" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<meta name="description" content={description} />
 	</head>
 	<body>
 		<Background />
