@@ -70,6 +70,11 @@
 	animation: shimmer 5s linear infinite;
 }
 
+/* Hero caché par la star map (data-hidden sur le slot) : shimmer en pause. */
+[data-hidden] .name {
+	animation-play-state: paused;
+}
+
 @keyframes shimmer {
 	to { background-position: 220% center; }
 }

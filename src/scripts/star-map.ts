@@ -26,6 +26,27 @@ const hash = (n: number) => {
 const pad = (n: number) => String(n).padStart(2, '0');
 const LEG = 4;
 
+// Perf : on mémorise la dernière valeur écrite par élément et on ne touche au DOM
+// que si elle change — chaque écriture peut relancer un recalcul côté navigateur.
+const written = new WeakMap<object, Map<string, string>>();
+const changed = (el: object, key: string, v: string) => {
+	let m = written.get(el);
+	if (!m) written.set(el, (m = new Map()));
+	if (m.get(key) === v) return false;
+	m.set(key, v);
+	return true;
+};
+const css = (el: HTMLElement | SVGElement, prop: string, v: string) => {
+	if (changed(el, prop, v)) el.style.setProperty(prop, v);
+};
+const attr = (el: Element, name: string, v: string) => {
+	if (changed(el, '@' + name, v)) el.setAttribute(name, v);
+};
+const txt = (el: { textContent: string | null } | null, v: string) => {
+	if (el && changed(el, '#text', v)) el.textContent = v;
+};
+const f1 = (v: number) => v.toFixed(1);
+
 export function initStarMap(styles: Record<string, string>) {
 	const root = document.querySelector<HTMLElement>('[data-starmap]');
 	const dataEl = document.getElementById('starmap-data');
@@ -55,8 +76,10 @@ export function initStarMap(styles: Record<string, string>) {
 
 	let vw = 1280;
 	let vh = 800;
+	let lastH = 0;
 	const readVp = () => {
 		vw = window.innerWidth || 1280;
+		lastH = window.innerHeight;
 		vh = Math.round(cl(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 480, 1400));
 	};
 
@@ -72,22 +95,32 @@ export function initStarMap(styles: Record<string, string>) {
 				d: r() < 0.85 ? 1 : 2,
 				o: +(0.2 + r() * 0.6).toFixed(2),
 				z: [0.3, 0.6, 1][Math.floor(r() * 3)],
-				c: q < 0.05 ? '#FD6035' : q < 0.16 ? '#537970' : '#F3F6F6',
+				c: q < 0.05 ? '253,96,53' : q < 0.16 ? '83,121,112' : '243,246,246', // rgb (alpha = o)
 			};
 		});
 	})();
 
 	// --- Construction du DOM (une seule fois) ---
-	const starEls = starBase.map((s) => {
+	// Scintillement par groupes : 8 calques animés au lieu de 140 étoiles (perf mobile).
+	// Chaque groupe a son rythme ; ses étoiles sont dispersées sur tout l'écran.
+	const TWINKLE_GROUPS = 8;
+	const starGroups = Array.from({ length: TWINKLE_GROUPS }, () => {
+		const g = document.createElement('div');
+		g.className = styles['star-group'];
+		g.style.animationDuration = (2 + Math.random() * 3).toFixed(2) + 's';
+		g.style.animationDelay = (-Math.random() * 5).toFixed(2) + 's';
+		starsLayer.appendChild(g);
+		return g;
+	});
+	const starEls = starBase.map((s, idx) => {
 		const d = document.createElement('div');
 		d.className = styles.star;
-		d.style.background = s.c;
-		d.style.setProperty('--o', String(s.o));
+		// Opacité propre portée par la couleur (le groupe anime sa propre opacité par-dessus).
+		d.style.background = `rgba(${s.c},${s.o})`;
+		d.style.width = s.d + 'px';
 		d.style.height = s.d + 'px';
-		// Scintillement désynchronisé (durée + décalage aléatoires).
-		d.style.animationDuration = (2 + Math.random() * 3).toFixed(2) + 's';
-		d.style.animationDelay = (-Math.random() * 5).toFixed(2) + 's';
-		starsLayer.appendChild(d);
+		d.style.top = s.y.toFixed(2) + '%'; // fixe : seul x bouge (via transform)
+		starGroups[idx % TWINKLE_GROUPS].appendChild(d);
 		return d;
 	});
 
@@ -99,6 +132,7 @@ export function initStarMap(styles: Record<string, string>) {
 		p.setAttribute('fill', 'none');
 		p.setAttribute('stroke', 'rgba(83,121,112,0.6)');
 		p.setAttribute('stroke-width', w);
+		p.setAttribute('vector-effect', 'non-scaling-stroke'); // trait constant malgré le zoom du <g>
 		if (dash) {
 			p.setAttribute('stroke-dasharray', dash);
 			p.setAttribute('stroke-linecap', 'round');
@@ -113,10 +147,10 @@ export function initStarMap(styles: Record<string, string>) {
 	const legTPath = mkPath('2 7', '1.2');
 	legTPath.setAttribute('stroke', '#FD6035');
 	legTPath.setAttribute('stroke-opacity', '0.8');
-	svg.appendChild(legPath);
-	svg.appendChild(sysPath);
-	svg.appendChild(sysTPath);
-	svg.appendChild(legTPath);
+	// Chemins en coordonnées "monde", construits une fois ; seul le <g> bouge (caméra).
+	const pathsG = document.createElementNS(NS, 'g');
+	pathsG.append(legPath, sysPath, sysTPath, legTPath);
+	svg.appendChild(pathsG);
 	mapLayer.appendChild(svg);
 
 	const cats0 = [...new Set(projects.map((p) => p.cat))];
@@ -148,13 +182,17 @@ export function initStarMap(styles: Record<string, string>) {
 	});
 
 	// Poussière (16 grains par système).
-	const dustEls: { el: HTMLElement; g: number; d: number }[] = [];
+	// Taille/opacité fixes ; position monde (wx, wy) recalculée au relayout.
+	const dustEls: { el: HTMLElement; g: number; d: number; o: number; sz: number; wx: number; wy: number }[] = [];
 	for (let g = 0; g < cats0.length; g++) {
 		for (let d = 0; d < 16; d++) {
 			const el = document.createElement('div');
 			el.className = styles.dust;
+			const sz = hash(d * 11.3 + g) < 0.8 ? 2 : 3;
+			el.style.width = sz + 'px';
+			el.style.height = sz + 'px';
 			mapLayer.appendChild(el);
-			dustEls.push({ el, g, d });
+			dustEls.push({ el, g, d, o: 0.25 + hash(d * 7.9 + g * 3) * 0.45, sz, wx: 0, wy: 0 });
 		}
 	}
 
@@ -193,6 +231,7 @@ export function initStarMap(styles: Record<string, string>) {
 		year: root.querySelector<HTMLElement>('[data-hud-year]'),
 	};
 	const navRows = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-row]'));
+	const navBars = navRows.map((r) => r.querySelector<HTMLElement>('[data-nav-bar]'));
 
 	// Popup
 	const backdropEl = root.querySelector<HTMLElement>('[data-backdrop]');
@@ -252,15 +291,68 @@ export function initStarMap(styles: Record<string, string>) {
 		return { P, cats, ord, G, W, U, N: ord.length };
 	}
 
+	// --- Cache de disposition ---
+	// Perf : tout ce qui ne dépend que de la taille d'écran est calculé au relayout
+	// (init, resize, load) et plus à chaque frame de scroll.
+	let L: ReturnType<typeof layout>;
+	let stageTop = 0;
+	let stageEnd = 0;
+	let T = 0;
+	let STEP = 0;
+	let Utot = 0;
+	let legPts: (Pt[] | null)[] = []; // points échantillonnés des sauts (monde)
+	const D = (arr: Pt[]) => (arr.length ? 'M' + arr.map((s) => f1(s.x) + ' ' + f1(s.y)).join(' L') + ' ' : '');
+	const lp = (q: number, t: number): Pt => {
+		const W = L.W;
+		return { x: W[q].x + (W[q + 1].x - W[q].x) * t, y: W[q].y + (W[q + 1].y - W[q].y) * t };
+	};
+
+	function relayout() {
+		L = layout();
+		const { W, G, N } = L;
+		T = vh * 0.9;
+		STEP = vh * 0.28;
+		Utot = L.U[N - 1] || 0;
+		const h = vh + T + Utot * STEP;
+		root!.style.height = h + 'px';
+		if (workAnchor) workAnchor.style.top = T + 'px';
+		stageTop = root!.getBoundingClientRect().top + window.scrollY;
+		stageEnd = stageTop + h;
+
+		// Chemins de base (statiques en coordonnées monde).
+		let sysD = '';
+		let legD = '';
+		legPts = [];
+		for (let q = 0; q < N - 1; q++) {
+			if (W[q + 1].g !== W[q].g) {
+				legPts[q] = Array.from({ length: 49 }, (_, s) => lp(q, s / 48));
+				legD += D(legPts[q]!);
+			} else {
+				legPts[q] = null;
+				sysD += D([W[q], W[q + 1]]);
+			}
+		}
+		sysPath.setAttribute('d', sysD);
+		legPath.setAttribute('d', legD);
+		attr(svg, 'width', String(vw));
+		attr(svg, 'height', String(vh));
+
+		// Poussière : position monde autour de son système.
+		dustEls.forEach((du) => {
+			const g0 = G[du.g];
+			const a = hash(g0.g * 97 + du.d * 3.1) * Math.PI * 2;
+			const rr = Math.sqrt(hash(g0.g * 53 + du.d * 5.7)) * g0.Rc * 1.15;
+			du.wx = g0.gx + Math.cos(a) * rr * 1.1;
+			du.wy = g0.gy + Math.sin(a) * rr * 0.8;
+		});
+
+		G.forEach((g0, gi) => txt(groupEls[gi].label, pad(g0.g + 1) + ' · ' + g0.c + ' system'));
+	}
+
 	type Metrics = ReturnType<typeof layout> & {
 		stageTop: number; T: number; STEP: number; Utot: number; local: number; u: number; p: number; kN: number;
 	};
 	function metrics(): Metrics {
-		const L = layout();
-		const stageTop = root!.getBoundingClientRect().top + window.scrollY;
-		const T = vh * 0.9;
-		const STEP = vh * 0.28;
-		const Utot = L.U[L.N - 1] || 0;
 		const local = window.scrollY - stageTop;
 		const u = cl((local - T) / STEP, 0, Utot);
 		const p = cl(local / T, 0, 1);
@@ -269,15 +361,6 @@ export function initStarMap(styles: Record<string, string>) {
 			if (Math.abs(v - u) < Math.abs(L.U[kN] - u)) kN = k;
 		});
 		return { ...L, stageTop, T, STEP, Utot, local, u, p, kN };
-	}
-
-	function updateGeometry() {
-		const L = layout();
-		const T = vh * 0.9;
-		const STEP = vh * 0.28;
-		const Utot = L.U[L.N - 1] || 0;
-		root!.style.height = vh + T + Utot * STEP + 'px';
-		if (workAnchor) workAnchor.style.top = T + 'px';
 	}
 
 	// --- État popup / navigation ---
@@ -489,13 +572,16 @@ export function initStarMap(styles: Record<string, string>) {
 
 		// Transition Hero → carte
 		if (heroWrap) {
-			heroWrap.style.transform = `translateY(${(-ease * vh * 0.35).toFixed(1)}px) scale(${(1 - ease * 0.12).toFixed(3)})`;
-			heroWrap.style.opacity = cl(1 - p * 1.6, 0, 1).toFixed(3);
-			heroWrap.style.pointerEvents = p < 0.3 ? 'auto' : 'none';
+			css(heroWrap, 'transform', `translateY(${f1(-ease * vh * 0.35)}px) scale(${(1 - ease * 0.12).toFixed(3)})`);
+			const heroOp = cl(1 - p * 1.6, 0, 1);
+			css(heroWrap, 'opacity', heroOp.toFixed(3));
+			// Hero invisible : ses animations (canvas, shimmer) se mettent en pause.
+			if (changed(heroWrap, '#hidden', String(heroOp === 0))) heroWrap.toggleAttribute('data-hidden', heroOp === 0);
+			css(heroWrap, 'pointer-events', p < 0.3 ? 'auto' : 'none');
 		}
 		const wheelOp = cl((p - 0.35) / 0.5, 0, 1);
-		mapUi!.style.opacity = wheelOp.toFixed(3);
-		mapUi!.style.pointerEvents = p > 0.8 ? 'auto' : 'none';
+		css(mapUi!, 'opacity', wheelOp.toFixed(3));
+		css(mapUi!, 'pointer-events', p > 0.8 ? 'auto' : 'none');
 
 		let j = 0;
 		while (j < N - 1 && U[j + 1] <= u) j++;
@@ -503,7 +589,6 @@ export function initStarMap(styles: Record<string, string>) {
 		const f = last ? 0 : (u - U[j]) / (U[j + 1] - U[j]);
 		const leg = !last && W[j + 1].g !== W[j].g;
 		const camF = (q: number): Pt => ({ x: W[q].x * 0.7 + W[q].gx * 0.3, y: W[q].y * 0.45 + W[q].gy * 0.55 });
-		const lp = (q: number, t: number): Pt => ({ x: W[q].x + (W[q + 1].x - W[q].x) * t, y: W[q].y + (W[q + 1].y - W[q].y) * t });
 		let cam: Pt;
 		if (last) cam = camF(N - 1);
 		else if (!leg) {
@@ -524,6 +609,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const navW = vw >= 1200 ? 280 : 120;
 		const oy = vh * 0.45 + (1 - ease) * vh * 0.9;
 		const S = (q: Pt, dp: number): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + dp + (q.y - cam.y) * z });
+		const at = (x: number, y: number) => `translate(${f1(x)}px,${f1(y)}px)`;
 
 		const kN = m.kN;
 		const ai = ord[kN];
@@ -536,42 +622,35 @@ export function initStarMap(styles: Record<string, string>) {
 		const arrOp = leg ? Math.min(cl((fArr - 0.05) / 0.15, 0, 1), cl((0.88 - fArr) / 0.1, 0, 1)) : 0;
 		const dim = 1 - arrOp * 0.9;
 
-		// Chemins (+ portions parcourues en orange)
-		const f1 = (v: number) => v.toFixed(1);
-		const D = (arr: Pt[]) => (arr.length ? 'M' + arr.map((s) => f1(s.x) + ' ' + f1(s.y)).join(' L') + ' ' : '');
-		let sysD = '';
-		let legD = '';
+		// Chemins : la base est statique (relayout), seul le <g> suit la caméra.
+		// S(q) = (ox - cam·z, oy + dip - cam·z) + q·z  →  translate + scale.
+		attr(pathsG, 'transform', `translate(${f1(ox - cam.x * z)} ${f1(oy + dip - cam.y * z)}) scale(${z.toFixed(3)})`);
+		// Portions parcourues en orange (U croissant : on s'arrête au premier non atteint).
 		let sysT = '';
 		let legT = '';
-		for (let q = 0; q < N - 1; q++) {
-			const isLeg = W[q + 1].g !== W[q].g;
-			const scr = (isLeg ? Array.from({ length: 49 }, (_, s) => lp(q, s / 48)) : [W[q], W[q + 1]]).map((w) => S(w, dip));
-			if (isLeg) legD += D(scr);
-			else sysD += D(scr);
-			if (u > U[q]) {
-				const ff = cl((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
-				if (isLeg) legT += D(scr.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
-				else sysT += D([scr[0], { x: lerp(scr[0].x, scr[1].x, ff), y: lerp(scr[0].y, scr[1].y, ff) }]);
-			}
+		for (let q = 0; q < N - 1 && u > U[q]; q++) {
+			const ff = cl((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
+			const pts = legPts[q];
+			if (pts) legT += D(pts.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
+			else sysT += D([W[q], lp(q, ff)]);
 		}
-		svg.setAttribute('width', String(vw));
-		svg.setAttribute('height', String(vh));
-		sysPath.setAttribute('d', sysD);
-		legPath.setAttribute('d', legD);
-		sysTPath.setAttribute('d', sysT);
-		legTPath.setAttribute('d', legT);
+		attr(sysTPath, 'd', sysT);
+		attr(legTPath, 'd', legT);
 
-		// Étoiles
+		// Étoiles (top fixe en % ; x, rotation et traînée via transform)
 		const W0 = vw * 1.1;
+		const rotS = `rotate(${f1(rot)}deg)`;
 		starBase.forEach((s, idx) => {
 			const zz = s.z;
 			const x = (((s.x / 100) * W0 - cam.x * 0.08 * zz) % W0 + W0) % W0 - vw * 0.05;
 			const len = s.d + wave * (40 + s.o * 120) * zz * 1.4;
-			const el = starEls[idx];
-			el.style.left = ((x / vw) * 100).toFixed(2) + '%';
-			el.style.top = s.y.toFixed(2) + '%';
-			el.style.width = len.toFixed(1) + 'px';
-			el.style.transform = 'translate(-50%, -50%) rotate(' + rot.toFixed(1) + 'deg)';
+			// Au repos : taille réelle, coin calé sur un pixel entier — une étoile étirée
+			// ou à cheval sur deux pixels est lissée et paraît bien plus terne.
+			// En saut : rotation + traînée (étirement depuis la taille réelle).
+			const tf = wave === 0 // sans traînée, la rotation d'un point est invisible
+				? `translate(${Math.round(x - s.d / 2)}px,${-Math.round(s.d / 2)}px)`
+				: `translate(${f1(x)}px,0) ${rotS} scaleX(${f1(len / s.d)}) translate(-50%,-50%)`;
+			css(starEls[idx], 'transform', tf);
 		});
 
 		// Systèmes (anneaux + labels)
@@ -579,65 +658,56 @@ export function initStarMap(styles: Record<string, string>) {
 			const s = S({ x: g0.gx, y: g0.gy }, dip);
 			const R = (g0.Rc + 46) * z;
 			const { ring, label } = groupEls[gi];
-			ring.style.left = s.x - R + 'px';
-			ring.style.top = s.y - R + 'px';
-			ring.style.width = R * 2 + 'px';
-			ring.style.height = R * 2 + 'px';
-			label.textContent = pad(g0.g + 1) + ' · ' + g0.c + ' system';
-			label.style.left = s.x + 'px';
-			label.style.top = (g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12) + 'px';
-			label.style.color = g0.g === curG ? '#F3F6F6' : '#537970';
-			label.style.opacity = dim.toFixed(3);
+			// Taille : ne change que pendant un saut (z) ; position : transform.
+			css(ring, 'width', f1(R * 2) + 'px');
+			css(ring, 'height', f1(R * 2) + 'px');
+			css(ring, 'transform', at(s.x - R, s.y - R));
+			const ly = g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
+			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
+			css(label, 'color', g0.g === curG ? '#F3F6F6' : '#537970');
+			css(label, 'opacity', dim.toFixed(3));
 		});
 
-		// Nœuds
+		// Nœuds (hors écran : masqués, on n'écrit rien d'autre)
 		ord.forEach((pi, q) => {
 			const s = S(W[q], dip);
+			const { dot, label } = nodeEls[q];
+			const on = s.x > -240 && s.x < vw + 240 && s.y > -120 && s.y < vh + 120;
+			css(dot, 'display', on ? 'block' : 'none');
+			css(label, 'display', on ? 'block' : 'none');
+			if (!on) return;
 			const act = Math.max(0, 1 - Math.abs(u - U[q]) * 1.4);
 			const hi = act > 0.5;
-			const on = s.x > -240 && s.x < vw + 240 && s.y > -120 && s.y < vh + 120;
-			const { dot, label } = nodeEls[q];
-			const w = 8 + 8 * act;
+			const w = 8 + 8 * act; // diamètre : 16px de base (CSS) mis à l'échelle
 			const op = cl(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1) * dim;
-			dot.style.left = s.x + 'px';
-			dot.style.top = s.y + 'px';
-			dot.style.width = w + 'px';
-			dot.style.height = w + 'px';
-			dot.style.background = hi ? '#FD6035' : '#F3F6F6';
-			dot.style.boxShadow = hi ? '0 0 0 6px rgba(253,96,53,0.18), 0 0 24px rgba(253,96,53,0.5)' : 'none';
-			dot.style.opacity = op.toFixed(3);
-			dot.style.display = on ? 'block' : 'none';
-			dot.style.zIndex = hi ? '5' : '2';
+			css(dot, 'transform', `${at(s.x, s.y)} translate(-50%,-50%) scale(${(w / 16).toFixed(3)})`);
+			css(dot, 'background', hi ? '#FD6035' : '#F3F6F6');
+			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(253,96,53,0.18), 0 0 24px rgba(253,96,53,0.5)' : 'none');
+			css(dot, 'opacity', op.toFixed(3));
+			css(dot, 'z-index', hi ? '5' : '2');
 			const flip = W[q].x < W[q].gx - 1 || s.x + 200 > vw - navW - 16;
-			label.style.left = (flip ? s.x - 16 - 6 * act : s.x + 16 + 6 * act) + 'px';
-			label.style.top = s.y - 9 + 'px';
-			label.style.transform = flip ? 'translateX(-100%)' : 'none';
-			label.style.display = on ? 'block' : 'none';
-			label.style.opacity = op.toFixed(3);
-			label.style.zIndex = hi ? '5' : '2';
-			label.style.fontSize = (hi ? 15 : 12) + 'px';
-			label.style.color = hi ? '#FD6035' : 'rgba(243,246,246,0.62)';
+			const lx = flip ? s.x - 16 - 6 * act : s.x + 16 + 6 * act;
+			css(label, 'transform', at(lx, s.y - 9) + (flip ? ' translateX(-100%)' : ''));
+			css(label, 'opacity', op.toFixed(3));
+			css(label, 'z-index', hi ? '5' : '2');
+			css(label, 'font-size', (hi ? 15 : 12) + 'px');
+			css(label, 'color', hi ? '#FD6035' : 'rgba(243,246,246,0.62)');
 		});
 
 		// Poussière
-		dustEls.forEach(({ el, g, d }) => {
-			const g0 = G[g];
-			const a = hash(g0.g * 97 + d * 3.1) * Math.PI * 2;
-			const rr = Math.sqrt(hash(g0.g * 53 + d * 5.7)) * g0.Rc * 1.15;
-			const s = S({ x: g0.gx + Math.cos(a) * rr * 1.1, y: g0.gy + Math.sin(a) * rr * 0.8 }, dip);
-			const size = hash(d * 11.3 + g0.g) < 0.8 ? 2 : 3;
-			el.style.left = s.x + 'px';
-			el.style.top = s.y + 'px';
-			el.style.width = size + 'px';
-			el.style.height = size + 'px';
-			el.style.opacity = ((0.25 + hash(d * 7.9 + g0.g * 3) * 0.45) * dim).toFixed(3);
+		dustEls.forEach(({ el, o, sz, wx, wy }) => {
+			const s = S({ x: wx, y: wy }, dip);
+			const on = s.x > -20 && s.x < vw + 20 && s.y > -20 && s.y < vh + 20;
+			css(el, 'display', on ? 'block' : 'none');
+			if (!on) return;
+			css(el, 'transform', `translate(${Math.round(s.x - sz / 2)}px,${Math.round(s.y - sz / 2)}px)`); // pixel entier
+			css(el, 'opacity', (o * dim).toFixed(3));
 		});
 
 		// Sonde
 		const pq = leg ? S(lp(j, f), dip) : { x: -99, y: -99 };
-		probeEl.style.left = pq.x + 'px';
-		probeEl.style.top = pq.y + 'px';
-		probeEl.style.opacity = (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3);
+		css(probeEl, 'transform', `${at(pq.x, pq.y)} translate(-50%,-50%)`);
+		css(probeEl, 'opacity', (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
 
 		// Pulse + carte d'arrivée (système de destination selon la direction)
 		if (leg) {
@@ -645,74 +715,76 @@ export function initStarMap(styles: Record<string, string>) {
 			const ds = S({ x: dg.gx, y: dg.gy }, dip);
 			const qp = cl((fArr - 0.72) / 0.28, 0, 1);
 			const pr = (dg.Rc + 20 + qp * 160) * z;
-			pulseEl.style.left = ds.x - pr + 'px';
-			pulseEl.style.top = ds.y - pr + 'px';
-			pulseEl.style.width = pr * 2 + 'px';
-			pulseEl.style.height = pr * 2 + 'px';
-			pulseEl.style.opacity = (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3);
-			arrNum.textContent = pad(dg.g + 1);
-			arrName.textContent = ' ' + dg.c + ' system';
-			arrCount.textContent = pad(dg.mem.length) + ' projects';
-			arrivalEl.style.opacity = arrOp.toFixed(3);
+			css(pulseEl, 'width', f1(pr * 2) + 'px');
+			css(pulseEl, 'height', f1(pr * 2) + 'px');
+			css(pulseEl, 'transform', at(ds.x - pr, ds.y - pr));
+			css(pulseEl, 'opacity', (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3));
+			txt(arrNum, pad(dg.g + 1));
+			txt(arrName, ' ' + dg.c + ' system');
+			txt(arrCount, pad(dg.mem.length) + ' projects');
+			css(arrivalEl, 'opacity', arrOp.toFixed(3));
 		} else {
-			pulseEl.style.opacity = '0';
-			arrivalEl.style.opacity = '0';
+			css(pulseEl, 'opacity', '0');
+			css(arrivalEl, 'opacity', '0');
 		}
 
-		// Compteur + HUD + nav
-		if (counterEl) counterEl.textContent = pad(kN + 1) + ' / ' + pad(N);
+		// Compteur + HUD + nav (textes réécrits seulement quand le projet change)
+		txt(counterEl, pad(kN + 1) + ' / ' + pad(N));
 		const inWheel = p > 0.96;
 		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
-		if (hudEl) hudEl.style.opacity = hudOp.toFixed(3);
+		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ai];
-		if (hud.cat) hud.cat.textContent = 'Selected · ' + cur.num + ' · ' + cur.cat;
+		txt(hud.cat, 'Selected · ' + cur.num + ' · ' + cur.cat);
 		if (hud.img && hud.img.getAttribute('src') !== cur.img) hud.img.src = cur.img;
-		if (hud.title) hud.title.textContent = cur.title;
-		if (hud.tag) hud.tag.textContent = cur.tag;
-		if (hud.year) hud.year.textContent = cur.year;
+		txt(hud.title, cur.title);
+		txt(hud.tag, cur.tag);
+		txt(hud.year, cur.year);
 		navRows.forEach((rowEl, gi) => {
 			const on = gi === curG;
-			rowEl.style.color = on ? '#F3F6F6' : 'rgba(243,246,246,0.62)';
-			const bar = rowEl.querySelector<HTMLElement>('[data-nav-bar]');
+			css(rowEl, 'color', on ? '#F3F6F6' : 'rgba(243,246,246,0.62)');
+			const bar = navBars[gi];
 			if (bar) {
-				bar.style.width = (on ? 28 : 12) + 'px';
-				bar.style.background = on ? '#FD6035' : 'rgba(83,121,112,0.5)';
+				css(bar, 'width', (on ? 28 : 12) + 'px');
+				css(bar, 'background', on ? '#FD6035' : 'rgba(83,121,112,0.5)');
 			}
 		});
 
-		// Popup + beam + backdrop
+		// Popup + beam + backdrop (géométrie ignorée tant que la popup est fermée)
 		if (popupEl && beamSvg && beamPoly && backdropEl) {
-			const so = S(W[Math.max(0, ord.indexOf(openIdx))], vh * 0.2);
-			const popW = Math.min(640, vw - 32);
-			const itemTop = so.y - 8;
-			const pb = itemTop - 46;
-			const popL = cl(so.x - popW / 2, 16, vw - popW - 16);
+			const k3 = kVal.toFixed(3);
+			css(backdropEl, 'opacity', k3);
+			css(backdropEl, 'pointer-events', isOpen ? 'auto' : 'none');
+			css(beamSvg, 'opacity', k3);
+			css(popupEl, 'opacity', k3);
+			css(popupEl, 'pointer-events', isOpen ? 'auto' : 'none');
+			if (kVal > 0) {
+				const so = S(W[Math.max(0, ord.indexOf(openIdx))], vh * 0.2);
+				const popW = Math.min(640, vw - 32);
+				const itemTop = so.y - 8;
+				const pb = itemTop - 46;
+				const popL = cl(so.x - popW / 2, 16, vw - popW - 16);
 
-			backdropEl.style.opacity = kVal.toFixed(3);
-			backdropEl.style.pointerEvents = isOpen ? 'auto' : 'none';
+				attr(beamSvg, 'width', String(vw));
+				attr(beamSvg, 'height', String(vh));
+				attr(
+					beamPoly,
+					'points',
+					[popL + popW * 0.12, pb, popL + popW * 0.88, pb, so.x + 6, itemTop + 8, so.x - 6, itemTop + 8].map((v) => v.toFixed(1)).join(' '),
+				);
 
-			beamSvg.setAttribute('width', String(vw));
-			beamSvg.setAttribute('height', String(vh));
-			beamSvg.style.opacity = kVal.toFixed(3);
-			beamPoly.setAttribute(
-				'points',
-				[popL + popW * 0.12, pb, popL + popW * 0.88, pb, so.x + 6, itemTop + 8, so.x - 6, itemTop + 8].map((v) => v.toFixed(1)).join(' '),
-			);
-
-			popupEl.style.left = popL + 'px';
-			popupEl.style.bottom = vh - pb + 'px';
-			popupEl.style.width = popW + 'px';
-			popupEl.style.opacity = kVal.toFixed(3);
-			popupEl.style.pointerEvents = isOpen ? 'auto' : 'none';
-			popupEl.style.transform = `translateY(${((1 - kVal) * 40).toFixed(1)}px) scale(${(0.3 + 0.7 * kVal).toFixed(3)})`;
-			popupEl.style.clipPath = `inset(${((1 - kVal) * 100).toFixed(1)}% 0 0 0)`;
+				css(popupEl, 'left', popL + 'px');
+				css(popupEl, 'bottom', vh - pb + 'px');
+				css(popupEl, 'width', popW + 'px');
+				css(popupEl, 'transform', `translateY(${((1 - kVal) * 40).toFixed(1)}px) scale(${(0.3 + 0.7 * kVal).toFixed(3)})`);
+				css(popupEl, 'clip-path', `inset(${((1 - kVal) * 100).toFixed(1)}% 0 0 0)`);
+			}
 		}
 	}
 
 	// Nav : clic → voyage vers le premier projet du système.
 	navRows.forEach((rowEl, gi) => {
 		rowEl.addEventListener('click', () => {
-			const g0 = layout().G[gi];
+			const g0 = L.G[gi];
 			if (g0) goTo(g0.mem[0]);
 		});
 	});
@@ -720,9 +792,16 @@ export function initStarMap(styles: Record<string, string>) {
 	// --- Boucle de scroll ---
 	let raf = 0;
 	let snapT = 0;
+	let wasOut = false;
 	const onScroll = () => {
 		if (!raf) raf = requestAnimationFrame(() => {
 			raf = 0;
+			// Carte sortie de l'écran (About, footer…) : un dernier rendu puis plus rien,
+			// et on met le scintillement en pause.
+			const out = window.scrollY > stageEnd;
+			if (out !== wasOut) root.toggleAttribute('data-off', out);
+			if (out && wasOut) return;
+			wasOut = out;
 			render();
 			if (isOpen) {
 				const m = metrics();
@@ -740,9 +819,13 @@ export function initStarMap(styles: Record<string, string>) {
 			animating = false;
 		}
 	};
+	// Mobile : la barre d'adresse qui apparaît/disparaît au scroll déclenche un resize
+	// (hauteur seule, ~60-120px). On l'ignore, sinon la carte se recalcule et saute.
+	const coarse = window.matchMedia('(pointer: coarse)').matches;
 	const onResize = () => {
+		if (coarse && window.innerWidth === vw && Math.abs(window.innerHeight - lastH) < 160) return;
 		readVp();
-		updateGeometry();
+		relayout();
 		render();
 	};
 
@@ -750,6 +833,11 @@ export function initStarMap(styles: Record<string, string>) {
 	window.addEventListener('wheel', onWheel, { passive: true });
 	window.addEventListener('touchstart', onWheel, { passive: true });
 	window.addEventListener('resize', onResize);
+	// Polices/images chargées : ce qui précède la carte a pu bouger → on remesure.
+	window.addEventListener('load', () => {
+		relayout();
+		render();
+	});
 	window.addEventListener('keydown', onKey);
 	mapUi.addEventListener('pointerdown', onDown);
 	backdropEl?.addEventListener('click', () => setOpen(false));
@@ -782,7 +870,7 @@ export function initStarMap(styles: Record<string, string>) {
 	});
 
 	readVp();
-	updateGeometry();
+	relayout();
 	render();
 	root.setAttribute('data-ready', '');
 }

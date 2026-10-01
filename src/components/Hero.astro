@@ -44,6 +44,9 @@ import styles from '../styles/components/hero.module.css'
 		type Shot = { x: number; y: number; vx: number; vy: number; life: number; max: number; len: number };
 		let shooting: Shot[] = [];
 		let W = 0, H = 0, dpr = 1, sinceShoot = 0;
+		let dirty = false; // quelque chose est dessiné sur le canvas
+		// Slot du Hero : la star map y pose data-hidden quand le Hero est invisible.
+		const slot = hero.closest('[data-hero-wrap]');
 
 		function resize() {
 			dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -71,12 +74,21 @@ import styles from '../styles/components/hero.module.css'
 		}
 
 		function loop() {
-			ctx.clearRect(0, 0, W, H);
+			requestAnimationFrame(loop);
+			// Effacer un canvas plein écran coûte : seulement s'il y a quelque chose dessus.
+			if (dirty) ctx.clearRect(0, 0, W, H);
+			dirty = false;
+			// Perf : Hero invisible → on ne dessine rien (et on vide les filantes).
+			if (slot?.hasAttribute('data-hidden')) {
+				shooting = [];
+				return;
+			}
 			sinceShoot++;
 			if (sinceShoot > 70 && Math.random() < 0.035) {
 				spawn();
 				sinceShoot = 0;
 			}
+			dirty = shooting.length > 0; // ce qui est dessiné ci-dessous sera à effacer
 			for (let i = shooting.length - 1; i >= 0; i--) {
 				const sh = shooting[i];
 				sh.life++;
@@ -98,7 +110,6 @@ import styles from '../styles/components/hero.module.css'
 				ctx.stroke();
 				if (sh.life >= sh.max) shooting.splice(i, 1);
 			}
-			requestAnimationFrame(loop);
 		}
 		requestAnimationFrame(loop);
 	}

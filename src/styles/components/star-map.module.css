@@ -41,6 +41,8 @@
 }
 
 /* ===== Couches ===== */
+/* Perf : les éléments animés (étoiles, nœuds, anneaux, poussière…) sont ancrés en 0,0
+   et positionnés uniquement par `transform` depuis le JS — pas de recalcul de mise en page. */
 .stars-layer {
 	position: absolute;
 	inset: 0;
@@ -50,18 +52,29 @@
 
 .star {
 	position: absolute;
+	left: 0;
 	border-radius: 1px;
-	transform: translate(-50%, -50%);
-	opacity: var(--o, 0.5);
+	transform-origin: 0 0;
+}
+
+/* Groupe d'étoiles dispersées qui scintillent ensemble (durée/décalage posés par le JS). */
+.star-group {
+	position: absolute;
+	inset: 0;
 	animation-name: twinkle;
 	animation-iteration-count: infinite;
 	animation-timing-function: ease-in-out;
 }
 
-/* Scintillement très léger, relatif à l'opacité propre de chaque étoile. */
+/* Carte hors écran : scintillement en pause (le JS pose data-off). */
+.stage[data-off] .star-group {
+	animation-play-state: paused;
+}
+
+/* Scintillement très léger : dip à 50 % de l'opacité propre de chaque étoile. */
 @keyframes twinkle {
-	60%, 70% { opacity: var(--o, 0.5); }
-	85% { opacity: calc(var(--o, 0.5) * 0.5); }
+	60%, 70% { opacity: 1; }
+	85% { opacity: 0.5; }
 }
 
 /* Le Hero est injecté ici (slot) ; le moteur l'anime (transform/opacity). */
@@ -97,6 +110,8 @@
 
 .ring {
 	position: absolute;
+	left: 0;
+	top: 0;
 	border-radius: 50%;
 	border: 1px dashed rgba(83, 121, 112, 0.35);
 	box-sizing: border-box;
@@ -105,7 +120,8 @@
 
 .sys-label {
 	position: absolute;
-	transform: translateX(-50%);
+	left: 0;
+	top: 0;
 	font-family: var(--font-display);
 	font-size: 12px;
 	letter-spacing: 0.2em;
@@ -116,13 +132,18 @@
 
 .node {
 	position: absolute;
-	transform: translate(-50%, -50%);
+	left: 0;
+	top: 0;
+	width: 16px;
+	height: 16px;
 	border-radius: 50%;
 	cursor: pointer;
 }
 
 .node-label {
 	position: absolute;
+	left: 0;
+	top: 0;
 	white-space: nowrap;
 	font-family: var(--font-display);
 	line-height: 18px;
@@ -138,7 +159,8 @@
 /* ===== Poussière des systèmes ===== */
 .dust {
 	position: absolute;
-	transform: translate(-50%, -50%);
+	left: 0;
+	top: 0;
 	border-radius: 50%;
 	background: var(--color-secondary);
 	pointer-events: none;
@@ -147,9 +169,10 @@
 /* ===== Saut hyperspace : sonde, pulse, carte d'arrivée ===== */
 .probe {
 	position: absolute;
+	left: 0;
+	top: 0;
 	width: 10px;
 	height: 10px;
-	transform: translate(-50%, -50%);
 	border-radius: 50%;
 	background: var(--color-accent);
 	box-shadow: 0 0 0 6px rgba(253, 96, 53, 0.18), 0 0 24px rgba(253, 96, 53, 0.5);
@@ -158,6 +181,8 @@
 
 .pulse {
 	position: absolute;
+	left: 0;
+	top: 0;
 	border-radius: 50%;
 	border: 1px solid var(--color-accent);
 	box-sizing: border-box;
