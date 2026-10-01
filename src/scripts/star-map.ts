@@ -82,10 +82,14 @@ export function initStarMap(styles: Record<string, string>) {
 	let vw = 1280;
 	let vh = 800;
 	let lastH = 0;
+	// Écran en portrait : la carte se parcourt de haut en bas (même règle que le CSS).
+	const portraitMq = window.matchMedia('(orientation: portrait)');
+	let vertical = false;
 	const readVp = () => {
 		vw = window.innerWidth || 1280;
 		lastH = window.innerHeight;
 		vh = Math.round(cl(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 480, 1400));
+		vertical = portraitMq.matches;
 	};
 
 	// Étoiles de fond déterministes (140).
@@ -124,7 +128,6 @@ export function initStarMap(styles: Record<string, string>) {
 		d.style.background = `rgba(${s.c},${s.o})`;
 		d.style.width = s.d + 'px';
 		d.style.height = s.d + 'px';
-		d.style.top = s.y.toFixed(2) + '%'; // fixe : seul x bouge (via transform)
 		starGroups[idx % TWINKLE_GROUPS].appendChild(d);
 		return d;
 	});
@@ -265,17 +268,21 @@ export function initStarMap(styles: Record<string, string>) {
 		const P = projects;
 		const cats = [...new Set(P.map((p) => p.cat))];
 		const ord = cats.flatMap((c) => P.filter((p) => p.cat === c).map((p) => p.i));
-		const Dx = cl(vw * 1.15, 1000, 1650);
+		// Calcul sur un axe principal (sens du parcours) et un axe transverse ;
+		// en vertical on permute les deux à la fin.
+		const main = vertical ? vh : vw;
+		const cross = vertical ? vw : vh;
+		const Dx = cl(main * 1.15, 1000, 1650);
 		const G: Group[] = cats.map((c, g) => {
 			const mem = ord.filter((q) => P[q].cat === c);
-			return { c, g, mem, gx: g * Dx, gy: (g % 2 ? -1 : 1) * vh * 0.06, Rc: 110 + mem.length * 26, pos: null };
+			return { c, g, mem, gx: g * Dx, gy: (g % 2 ? -1 : 1) * cross * 0.06, Rc: 110 + mem.length * 26, pos: null };
 		});
 		const W: Node[] = ord.map((pi) => {
 			const g0 = G.find((x) => x.c === P[pi].cat)!;
 			const n = g0.mem.length;
 			const j = g0.mem.indexOf(pi);
 			if (!g0.pos) {
-				const amp = Math.min(g0.Rc * 0.8, vh * 0.24);
+				const amp = Math.min(g0.Rc * 0.8, cross * 0.24);
 				const wts = Array.from({ length: Math.max(0, n - 1) }, (_, q) => 0.4 + hash(g0.g * 41 + q * 9.3) * 1.2);
 				const tot = wts.reduce((a, b) => a + b, 0) || 1;
 				let acc = 0;
@@ -291,6 +298,13 @@ export function initStarMap(styles: Record<string, string>) {
 			}
 			return { x: g0.pos[j].x, y: g0.pos[j].y, g: g0.g, gx: g0.gx, gy: g0.gy };
 		});
+		if (vertical) {
+			G.forEach((g0) => ([g0.gx, g0.gy] = [g0.gy, g0.gx]));
+			W.forEach((w) => {
+				[w.x, w.y] = [w.y, w.x];
+				[w.gx, w.gy] = [w.gy, w.gx];
+			});
+		}
 		const U = [0];
 		for (let k = 1; k < W.length; k++) U.push(U[k - 1] + (W[k].g === W[k - 1].g ? 1 : LEG));
 		return { P, cats, ord, G, W, U, N: ord.length };
@@ -315,6 +329,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function relayout() {
 		L = layout();
 		const { W, G, N } = L;
+		starEls.forEach((d, i) => (d.style.top = vertical ? '0' : starBase[i].y.toFixed(2) + '%'));
 		T = vh * 0.9;
 		STEP = vh * STEP_K;
 		Utot = L.U[N - 1] || 0;
@@ -347,8 +362,8 @@ export function initStarMap(styles: Record<string, string>) {
 			const g0 = G[du.g];
 			const a = hash(g0.g * 97 + du.d * 3.1) * Math.PI * 2;
 			const rr = Math.sqrt(hash(g0.g * 53 + du.d * 5.7)) * g0.Rc * 1.15;
-			du.wx = g0.gx + Math.cos(a) * rr * 1.1;
-			du.wy = g0.gy + Math.sin(a) * rr * 0.8;
+			du.wx = g0.gx + Math.cos(a) * rr * (vertical ? 0.8 : 1.1);
+			du.wy = g0.gy + Math.sin(a) * rr * (vertical ? 1.1 : 0.8);
 		});
 
 		G.forEach((g0, gi) => txt(groupEls[gi].label, pad(g0.g + 1) + ' · ' + g0.c + ' system'));
@@ -526,7 +541,7 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function onDown(e: PointerEvent) {
-		if (e.button !== 0) return;
+		if (e.button !== 0 || vertical) return; // vertical : le scroll natif suffit
 		const startX = e.clientX;
 		const startS = window.scrollY;
 		const px = STEP / 150; // 150px de drag = un projet
@@ -624,7 +639,11 @@ export function initStarMap(styles: Record<string, string>) {
 		const last = j >= N - 1;
 		const f = last ? 0 : (u - U[j]) / (U[j + 1] - U[j]);
 		const leg = !last && W[j + 1].g !== W[j].g;
-		const camF = (q: number): Pt => ({ x: W[q].x * 0.7 + W[q].gx * 0.3, y: W[q].y * 0.45 + W[q].gy * 0.55 });
+		// Caméra : suit le nœud dans le sens du parcours, le centre du système en travers.
+		const camF = (q: number): Pt =>
+			vertical
+				? { x: W[q].x * 0.45 + W[q].gx * 0.55, y: W[q].y * 0.7 + W[q].gy * 0.3 }
+				: { x: W[q].x * 0.7 + W[q].gx * 0.3, y: W[q].y * 0.45 + W[q].gy * 0.55 };
 		let cam: Pt;
 		if (last) cam = camF(N - 1);
 		else if (!leg) {
@@ -641,9 +660,11 @@ export function initStarMap(styles: Record<string, string>) {
 		const z = 1 - wave * 0.5;
 		const dip = vh * 0.2 * kVal; // la carte descend quand la popup s'ouvre
 		const hudW = Math.min(300, vw * 0.3);
-		const ox = vw >= 1200 ? vw / 2 + hudW * 0.3 - 60 : vw / 2;
-		const navW = vw >= 1200 ? 280 : 120;
-		const oy = vh * 0.45 + (1 - ease) * vh * 0.9;
+		// Vertical : carte un peu à gauche (labels à droite des nœuds), un peu plus haut
+		// (bandeau HUD en bas), pas de nav systèmes.
+		const ox = vertical ? vw * 0.36 : vw >= 1200 ? vw / 2 + hudW * 0.3 - 60 : vw / 2;
+		const navW = vertical ? 0 : vw >= 1200 ? 280 : 120;
+		const oy = vh * (vertical ? 0.42 : 0.45) + (1 - ease) * vh * 0.9;
 		const S = (q: Pt, dp: number): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + dp + (q.y - cam.y) * z });
 		const at = (x: number, y: number) => `translate(${f1(x)}px,${f1(y)}px)`;
 
@@ -673,19 +694,23 @@ export function initStarMap(styles: Record<string, string>) {
 		attr(sysTPath, 'd', sysT);
 		attr(legTPath, 'd', legT);
 
-		// Étoiles (top fixe en % ; x, rotation et traînée via transform)
+		// Étoiles : parallaxe sur l'axe du parcours (x en horizontal, y en vertical).
+		// En horizontal, top fixe en % (relayout) ; en vertical, top: 0 et y via transform.
 		const W0 = vw * 1.1;
+		const H0 = vh * 1.1;
+		const wrap = (v: number, m: number) => ((v % m) + m) % m;
 		const rotS = `rotate(${f1(rot)}deg)`;
 		starBase.forEach((s, idx) => {
 			const zz = s.z;
-			const x = (((s.x / 100) * W0 - cam.x * 0.08 * zz) % W0 + W0) % W0 - vw * 0.05;
+			const x = vertical ? (s.x / 100) * vw : wrap((s.x / 100) * W0 - cam.x * 0.08 * zz, W0) - vw * 0.05;
+			const y = vertical ? wrap((s.y / 100) * H0 - cam.y * 0.08 * zz, H0) - vh * 0.05 : 0;
 			const len = s.d + wave * (40 + s.o * 120) * zz * 1.4;
 			// Au repos : taille réelle, coin calé sur un pixel entier — une étoile étirée
 			// ou à cheval sur deux pixels est lissée et paraît bien plus terne.
 			// En saut : rotation + traînée (étirement depuis la taille réelle).
 			const tf = wave === 0 // sans traînée, la rotation d'un point est invisible
-				? `translate(${Math.round(x - s.d / 2)}px,${-Math.round(s.d / 2)}px)`
-				: `translate(${f1(x)}px,0) ${rotS} scaleX(${f1(len / s.d)}) translate(-50%,-50%)`;
+				? `translate(${Math.round(x - s.d / 2)}px,${Math.round(y - s.d / 2)}px)`
+				: `translate(${f1(x)}px,${f1(y)}px) ${rotS} scaleX(${f1(len / s.d)}) translate(-50%,-50%)`;
 			css(starEls[idx], 'transform', tf);
 		});
 
@@ -698,7 +723,8 @@ export function initStarMap(styles: Record<string, string>) {
 			css(ring, 'width', f1(R * 2) + 'px');
 			css(ring, 'height', f1(R * 2) + 'px');
 			css(ring, 'transform', at(s.x - R, s.y - R));
-			const ly = g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
+			// Vertical : toujours au-dessus de l'anneau (dessous = chemin vers le suivant).
+			const ly = vertical || g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
 			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
 			css(label, 'color', g0.g === curG ? '#F3F6F6' : '#537970');
 			css(label, 'opacity', dim.toFixed(3));

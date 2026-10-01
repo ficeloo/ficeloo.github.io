@@ -436,6 +436,77 @@
 	color: var(--color-accent);
 }
 
+/* ===== Portrait : carte verticale (le moteur bascule sur la même media query) ===== */
+@media (orientation: portrait) {
+	/* Barre du haut sur une ligne. */
+	.topbar {
+		align-items: center;
+		padding: 0.8rem 16px;
+		gap: 0.6rem;
+	}
+	.counter {
+		padding-top: 0;
+		font-size: 0.75rem;
+		white-space: nowrap;
+	}
+	.title {
+		font-size: clamp(1.1rem, 5vw, 1.6rem);
+		white-space: nowrap;
+	}
+	.see-all {
+		padding: 0.4rem 0.6rem;
+		font-size: 0.75rem;
+		white-space: nowrap;
+	}
+
+	/* Nav systèmes et lien About masqués : compteur + overlay + snap vers About suffisent. */
+	.nav,
+	.about-link {
+		display: none;
+	}
+
+	/* HUD = bandeau compact en bas : vignette à gauche, infos à droite. */
+	.hud {
+		left: 16px;
+		right: 16px;
+		bottom: 16px;
+		width: auto;
+		padding: 10px;
+		display: grid;
+		grid-template-columns: 96px 1fr;
+		grid-template-areas:
+			'img label'
+			'img title'
+			'img meta';
+		column-gap: 12px;
+		row-gap: 4px;
+		align-items: center;
+	}
+	.hud-img {
+		display: block;
+		grid-area: img;
+	}
+	.hud-label {
+		grid-area: label;
+		font-size: 10px;
+	}
+	.hud-title {
+		grid-area: title;
+		font-size: 1rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.hud-meta {
+		grid-area: meta;
+		font-size: 0.8rem;
+		gap: 0.6rem;
+	}
+	.hud-hint {
+		display: none;
+	}
+}
+
 /* ===== Popup (projetée depuis le nœud) ===== */
 .backdrop {
 	position: absolute;
