@@ -900,6 +900,7 @@ export function initStarMap(styles: Record<string, string>) {
 	};
 	const onWheel = () => {
 		navK = null;
+		hashIdx = -1; // l'utilisateur a pris la main : plus de recalage sur le hash
 		if (animating) {
 			cancelAnimationFrame(sRaf);
 			animating = false;
@@ -932,6 +933,7 @@ export function initStarMap(styles: Record<string, string>) {
 	// Polices/images chargées : ce qui précède la carte a pu bouger → on remesure.
 	window.addEventListener('load', () => {
 		relayout();
+		if (hashIdx >= 0) goTo(hashIdx, true); // recale sur le projet du hash avec la mesure finale
 		render();
 	});
 	window.addEventListener('keydown', onKey);
@@ -965,8 +967,13 @@ export function initStarMap(styles: Record<string, string>) {
 		});
 	});
 
+	// Retour depuis une page projet (« ← Back ») : /#project-<slug> → carte calée sur ce projet.
+	const hashSlug = /^#project-(.+)$/.exec(decodeURIComponent(location.hash))?.[1];
+	let hashIdx = hashSlug ? projects.findIndex((p) => p.slug === hashSlug) : -1;
+
 	readVp();
 	relayout();
+	if (hashIdx >= 0) goTo(hashIdx, true);
 	render();
 	root.setAttribute('data-ready', '');
 }

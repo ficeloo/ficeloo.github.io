@@ -1,6 +1,14 @@
 ---
 import styles from '../styles/components/header.module.css'
 
+interface Props {
+	/** Présent sur une sous-page : nav « ← Back / Contact » et fil d'Ariane à droite. */
+	crumb?: string;
+	/** Cible de « ← Back » : le projet d'où l'on vient dans la carte, sinon son début. */
+	back?: string;
+}
+
+const { crumb, back = '/#work' } = Astro.props;
 const currYear = new Date().getFullYear();
 ---
 
@@ -8,13 +16,20 @@ const currYear = new Date().getFullYear();
 	<div class={styles.wordmark}>
 		<a href="/">ficelo<span class={styles["wordmark-dot"]}>.</span></a>
 	</div>
-	<nav>
-		<a href="/#work">Work</a>
-		<a href="/#about">About</a>
-		<a href="/#contact">Contact</a>
-	</nav>
+	{crumb ? (
+		<nav>
+			<a href={back}><span class={styles.arrow}>←</span> Back</a>
+			<a href="#contact">Contact</a>
+		</nav>
+	) : (
+		<nav>
+			<a href="/#work">Work</a>
+			<a href="/#about">About</a>
+			<a href="#contact">Contact</a>
+		</nav>
+	)}
 
 	<div class={styles.indicator}>
-		PORTFOLIO / {currYear}
+		{crumb ?? `Portfolio / ${currYear}`}
 	</div>
 </header>

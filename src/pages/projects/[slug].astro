@@ -14,7 +14,7 @@ export function getStaticPaths() {
 const { project } = Astro.props;
 ---
 
-<Layout title={project.title}>
+<Layout title={project.title} crumb={`Project / ${project.title}`} back={`/#project-${project.slug}`}>
 	<div class={styles.project}>
 		<h1>{project.title}</h1>
 		<div class={styles.tag}>

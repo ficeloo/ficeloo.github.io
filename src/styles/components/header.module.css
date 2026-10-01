@@ -18,6 +18,12 @@
 	text-align: right;
 	letter-spacing: 0.18em;
 	color: rgba(243, 246, 246, 0.62);
+	text-transform: uppercase;
+	/* Fil d'Ariane des sous-pages : un nom de projet trop long est coupé. */
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .header nav {
@@ -33,6 +39,7 @@
 	letter-spacing: 0.2em;
 	text-transform: uppercase;
 	text-decoration: none;
+	white-space: nowrap; /* « ← Back » sur une ligne en mobile */
 	transition: color 0.2s ease;
 }
 
@@ -55,6 +62,15 @@
 
 .header nav a:hover::after {
 	transform: scaleX(1);
+}
+
+/* Flèche « ← Back » : glisse vers la gauche au survol (comme celles du Hero). */
+.arrow {
+	display: inline-block;
+	transition: transform 0.3s ease;
+}
+.header nav a:hover .arrow {
+	transform: translateX(-0.35em);
 }
 
 .header nav a:focus-visible {
