@@ -88,7 +88,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const readVp = () => {
 		vw = window.innerWidth || 1280;
 		lastH = window.innerHeight;
-		vh = Math.round(cl(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 480, 1400));
+		vh = Math.round(cl(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
 		vertical = portraitMq.matches;
 	};
 
@@ -329,6 +329,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function relayout() {
 		L = layout();
 		const { W, G, N } = L;
+		measurePop = true; // la taille d'écran a pu changer la hauteur de la popup
 		starEls.forEach((d, i) => (d.style.top = vertical ? '0' : starBase[i].y.toFixed(2) + '%'));
 		T = vh * 0.9;
 		STEP = vh * STEP_K;
@@ -385,6 +386,8 @@ export function initStarMap(styles: Record<string, string>) {
 
 	// --- État popup / navigation ---
 	let isOpen = false;
+	let popH = 0; // hauteur de la popup ouverte
+	let measurePop = false; // à mesurer au prochain rendu (une fois sa largeur appliquée)
 	let openIdx = 0;
 	let kVal = 0;
 	let kRaf = 0;
@@ -493,7 +496,10 @@ export function initStarMap(styles: Record<string, string>) {
 		if (o === isOpen) return;
 		isOpen = o;
 		if (idx != null) openIdx = idx;
-		if (o) fillPopup(openIdx);
+		if (o) {
+			fillPopup(openIdx);
+			measurePop = true;
+		}
 		const from = kVal;
 		const to = o ? 1 : 0;
 		const t0 = performance.now();
@@ -724,7 +730,11 @@ export function initStarMap(styles: Record<string, string>) {
 			css(ring, 'height', f1(R * 2) + 'px');
 			css(ring, 'transform', at(s.x - R, s.y - R));
 			// Vertical : toujours au-dessus de l'anneau (dessous = chemin vers le suivant).
-			const ly = vertical || g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
+			// En vertical, seul le système courant reste calé sous la barre du haut
+			// (sinon les labels de deux systèmes se superposent).
+			const ly = vertical
+				? g0.g === curG ? Math.max(110, s.y - R - 28) : s.y - R - 28
+				: g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
 			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
 			css(label, 'color', g0.g === curG ? '#F3F6F6' : '#537970');
 			css(label, 'opacity', dim.toFixed(3));
@@ -816,14 +826,21 @@ export function initStarMap(styles: Record<string, string>) {
 			const k3 = kVal.toFixed(3);
 			css(backdropEl, 'opacity', k3);
 			css(backdropEl, 'pointer-events', isOpen ? 'auto' : 'none');
-			css(beamSvg, 'opacity', k3);
 			css(popupEl, 'opacity', k3);
 			css(popupEl, 'pointer-events', isOpen ? 'auto' : 'none');
 			if (kVal > 0) {
 				const so = S(W[Math.max(0, ord.indexOf(openIdx))], vh * 0.2);
 				const popW = Math.min(640, vw - 32);
+				css(popupEl, 'width', popW + 'px');
+				if (measurePop) {
+					popH = popupEl.offsetHeight; // le transform (scale) n'affecte pas offsetHeight
+					measurePop = false;
+				}
 				const itemTop = so.y - 8;
-				const pb = itemTop - 46;
+				// Au-dessus du nœud, mais jamais hors de l'écran (petites hauteurs, portrait).
+				const pb = Math.max(itemTop - 46, popH + 12);
+				// Popup qui recouvre le nœud : le faisceau n'a plus de sens.
+				css(beamSvg, 'opacity', pb < itemTop - 20 ? k3 : '0');
 				const popL = cl(so.x - popW / 2, 16, vw - popW - 16);
 
 				attr(beamSvg, 'width', String(vw));
@@ -836,9 +853,10 @@ export function initStarMap(styles: Record<string, string>) {
 
 				css(popupEl, 'left', popL + 'px');
 				css(popupEl, 'bottom', vh - pb + 'px');
-				css(popupEl, 'width', popW + 'px');
 				css(popupEl, 'transform', `translateY(${((1 - kVal) * 40).toFixed(1)}px) scale(${(0.3 + 0.7 * kVal).toFixed(3)})`);
 				css(popupEl, 'clip-path', `inset(${((1 - kVal) * 100).toFixed(1)}% 0 0 0)`);
+			} else {
+				css(beamSvg, 'opacity', '0');
 			}
 		}
 	}

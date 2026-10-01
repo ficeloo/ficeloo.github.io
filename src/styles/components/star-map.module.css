@@ -13,6 +13,9 @@
 	position: sticky;
 	top: 0;
 	height: 100vh;
+	/* Mobile : hauteur visible avec la barre d'adresse affichée — stable au scroll
+	   (contrairement à dvh), et le bandeau HUD reste au-dessus de la barre. */
+	height: 100svh;
 	overflow: hidden;
 }
 
@@ -26,6 +29,7 @@
 .stage[data-reduced] .hero-slot {
 	position: static;
 	min-height: 100vh;
+	min-height: 100svh;
 }
 .stage[data-reduced] .stars-layer,
 .stage[data-reduced] .map-ui {
@@ -504,6 +508,11 @@
 	}
 	.hud-hint {
 		display: none;
+	}
+
+	/* Popup : vignette plafonnée pour laisser la place au texte. */
+	.popup-img {
+		max-height: 28svh;
 	}
 }
 

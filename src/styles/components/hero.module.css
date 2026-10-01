@@ -196,6 +196,17 @@
 	}
 }
 
+/* Petite hauteur (téléphone en paysage) : marges et espacements resserrés. */
+@media (max-height: 500px) {
+	.hero {
+		padding: 1.2rem 6%;
+		gap: 0.9rem;
+	}
+	.hero-cta {
+		margin-top: 0;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.status-pill .dot,
 	.name {
