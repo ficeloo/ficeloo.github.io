@@ -24,7 +24,11 @@ const hash = (n: number) => {
 	return s - Math.floor(s);
 };
 const pad = (n: number) => String(n).padStart(2, '0');
-const LEG = 4;
+// Rythme du scroll dans la carte (réglages à affiner à l'usage) :
+const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
+const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
+const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
+const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
 
 // Perf : on mémorise la dernière valeur écrite par élément et on ne touche au DOM
 // que si elle change — chaque écriture peut relancer un recalcul côté navigateur.
@@ -55,6 +59,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const heroWrap = root?.querySelector<HTMLElement>('[data-hero-wrap]');
 	const mapUi = root?.querySelector<HTMLElement>('[data-map-ui]');
 	const workAnchor = root?.querySelector<HTMLElement>('[data-work-anchor]');
+	const aboutEl = document.getElementById('about'); // section qui suit la carte
 	if (!root || !dataEl || !starsLayer || !mapLayer || !mapUi) return;
 
 	const raw = JSON.parse(dataEl.textContent || '[]') as Raw[];
@@ -311,7 +316,7 @@ export function initStarMap(styles: Record<string, string>) {
 		L = layout();
 		const { W, G, N } = L;
 		T = vh * 0.9;
-		STEP = vh * 0.28;
+		STEP = vh * STEP_K;
 		Utot = L.U[N - 1] || 0;
 		const h = vh + T + Utot * STEP;
 		root!.style.height = h + 'px';
@@ -393,7 +398,7 @@ export function initStarMap(styles: Record<string, string>) {
 			animating = false;
 			return;
 		}
-		const units = Math.abs(d) / (vh * 0.28);
+		const units = Math.abs(d) / STEP; // durée proportionnelle au nombre de pas
 		const dur = fast ? cl(160 + units * 170, 160, 1400) : cl(450 + units * 300, 450, 3600);
 		const t0 = performance.now();
 		animating = true;
@@ -408,12 +413,43 @@ export function initStarMap(styles: Record<string, string>) {
 		sRaf = requestAnimationFrame(step);
 	}
 
+	// Snap directionnel : on termine le mouvement dans le sens du scroll plutôt que de
+	// revenir au plus proche (sinon 1-2 crans de molette sont annulés).
 	function snap() {
-		if (animating || dragging) return;
+		if (animating || dragging || touching) return;
 		const m = metrics();
-		if (m.local < m.T * 0.98 || m.local > m.T + m.Utot * m.STEP + 2) return;
-		const target = m.stageTop + m.T + m.U[m.kN] * m.STEP;
-		if (Math.abs(target - window.scrollY) > 2) animScroll(target);
+		const y = window.scrollY;
+		const mapStart = m.stageTop + m.T;
+		// Avant la carte : tout en haut, rien à faire ; entre le Hero et le 1er système,
+		// jamais d'entre-deux.
+		if (y < mapStart - 2) {
+			if (y <= 0) return;
+			// Un petit mouvement suffit (intention claire).
+			const toMap = scrollDir > 0 ? y > EDGE_PX : y > mapStart - EDGE_PX;
+			animScroll(toMap ? mapStart : 0);
+			return;
+		}
+		// Après le dernier projet : entre la carte et la section About, jamais d'entre-deux.
+		const mapEnd = mapStart + m.Utot * m.STEP;
+		if (y > mapEnd + 2) {
+			if (!aboutEl) return;
+			// Haut de About, borné au bas de page (About + footer peuvent être plus courts que l'écran).
+			const maxY = document.documentElement.scrollHeight - window.innerHeight;
+			const aboutY = Math.min(aboutEl.getBoundingClientRect().top + y, maxY);
+			if (y >= aboutY - 2) return;
+			const toAbout = scrollDir > 0 ? y > mapEnd + EDGE_PX : y > aboutY - EDGE_PX;
+			animScroll(toAbout ? aboutY : mapEnd);
+			return;
+		}
+		const { U, u } = m;
+		let k = 0;
+		if (scrollDir > 0) {
+			k = U.findIndex((v) => v >= u - SNAP_BIAS);
+		} else {
+			for (let q = 0; q < U.length; q++) if (U[q] <= u + SNAP_BIAS) k = q;
+		}
+		const target = mapStart + U[k] * m.STEP;
+		if (Math.abs(target - y) > 2) animScroll(target);
 	}
 
 	function goTo(i: number, instant = false) {
@@ -493,7 +529,7 @@ export function initStarMap(styles: Record<string, string>) {
 		if (e.button !== 0) return;
 		const startX = e.clientX;
 		const startS = window.scrollY;
-		const px = (vh * 0.28) / 150;
+		const px = STEP / 150; // 150px de drag = un projet
 		moved = false;
 		dragging = true;
 		const mv = (ev: PointerEvent) => {
@@ -793,7 +829,13 @@ export function initStarMap(styles: Record<string, string>) {
 	let raf = 0;
 	let snapT = 0;
 	let wasOut = false;
+	let lastY = window.scrollY;
+	let scrollDir = 1; // sens du dernier scroll (1 = vers le bas)
+	let touching = false; // doigt posé : pas de snap avant qu'il soit levé
 	const onScroll = () => {
+		const y = window.scrollY;
+		if (y !== lastY) scrollDir = y > lastY ? 1 : -1;
+		lastY = y;
 		if (!raf) raf = requestAnimationFrame(() => {
 			raf = 0;
 			// Carte sortie de l'écran (About, footer…) : un dernier rendu puis plus rien,
@@ -831,7 +873,17 @@ export function initStarMap(styles: Record<string, string>) {
 
 	window.addEventListener('scroll', onScroll, { passive: true });
 	window.addEventListener('wheel', onWheel, { passive: true });
-	window.addEventListener('touchstart', onWheel, { passive: true });
+	window.addEventListener('touchstart', () => {
+		touching = true;
+		onWheel();
+	}, { passive: true });
+	const onTouchEnd = () => {
+		touching = false;
+		clearTimeout(snapT);
+		snapT = window.setTimeout(snap, 170);
+	};
+	window.addEventListener('touchend', onTouchEnd, { passive: true });
+	window.addEventListener('touchcancel', onTouchEnd, { passive: true });
 	window.addEventListener('resize', onResize);
 	// Polices/images chargées : ce qui précède la carte a pu bouger → on remesure.
 	window.addEventListener('load', () => {
