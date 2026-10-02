@@ -893,7 +893,7 @@ export function initStarMap(styles: Record<string, string>) {
 	let lastY = window.scrollY;
 	let scrollDir = 1; // sens du dernier scroll (1 = vers le bas)
 	let touching = false; // doigt posé : pas de snap avant qu'il soit levé
-	let touchEndAt = 0;
+	let touchEndAt = -Infinity; // aucun geste encore (sinon le chargement de la page compterait)
 	let swipeY: number | null = null; // début d'un geste commencé dans la carte (tactile)
 	const mapRange = () => [stageTop + T, stageTop + T + Utot * STEP];
 	const onScroll = () => {
