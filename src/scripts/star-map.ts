@@ -25,7 +25,6 @@ const hash = (n: number) => {
 const pad = (n: number) => String(n).padStart(2, '0');
 // Rythme du scroll dans la carte (réglages à affiner à l'usage) :
 const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
-const STEP_K_TOUCH = 0.35; // idem sur écran tactile (pas de snap : projets plus rapprochés)
 const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
 const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
 const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
@@ -79,7 +78,7 @@ export function initStarMap(styles: Record<string, string>) {
 		return;
 	}
 
-	// Écran tactile : le doigt pilote seul le scroll dans la carte (pas de snap).
+	// Écran tactile : dans la carte, on navigue avec des boutons (voir « Tactile » plus bas).
 	const coarse = window.matchMedia('(pointer: coarse)').matches;
 	let vw = 1280;
 	let vh = 800;
@@ -335,7 +334,7 @@ export function initStarMap(styles: Record<string, string>) {
 		measurePop = true; // la taille d'écran a pu changer la hauteur de la popup
 		starEls.forEach((d, i) => (d.style.top = vertical ? '0' : starBase[i].y.toFixed(2) + '%'));
 		T = vh * 0.9;
-		STEP = vh * (coarse ? STEP_K_TOUCH : STEP_K);
+		STEP = vh * STEP_K;
 		Utot = L.U[N - 1] || 0;
 		const h = vh + T + Utot * STEP;
 		root!.style.height = h + 'px';
@@ -434,6 +433,10 @@ export function initStarMap(styles: Record<string, string>) {
 		sRaf = requestAnimationFrame(step);
 	}
 
+	// Haut de About, borné au bas de page (About + footer peuvent être plus courts que l'écran).
+	const aboutTop = () =>
+		Math.min(aboutEl!.getBoundingClientRect().top + window.scrollY, document.documentElement.scrollHeight - window.innerHeight);
+
 	// Snap directionnel : on termine le mouvement dans le sens du scroll plutôt que de
 	// revenir au plus proche (sinon 1-2 crans de molette sont annulés).
 	function snap() {
@@ -454,16 +457,12 @@ export function initStarMap(styles: Record<string, string>) {
 		const mapEnd = mapStart + m.Utot * m.STEP;
 		if (y > mapEnd + 2) {
 			if (!aboutEl) return;
-			// Haut de About, borné au bas de page (About + footer peuvent être plus courts que l'écran).
-			const maxY = document.documentElement.scrollHeight - window.innerHeight;
-			const aboutY = Math.min(aboutEl.getBoundingClientRect().top + y, maxY);
+			const aboutY = aboutTop();
 			if (y >= aboutY - 2) return;
 			const toAbout = scrollDir > 0 ? y > mapEnd + EDGE_PX : y > aboutY - EDGE_PX;
 			animScroll(toAbout ? aboutY : mapEnd);
 			return;
 		}
-		// Tactile : dans la carte, on s'arrête là où le doigt nous laisse.
-		if (coarse) return;
 		const { U, u } = m;
 		let k = 0;
 		if (scrollDir > 0) {
@@ -527,6 +526,17 @@ export function initStarMap(styles: Record<string, string>) {
 		else goTo(i);
 	}
 
+	// Projet précédent (-1) ou suivant (+1) : flèches du clavier et boutons tactiles.
+	function navigate(d: number, fast = false) {
+		const m = metrics();
+		const base = animating && navK != null ? navK : m.kN;
+		const nk = cl(base + d, 0, m.N - 1);
+		if (nk === base) return;
+		navK = nk;
+		setOpen(false);
+		animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
+	}
+
 	function onKey(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			setOpen(false);
@@ -538,14 +548,8 @@ export function initStarMap(styles: Record<string, string>) {
 		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return;
 		if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
 			e.preventDefault();
-			const now = performance.now();
-			if (e.repeat && animating && animEnd - now > 90) return;
-			const base = animating && navK != null ? navK : m.kN;
-			const nk = cl(base + (e.key === 'ArrowRight' ? 1 : -1), 0, m.N - 1);
-			if (nk === base) return;
-			navK = nk;
-			setOpen(false);
-			animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, e.repeat);
+			if (e.repeat && animating && animEnd - performance.now() > 90) return;
+			navigate(e.key === 'ArrowRight' ? 1 : -1, e.repeat);
 		} else if (e.key === 'Enter' && !e.repeat) {
 			// Entrée sur un bouton ou un lien focalisé : on laisse le navigateur faire.
 			if ((e.target as Element).closest('a, button')) return;
@@ -556,7 +560,7 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function onDown(e: PointerEvent) {
-		if (e.button !== 0 || vertical) return; // vertical : le scroll natif suffit
+		if (e.button !== 0 || vertical || coarse) return; // vertical : scroll natif ; tactile : boutons
 		const startX = e.clientX;
 		const startS = window.scrollY;
 		const px = STEP / 150; // 150px de drag = un projet
@@ -816,8 +820,7 @@ export function initStarMap(styles: Record<string, string>) {
 		// Compteur + HUD + nav (textes réécrits seulement quand le projet change)
 		txt(counterEl, pad(kN + 1) + ' / ' + pad(N));
 		const inWheel = p > 0.96;
-		// Sans snap (tactile), on peut s'arrêter entre deux projets : le HUD reste visible.
-		const hudOp = !inWheel ? 0 : coarse ? 1 : cl(1 - Math.abs(u - U[kN]) * 3, 0, 1);
+		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ai];
 		txt(hud.cat, 'Selected · ' + cur.num + ' · ' + cur.cat);
@@ -890,8 +893,22 @@ export function initStarMap(styles: Record<string, string>) {
 	let lastY = window.scrollY;
 	let scrollDir = 1; // sens du dernier scroll (1 = vers le bas)
 	let touching = false; // doigt posé : pas de snap avant qu'il soit levé
+	let touchEndAt = 0;
+	let swipeY: number | null = null; // début d'un geste commencé dans la carte (tactile)
+	const mapRange = () => [stageTop + T, stageTop + T + Utot * STEP];
 	const onScroll = () => {
 		const y = window.scrollY;
+		// Tactile : un swipe lancé hors de la carte s'arrête à son bord,
+		// on y entre toujours par le premier ou le dernier projet.
+		if (coarse && !animating && (touching || performance.now() - touchEndAt < 1500)) {
+			const [a, b] = mapRange();
+			const edge = lastY <= a && y > a ? a : lastY >= b && y < b ? b : null;
+			if (edge !== null) {
+				window.scrollTo({ top: edge, behavior: 'instant' as ScrollBehavior });
+				lastY = edge;
+				return;
+			}
+		}
 		if (y !== lastY) scrollDir = y > lastY ? 1 : -1;
 		lastY = y;
 		if (!raf) raf = requestAnimationFrame(() => {
@@ -931,12 +948,33 @@ export function initStarMap(styles: Record<string, string>) {
 
 	window.addEventListener('scroll', onScroll, { passive: true });
 	window.addEventListener('wheel', onWheel, { passive: true });
-	window.addEventListener('touchstart', () => {
+
+	// --- Tactile : dans la carte, navigation par boutons uniquement ---
+	// Le swipe ne fait pas défiler les projets ; il sert seulement à sortir de la carte
+	// (vers le Hero depuis le premier projet, vers About depuis le dernier).
+	function exitMap(d: number) {
+		const m = metrics();
+		if (d > 0 && m.kN === m.N - 1 && aboutEl) animScroll(aboutTop());
+		else if (d < 0 && m.kN === 0) animScroll(0);
+	}
+	window.addEventListener('touchstart', (e) => {
 		touching = true;
 		onWheel();
+		const [a, b] = mapRange();
+		const y = window.scrollY;
+		swipeY = coarse && !listOpen && y > a - 2 && y < b + 2 ? e.touches[0].clientY : null;
 	}, { passive: true });
-	const onTouchEnd = () => {
+	window.addEventListener('touchmove', (e) => {
+		if (swipeY !== null && e.cancelable) e.preventDefault();
+	}, { passive: false });
+	const onTouchEnd = (e: TouchEvent) => {
 		touching = false;
+		touchEndAt = performance.now();
+		if (swipeY !== null) {
+			const dy = swipeY - (e.changedTouches[0]?.clientY ?? swipeY);
+			swipeY = null;
+			if (Math.abs(dy) > 50) exitMap(dy > 0 ? 1 : -1);
+		}
 		clearTimeout(snapT);
 		snapT = window.setTimeout(snap, 170);
 	};
@@ -957,6 +995,15 @@ export function initStarMap(styles: Record<string, string>) {
 		if (moved) return;
 		const m = metrics();
 		setOpen(true, m.ord[m.kN]);
+	});
+
+	// Boutons tactiles : haut de page, projet précédent / suivant, bas de page.
+	root.querySelectorAll<HTMLElement>('[data-go]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const go = btn.dataset.go;
+			if (go === 'prev' || go === 'next') navigate(go === 'next' ? 1 : -1);
+			else animScroll(go === 'top' ? 0 : document.documentElement.scrollHeight - window.innerHeight, true);
+		});
 	});
 
 	seeAllBtn?.addEventListener('click', openList);

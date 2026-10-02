@@ -72,6 +72,14 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			</div>
 
 			<a class={styles['about-link']} href="#about">About me ↓</a>
+
+			<!-- Tactile : remplace le swipe dans la carte (affiché seulement sur écran tactile). -->
+			<nav class={styles['touch-nav']} aria-label="Projects">
+				<button type="button" data-go="top" aria-label="Back to top">↑</button>
+				<button type="button" data-go="prev">← Prev</button>
+				<button type="button" data-go="next">Next →</button>
+				<button type="button" data-go="bottom" aria-label="Go to the bottom of the page">↓</button>
+			</nav>
 		</div>
 
 		<div class={styles.backdrop} data-backdrop></div>
