@@ -6,12 +6,13 @@ type Raw = {
 	slug: string;
 	title: string;
 	description: string;
+	cat: string;
 	tag: string;
 	year: string;
 	img: string;
 	alt: string;
 };
-type Proj = Raw & { i: number; num: string; cat: string; link: string };
+type Proj = Raw & { i: number; num: string; link: string };
 type Pt = { x: number; y: number };
 type Node = Pt & { g: number; gx: number; gy: number };
 type Group = { c: string; g: number; mem: number[]; gx: number; gy: number; Rc: number; pos: Pt[] | null };
@@ -66,7 +67,6 @@ export function initStarMap(styles: Record<string, string>) {
 		...p,
 		i,
 		num: pad(i + 1),
-		cat: p.tag.split('·')[0].trim(),
 		link: `/projects/${p.slug}`,
 	}));
 	if (!projects.length) return;

@@ -15,18 +15,18 @@ const data = await Promise.all(projects.map(async (p) => ({
 	slug: p.slug,
 	title: p.title,
 	description: p.description,
+	cat: p.category,
 	tag: p.tag,
 	year: p.year,
 	img: await thumb(p.image),
 	alt: p.alt,
 })));
 
-const catOf = (tag: string) => tag.split('·')[0].trim();
-const cats = [...new Set(projects.map((p) => catOf(p.tag)))];
+const cats = [...new Set(projects.map((p) => p.category))];
 const systems = cats.map((c, g) => ({
 	num: pad(g + 1),
 	label: c,
-	count: pad(projects.filter((p) => catOf(p.tag) === c).length),
+	count: pad(projects.filter((p) => p.category === c).length),
 }));
 const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...systems.map((s) => ({ key: s.label, label: s.label, count: s.count }))];
 ---
@@ -143,7 +143,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			<div class={styles['overlay-grid']}>
 				<div class={styles['overlay-rows']}>
 					{projects.map((p, i) => (
-						<div class={styles.row} data-row-idx={i} data-cat={catOf(p.tag)}>
+						<div class={styles.row} data-row-idx={i} data-cat={p.category}>
 							<span class={styles['row-num']}>{pad(i + 1)}</span>
 							<div class={styles['row-main']}>
 								<span class={styles['row-title']}>{p.title}</span>

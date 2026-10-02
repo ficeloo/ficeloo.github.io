@@ -17,6 +17,7 @@ interface Project {
 	title: string;
 	description: string;
 	longDescription?: string;
+	category: string; // Système de la star map : les projets y sont regroupés par catégorie
 	tag: string;
 	year: string;
 	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
@@ -49,6 +50,7 @@ export const projects: Project[] = [
 					<li>Audio integration.</li>
 				</ul>
 			</div>`,
+		category: "Game",
 		tag: "Game  ·  Rust  ·  Arcade",
 		year: "June 2026",
 		image: sdGif,
@@ -80,6 +82,7 @@ export const projects: Project[] = [
 						<li><strong>Full monitoring stack</strong> using Prometheus, Grafana, Alertmanager, and dedicated exporters.</li>
 					</ul>
 				</div>`,
+		category: "Web",
 		tag: "Web  ·  TypeScript  ·  Full-stack",
 		year: "May 2026",
 		image: ftHome,
