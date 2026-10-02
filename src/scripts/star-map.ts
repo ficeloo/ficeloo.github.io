@@ -253,6 +253,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const popYear = root.querySelector<HTMLElement>('[data-popup-year]');
 	const popLink = root.querySelector<HTMLAnchorElement>('[data-popup-link]');
 	const popClose = root.querySelector<HTMLElement>('[data-popup-close]');
+	const keysEl = root.querySelector<HTMLElement>('[data-keys]');
 
 	// Overlay "Tout voir"
 	const overlayEl = root.querySelector<HTMLElement>('[data-overlay]');
@@ -642,6 +643,10 @@ export function initStarMap(styles: Record<string, string>) {
 		const wheelOp = cl((p - 0.35) / 0.5, 0, 1);
 		css(mapUi!, 'opacity', wheelOp.toFixed(3));
 		css(mapUi!, 'pointer-events', p > 0.8 ? 'auto' : 'none');
+		if (keysEl) {
+			css(keysEl, 'opacity', wheelOp.toFixed(3));
+			if (changed(keysEl, '#popup', String(isOpen))) keysEl.toggleAttribute('data-popup', isOpen);
+		}
 
 		let j = 0;
 		while (j < N - 1 && U[j + 1] <= u) j++;
