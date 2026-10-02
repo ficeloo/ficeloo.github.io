@@ -38,8 +38,10 @@ const isGif = project.image.format === 'gif';
 		</div>
 		{project.screenshots && project.screenshots.length > 0 &&
 			(<div class={styles.gallery}>
-				{project.screenshots.map((shot) => (
-					<Image class={styles.thumb} data-thumb src={shot} alt="" />
+				{project.screenshots.map((shot, i) => (
+					<button type="button" class={styles.thumb} data-thumb>
+						<Image src={shot} alt={`${project.title}, screenshot ${i + 1}`} />
+					</button>
 				))}
 			</div>
 		)}
@@ -60,16 +62,17 @@ const isGif = project.image.format === 'gif';
 <script>
 	// Clic sur une capture : elle recouvre le média principal pendant 10 s.
 	const preview = document.querySelector<HTMLImageElement>('[data-preview]');
-	const thumbnails = document.querySelectorAll<HTMLImageElement>('[data-thumb]');
+	const thumbnails = document.querySelectorAll<HTMLButtonElement>('[data-thumb]');
 
 	let revertTimer = 0;
 
 	thumbnails.forEach(thumb => {
 		thumb.addEventListener('click', () => {
-			if (!preview)
+			const shot = thumb.querySelector('img');
+			if (!preview || !shot)
 				return;
 
-			preview.src = thumb.currentSrc || thumb.src;
+			preview.src = shot.currentSrc || shot.src;
 			preview.toggleAttribute('data-visible', true);
 
 			clearTimeout(revertTimer);

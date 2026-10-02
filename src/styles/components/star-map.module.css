@@ -411,6 +411,13 @@
 	color: var(--color-accent);
 }
 
+/* Focus clavier visible sur tous les contrôles de la carte. */
+.stage button:focus-visible,
+.stage a:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
 /* ===== Raccourcis clavier (bas de la carte) ===== */
 .keys {
 	position: absolute;
@@ -860,6 +867,12 @@
 }
 
 .row {
+	/* Bouton remis à plat : il garde l'apparence d'une ligne de liste. */
+	width: 100%;
+	background: none;
+	border: 0;
+	font: inherit;
+	text-align: left;
 	display: grid;
 	grid-template-columns: 3rem minmax(0, 1fr) auto;
 	gap: 1rem;

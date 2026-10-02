@@ -92,7 +92,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			</defs>
 			<polygon data-beam-poly points="" fill="url(#beamG)"></polygon>
 		</svg>
-		<div class={styles.popup} data-popup>
+		<div class={styles.popup} data-popup inert>
 			<div class={styles['popup-scanlines']}></div>
 			<div class={`${styles['popup-corner']} ${styles['corner-tl']}`}></div>
 			<div class={`${styles['popup-corner']} ${styles['corner-tr']}`}></div>
@@ -103,7 +103,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 				<div class={styles['popup-body']}>
 					<div class={styles['popup-meta']}>
 						<span data-popup-meta></span>
-						<button class={styles['popup-close']} type="button" data-popup-close>✕</button>
+						<button class={styles['popup-close']} type="button" data-popup-close aria-label="Close">✕</button>
 					</div>
 					<h3 class={styles['popup-title']} data-popup-title></h3>
 					<p class={styles['popup-desc']} data-popup-desc></p>
@@ -127,10 +127,10 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 	</div>
 
 	<!-- Overlay "Tout voir" -->
-	<div class={styles.overlay} data-overlay>
+	<div class={styles.overlay} data-overlay role="dialog" aria-modal="true" aria-labelledby="overlay-title" inert>
 		<div class={styles['overlay-inner']}>
 			<div class={styles['overlay-head']}>
-				<h2 class={styles['overlay-title']}>All <span class="accent">projects</span></h2>
+				<h2 class={styles['overlay-title']} id="overlay-title">All <span class="accent">projects</span></h2>
 				<button class={styles['overlay-close']} type="button" data-list-close>Close ✕</button>
 			</div>
 			<div class={styles['overlay-filters']}>
@@ -143,14 +143,14 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			<div class={styles['overlay-grid']}>
 				<div class={styles['overlay-rows']}>
 					{projects.map((p, i) => (
-						<div class={styles.row} data-row-idx={i} data-cat={p.category}>
+						<button type="button" class={styles.row} data-row-idx={i} data-cat={p.category}>
 							<span class={styles['row-num']}>{pad(i + 1)}</span>
-							<div class={styles['row-main']}>
+							<span class={styles['row-main']}>
 								<span class={styles['row-title']}>{p.title}</span>
 								<span class={styles['row-tag']}>{p.tag}</span>
-							</div>
+							</span>
 							<span class={styles['row-year']}>{p.year} →</span>
-						</div>
+						</button>
 					))}
 				</div>
 				<div class={styles['overlay-preview']}>

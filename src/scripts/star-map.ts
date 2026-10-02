@@ -506,6 +506,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function setOpen(o: boolean, idx?: number) {
 		if (o === isOpen) return;
 		isOpen = o;
+		if (popupEl) popupEl.inert = !o; // fermée : ses boutons sortent de l'ordre de tabulation
 		if (idx != null) openIdx = idx;
 		if (o) {
 			fillPopup(openIdx);
@@ -614,17 +615,25 @@ export function initStarMap(styles: Record<string, string>) {
 		if (overlayEl) {
 			overlayEl.style.opacity = '1';
 			overlayEl.style.pointerEvents = 'auto';
+			overlayEl.inert = false;
 		}
 		applyFilter();
 		applyHover();
+		// Focus sur le projet courant de la liste.
+		rows.find((r) => Number(r.dataset.rowIdx) === hovIdx)?.focus({ preventScroll: true });
 	}
-	function closeList() {
+	// restoreFocus : rendre le focus au bouton « View all » (sauf si on part vers un projet).
+	function closeList(restoreFocus = true) {
+		if (!listOpen) return;
 		listOpen = false;
 		document.body.style.overflow = '';
 		if (overlayEl) {
 			overlayEl.style.opacity = '0';
 			overlayEl.style.pointerEvents = 'none';
+			overlayEl.inert = true;
 		}
+		if (restoreFocus) seeAllBtn?.focus({ preventScroll: true });
+		else (document.activeElement as HTMLElement | null)?.blur();
 	}
 
 	function render() {
@@ -1006,7 +1015,21 @@ export function initStarMap(styles: Record<string, string>) {
 	});
 
 	seeAllBtn?.addEventListener('click', openList);
-	listClose?.addEventListener('click', closeList);
+	listClose?.addEventListener('click', () => closeList());
+	// Overlay ouvert : Tab boucle sur ses boutons au lieu de partir dans la page derrière.
+	overlayEl?.addEventListener('keydown', (e) => {
+		if (e.key !== 'Tab') return;
+		const items = Array.from(overlayEl.querySelectorAll<HTMLElement>('button')).filter((b) => !b.hidden);
+		const first = items[0];
+		const last = items[items.length - 1];
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault();
+			first.focus();
+		}
+	});
 	chips.forEach((ch) => {
 		ch.addEventListener('click', () => {
 			filter = ch.dataset.filter || 'All';
@@ -1015,12 +1038,14 @@ export function initStarMap(styles: Record<string, string>) {
 	});
 	rows.forEach((r) => {
 		const i = Number(r.dataset.rowIdx);
-		r.addEventListener('mouseenter', () => {
+		const hover = () => {
 			hovIdx = i;
 			applyHover();
-		});
+		};
+		r.addEventListener('mouseenter', hover);
+		r.addEventListener('focus', hover); // au clavier, l'aperçu suit le focus
 		r.addEventListener('click', () => {
-			closeList();
+			closeList(false);
 			goTo(i, true);
 			setTimeout(() => setOpen(true, i), 120);
 		});
