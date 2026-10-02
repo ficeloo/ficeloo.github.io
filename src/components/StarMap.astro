@@ -1,6 +1,7 @@
 ---
 import { projects } from '../data/projects';
 import { getImage } from 'astro:assets';
+import InProgressBadge from './InProgressBadge.astro';
 import type { ImageMetadata } from 'astro';
 import styles from '../styles/components/star-map.module.css';
 
@@ -18,6 +19,7 @@ const data = await Promise.all(projects.map(async (p) => ({
 	cat: p.category,
 	tag: p.tag,
 	year: p.year,
+	wip: !!p.inProgress,
 	img: await thumb(p.image),
 	alt: p.alt,
 })));
@@ -63,7 +65,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			<div class={styles.hud} data-hud>
 				<div class={styles['hud-label']} data-hud-cat>Selected</div>
 				<div class={styles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
-				<h3 class={styles['hud-title']} data-hud-title></h3>
+				<h3 class={styles['hud-title']}><span class={styles['title-text']} data-hud-title></span><InProgressBadge data-hud-wip hidden /></h3>
 				<div class={styles['hud-meta']}>
 					<span data-hud-tag></span>
 					<span class="sep">-</span>
@@ -105,7 +107,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 						<span data-popup-meta></span>
 						<button class={styles['popup-close']} type="button" data-popup-close aria-label="Close">✕</button>
 					</div>
-					<h3 class={styles['popup-title']} data-popup-title></h3>
+					<h3 class={styles['popup-title']}><span class={styles['title-text']} data-popup-title></span><InProgressBadge data-popup-wip hidden /></h3>
 					<p class={styles['popup-desc']} data-popup-desc></p>
 					<div class={styles['popup-tagyear']}>
 						<span data-popup-tag></span>
@@ -146,7 +148,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 						<button type="button" class={styles.row} data-row-idx={i} data-cat={p.category}>
 							<span class={styles['row-num']}>{pad(i + 1)}</span>
 							<span class={styles['row-main']}>
-								<span class={styles['row-title']}>{p.title}</span>
+								<span class={styles['row-title']}>{p.title}{p.inProgress && <InProgressBadge />}</span>
 								<span class={styles['row-tag']}>{p.tag}</span>
 							</span>
 							<span class={styles['row-year']}>{p.year} →</span>
@@ -167,7 +169,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			<li>
 				<a href={`/projects/${p.slug}`}>
 					<span class={styles['f-num']}>{pad(i + 1)}</span>
-					<span>{p.title}</span>
+					<span>{p.title} {p.inProgress && <InProgressBadge />}</span>
 					<span class={styles['f-tag']}>{p.tag}</span>
 				</a>
 			</li>

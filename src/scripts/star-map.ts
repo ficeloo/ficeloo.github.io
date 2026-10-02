@@ -9,6 +9,7 @@ type Raw = {
 	cat: string;
 	tag: string;
 	year: string;
+	wip: boolean; // projet en cours : badge « In progress »
 	img: string;
 	alt: string;
 };
@@ -243,6 +244,7 @@ export function initStarMap(styles: Record<string, string>) {
 		title: root.querySelector<HTMLElement>('[data-hud-title]'),
 		tag: root.querySelector<HTMLElement>('[data-hud-tag]'),
 		year: root.querySelector<HTMLElement>('[data-hud-year]'),
+		wip: root.querySelector<HTMLElement>('[data-hud-wip]'),
 	};
 	const navRows = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-row]'));
 	const navBars = navRows.map((r) => r.querySelector<HTMLElement>('[data-nav-bar]'));
@@ -260,6 +262,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const popYear = root.querySelector<HTMLElement>('[data-popup-year]');
 	const popLink = root.querySelector<HTMLAnchorElement>('[data-popup-link]');
 	const popClose = root.querySelector<HTMLElement>('[data-popup-close]');
+	const popWip = root.querySelector<HTMLElement>('[data-popup-wip]');
 	const keysEl = root.querySelector<HTMLElement>('[data-keys]');
 	const goPrev = root.querySelector<HTMLButtonElement>('[data-go="prev"]');
 	const goNext = root.querySelector<HTMLButtonElement>('[data-go="next"]');
@@ -496,6 +499,7 @@ export function initStarMap(styles: Record<string, string>) {
 		if (popDesc) popDesc.textContent = pr.description;
 		if (popTag) popTag.textContent = pr.tag;
 		if (popYear) popYear.textContent = pr.year;
+		if (popWip) popWip.hidden = !pr.wip;
 		if (popLink) popLink.setAttribute('href', pr.link);
 		if (popImg) {
 			popImg.src = pr.img;
@@ -836,6 +840,7 @@ export function initStarMap(styles: Record<string, string>) {
 		txt(hud.title, cur.title);
 		txt(hud.tag, cur.tag);
 		txt(hud.year, cur.year);
+		if (hud.wip && changed(hud.wip, '#hidden', String(!cur.wip))) hud.wip.hidden = !cur.wip;
 		navRows.forEach((rowEl, gi) => {
 			const on = gi === curG;
 			css(rowEl, 'color', on ? TEXT : TEXT_DIM);

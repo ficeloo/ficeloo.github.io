@@ -20,6 +20,7 @@ interface Project {
 	category: string; // Système de la star map : les projets y sont regroupés par catégorie
 	tag: string;
 	year: string;
+	inProgress?: boolean; // Projet pas encore terminé : badge « In progress » partout où il apparaît
 	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
 	alt: string;
 	screenshots?: ImageMetadata[]; // Tableau de screenshots

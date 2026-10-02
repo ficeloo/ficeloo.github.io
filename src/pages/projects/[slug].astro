@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { projects } from '../../data/projects';
 import { Image } from 'astro:assets';
+import InProgressBadge from '../../components/InProgressBadge.astro';
 import styles from '../../styles/pages/project.module.css'
 
 export function getStaticPaths() {
@@ -18,7 +19,7 @@ const isGif = project.image.format === 'gif';
 
 <Layout title={`${project.title} — ficelo`} description={project.description} crumb={`Project / ${project.title}`} back={`/#project-${project.slug}`}>
 	<div class={styles.project}>
-		<h1>{project.title}</h1>
+		<h1>{project.title} {project.inProgress && <InProgressBadge />}</h1>
 		<div class={styles.tag}>
 			{project.tag} <span class="accent">—</span> {project.year}
 		</div>

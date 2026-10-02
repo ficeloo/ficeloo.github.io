@@ -1,0 +1,8 @@
+---
+import styles from '../styles/components/in-progress-badge.module.css'
+
+// Attributs en plus transmis au badge (ex. data-hud-wip et hidden, pilotés par la star map).
+const attrs = Astro.props;
+---
+
+<span class={styles.badge} {...attrs}><span class={styles.dot}></span>In progress</span>
