@@ -1,18 +1,25 @@
 ---
 import { projects } from '../data/projects';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import styles from '../styles/components/star-map.module.css';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-const data = projects.map((p) => ({
+// Vignettes (HUD, popup, aperçu « View all ») : jamais affichées à plus de 640px de large.
+// Un GIF est gardé tel quel, sinon la conversion lui ferait perdre son animation.
+const thumb = async (img: ImageMetadata) =>
+	img.format === 'gif' ? img.src : (await getImage({ src: img, width: 720, format: 'webp' })).src;
+
+const data = await Promise.all(projects.map(async (p) => ({
 	slug: p.slug,
 	title: p.title,
 	description: p.description,
 	tag: p.tag,
 	year: p.year,
-	img: p.image.src,
+	img: await thumb(p.image),
 	alt: p.alt,
-}));
+})));
 
 const catOf = (tag: string) => tag.split('·')[0].trim();
 const cats = [...new Set(projects.map((p) => catOf(p.tag)))];

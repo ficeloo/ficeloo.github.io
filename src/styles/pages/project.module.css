@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	padding: 1em;
-	font-size: clamp(0.5rem, 1rem, 3rem);
+	font-size: 1rem;
 	gap: 1em;
 	max-width: 80rem;
 	margin: 0 auto;
@@ -23,7 +23,7 @@
 	display: flex;
 
 	font-family: var(--font-display);
-	font-size: 0.95em;;
+	font-size: 0.95em;
 	text-transform: uppercase;
 	gap: 1em;
 }
@@ -65,11 +65,32 @@
 	background-color: color-mix(in srgb, var(--color-bg) 85%, white);
 }
 
-.main-img img {
+.main-img {
+	position: relative;
+}
+
+.main-img > img {
+	display: block;
 	width: 100%;
+	height: auto;
 	border-radius: 5px;
 	border: 1px solid rgba(83, 121, 112, 0.4);
-	transition: opacity 0.15s ease-in-out;
+	box-sizing: border-box;
+}
+
+/* Capture de la galerie posée sur le média principal (voir le script de la page). */
+.main-img .preview {
+	position: absolute;
+	inset: 0;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s ease-in-out;
+}
+
+.main-img .preview[data-visible] {
+	opacity: 1;
 }
 
 .gallery {
@@ -151,20 +172,15 @@
 		border: 1px solid;
 		aspect-ratio: 16/9;
 		margin: 1rem auto;
-		allow: autoplay;
 	}
 }
 
 @media(min-width: 768px) {
 
 	.project {
-		font-size: clamp(1em, 1.15em, 4em);
+		font-size: 1.15em;
 		padding: 2em 3em;
 		gap: 2em;
-	}
-
-	.main-img img {
-		width: 100%;
 	}
 
 	.gallery {

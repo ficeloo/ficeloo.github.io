@@ -1,10 +1,9 @@
-// Moteur de la "star map" — porté du prototype de design (design_handoff_star_map).
-// Phase A : rendu statique. Phase B : modèle de scroll, fusion Hero↔carte, snap,
-// nav cliquable, HUD/compteur pilotés par le scroll.
-// Phases suivantes : sauts hyperspace (C), popup + clavier + drag (D), overlay (E).
+// Moteur de la "star map" : la liste des projets devient une carte spatiale
+// parcourue au scroll (systèmes par catégorie, sauts hyperspace entre systèmes,
+// popup projetée, overlay « View all », clavier et drag).
 
 type Raw = {
-	slug: string | null;
+	slug: string;
 	title: string;
 	description: string;
 	tag: string;
@@ -68,7 +67,7 @@ export function initStarMap(styles: Record<string, string>) {
 		i,
 		num: pad(i + 1),
 		cat: p.tag.split('·')[0].trim(),
-		link: p.slug ? `/projects/${p.slug}` : '#',
+		link: `/projects/${p.slug}`,
 	}));
 	if (!projects.length) return;
 
@@ -741,7 +740,7 @@ export function initStarMap(styles: Record<string, string>) {
 		});
 
 		// Nœuds (hors écran : masqués, on n'écrit rien d'autre)
-		ord.forEach((pi, q) => {
+		ord.forEach((_, q) => {
 			const s = S(W[q], dip);
 			const { dot, label } = nodeEls[q];
 			const on = s.x > -240 && s.x < vw + 240 && s.y > -120 && s.y < vh + 120;

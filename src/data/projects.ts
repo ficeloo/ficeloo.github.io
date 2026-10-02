@@ -1,14 +1,14 @@
-import stellarDriftGif from '../assets/stellar_drift.gif'
-import sdMenu from '../assets/MainMenu.png'
-import sdPause from '../assets/PauseMenu.png'
-import sdGameOver from '../assets/GameOver.png'
-import sdPlaying from '../assets/CoreGameplay.png'
-import transcendence from '../assets/ft_transcendance.png'
-import ftTrAccount from '../assets/ftTrAccount.png'
-import ftTrChat from '../assets/ftTrChat.png'
-import ftTrPrivPol from '../assets/ftTrPrivPol.png'
-import ftTrGame from '../assets/ftTrGame.png'
-import ftTrWin from '../assets/ftTrWin.png'
+import sdGif from '../assets/stellar-drift/gameplay.gif'
+import sdMenu from '../assets/stellar-drift/menu.png'
+import sdPause from '../assets/stellar-drift/pause.png'
+import sdGameOver from '../assets/stellar-drift/game-over.png'
+import sdPlaying from '../assets/stellar-drift/gameplay.png'
+import ftHome from '../assets/ft-transcendence/home.png'
+import ftAccount from '../assets/ft-transcendence/account.png'
+import ftChat from '../assets/ft-transcendence/chat.png'
+import ftPrivacy from '../assets/ft-transcendence/privacy-policy.png'
+import ftGame from '../assets/ft-transcendence/game.png'
+import ftWin from '../assets/ft-transcendence/win.png'
 
 import type { ImageMetadata } from 'astro';
 
@@ -19,7 +19,7 @@ interface Project {
 	longDescription?: string;
 	tag: string;
 	year: string;
-	image: ImageMetadata; // Image principale
+	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
 	alt: string;
 	screenshots?: ImageMetadata[]; // Tableau de screenshots
 	links: { itch?: string; github?: string; gdd?: string };
@@ -51,8 +51,8 @@ export const projects: Project[] = [
 			</div>`,
 		tag: "Game  ·  Rust  ·  Arcade",
 		year: "June 2026",
-		image: stellarDriftGif,
-		alt: "Short video of Stellar Drift gameplay",
+		image: sdGif,
+		alt: "Stellar Drift gameplay: a spaceship shooting at asteroids",
 		screenshots: [sdMenu, sdPlaying, sdPause, sdGameOver],
 		links: { itch: "https://ficelo.itch.io/stellar-drift", github: "https://github.com/ficeloo/stellar_drift", gdd: "https://github.com/ficeloo/stellar_drift/blob/master/doc/GDD.md" },
 		embedUrl: "https://itch.io/embed-upload/17819152?color=191a1c",
@@ -82,9 +82,9 @@ export const projects: Project[] = [
 				</div>`,
 		tag: "Web  ·  TypeScript  ·  Full-stack",
 		year: "May 2026",
-		image: transcendence,
+		image: ftHome,
 		alt: "Home page of the Ft_Transcendence project",
-		screenshots: [ftTrAccount, ftTrGame, ftTrWin, ftTrChat, ftTrPrivPol],
+		screenshots: [ftAccount, ftGame, ftWin, ftChat, ftPrivacy],
 		links: { github: "https://github.com/pixel-fight42/ft_transcendance/" },
 	},
 ]

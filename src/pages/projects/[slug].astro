@@ -12,6 +12,8 @@ export function getStaticPaths() {
 }
 
 const { project } = Astro.props;
+// Un GIF est affiché tel quel : la conversion en webp lui ferait perdre son animation.
+const isGif = project.image.format === 'gif';
 ---
 
 <Layout title={`${project.title} — ficelo`} description={project.description} crumb={`Project / ${project.title}`} back={`/#project-${project.slug}`}>
@@ -25,8 +27,14 @@ const { project } = Astro.props;
 			{project.links?.github && <a class={project.links.itch ? styles.second : styles.first} href={project.links.github}>&lt;/&gt; Code</a>}
 			{project.links?.gdd && <a class={styles.second} href={project.links.gdd}>🗎 GDD</a>}
 		</div>
-		<div class={styles["main-img"]} >
-			<img id="main" src={project.image.src} alt={project.alt} />
+		<div class={styles["main-img"]}>
+			{isGif ? (
+				<img src={project.image.src} width={project.image.width} height={project.image.height} alt={project.alt} />
+			) : (
+				<Image src={project.image} alt={project.alt} widths={[640, 1280, 1920]} sizes="(min-width: 80rem) 80rem, 100vw" loading="eager" />
+			)}
+			<!-- Capture cliquée dans la galerie, affichée par-dessus le média principal. -->
+			<img class={styles.preview} data-preview alt="" />
 		</div>
 		{project.screenshots && project.screenshots.length > 0 &&
 			(<div class={styles.gallery}>
@@ -42,7 +50,7 @@ const { project } = Astro.props;
 		{project.embedUrl &&
 			(<div class={styles.embed}>
 				Play it here
-				<iframe src={project.embedUrl} width="1280"/>
+				<iframe src={project.embedUrl} title={`${project.title}, playable in the browser`} width="1280" allow="autoplay"/>
 				<p class={styles["on-mobile"]}>This game is not designed to run on your device. Try it on a computer !</p>
 			</div>
 		)}
@@ -50,34 +58,22 @@ const { project } = Astro.props;
 </Layout>
 
 <script>
-	const mainImage = document.getElementById('main') as HTMLImageElement;
-	const thumbnails = document.querySelectorAll('[data-thumb]') as NodeListOf<HTMLImageElement>;
-
-	const originalSrc = mainImage.src;
+	// Clic sur une capture : elle recouvre le média principal pendant 10 s.
+	const preview = document.querySelector<HTMLImageElement>('[data-preview]');
+	const thumbnails = document.querySelectorAll<HTMLImageElement>('[data-thumb]');
 
 	let revertTimer = 0;
 
 	thumbnails.forEach(thumb => {
 		thumb.addEventListener('click', () => {
-			if (!mainImage)
+			if (!preview)
 				return;
 
-
-			mainImage.style.opacity = '0.6';
-
-			setTimeout(() => {
-				mainImage.src = thumb.src;
-				mainImage.style.opacity = '1';
-			}, 150);
+			preview.src = thumb.currentSrc || thumb.src;
+			preview.toggleAttribute('data-visible', true);
 
 			clearTimeout(revertTimer);
-			revertTimer = setTimeout(() => {
-				mainImage.style.opacity = '0.6';
-				setTimeout(() => {
-					mainImage.src = originalSrc;
-					mainImage.style.opacity = '1';
-				}, 150);
-			}, 10000);
+			revertTimer = window.setTimeout(() => preview.removeAttribute('data-visible'), 10000);
 		});
 	});
 </script>
