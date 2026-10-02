@@ -9,6 +9,11 @@ import ftChat from '../assets/ft-transcendence/chat.png'
 import ftPrivacy from '../assets/ft-transcendence/privacy-policy.png'
 import ftGame from '../assets/ft-transcendence/game.png'
 import ftWin from '../assets/ft-transcendence/win.png'
+// TODO (Théophile) : remplacer les cover.png provisoires par les vraies images
+// (même nom, ou changer l'extension ici si c'est un .gif / .jpg).
+import egCover from '../assets/endgame/cover.png'
+import scopCover from '../assets/scop/cover.png'
+import pfCover from '../assets/portfolio/cover.png'
 
 import type { ImageMetadata } from 'astro';
 
@@ -50,6 +55,8 @@ interface Project {
 	embedUrl?: string; // Pour les projets jouables sur navigateur (WASM)
 }
 
+// Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
+// (Game → Graphics → Web). Les numéros 01, 02… suivent cet ordre de parcours.
 export const projects: Project[] = [
 	{
 		slug: "stellar-drift",
@@ -88,6 +95,55 @@ export const projects: Project[] = [
 		embedUrl: "https://itch.io/embed-upload/17819152?color=191a1c",
 	},
 	{
+		slug: "endgame",
+		title: "Endgame",
+		// TODO (Théophile) : relire / réécrire ce brouillon (tiré de la page itch.io).
+		description: "A platformer made in less than 96 hours with three friends for the GMTK Game Jam 2026, our first game with Godot.",
+		longDescription: `
+			<p>
+				<em>Made by Cyprien, Marion, Noé and Théophile during the GMTK Game Jam 2026.</em><br>
+				<br>
+				Endgame was created in <span class="accent">less than 96 hours</span>, and we were so involved that we finished it at the last moment after an all-nighter.<br>
+				<br>
+				It has platformer mechanics, but above all we hope its <strong class="accent">theme and story</strong> will speak to those who play it until the end. We discovered <strong class="accent">Godot</strong> for this jam.<br>
+			</p>
+			<div>
+				Credits:
+				<ul style="padding-left: 1.2rem;">
+					<li>Music by John, a friend of the team.</li>
+					<li>Playable character by toulhane (Red Guard).</li>
+					<li>Ground, creatures and nature by kenney.nl (Pico-8 Platformer).</li>
+					<li>Coins by thepeeps191, clock pixel art by bontt.</li>
+				</ul>
+			</div>`,
+		category: "Game",
+		tag: "Game  ·  Godot  ·  Game Jam",
+		year: "July 2026",
+		image: egCover,
+		alt: "Endgame cover",
+		links: { itch: "https://ficelo.itch.io/endgame", github: "https://github.com/GameJam-NACRE/GMTK-2026" },
+		// TODO : embedUrl (itch.io → Edit game → Embed) pour le rendre jouable ici.
+	},
+	{
+		slug: "scop",
+		title: "Scop",
+		// TODO (Théophile) : texte à écrire.
+		description: "TODO — A 42 project: loading and displaying a textured 3D object with Rust and Vulkan.",
+		longDescription: `
+			<p>
+				<em>This project is part of the 42 curriculum.</em><br>
+				<br>
+				TODO — description du projet.<br>
+			</p>`,
+		category: "Graphics",
+		tag: "Graphics  ·  Rust  ·  Vulkan",
+		year: "2026",
+		inProgress: true,
+		image: scopCover,
+		alt: "Scop render",
+		links: {}, // TODO : lien GitHub quand le dépôt sera public
+	},
+	{
 		slug: "ft_transcendence",
 		title: "Ft_Transcendence",
 		description: "A multiplayer web platform built around our custom game, Pixel Fight. Full-stack project exploring real-time networking and authentication.",
@@ -122,6 +178,24 @@ export const projects: Project[] = [
 		alt: "Home page of the Ft_Transcendence project",
 		screenshots: [ftAccount, ftGame, ftWin, ftChat, ftPrivacy],
 		links: { github: "https://github.com/pixel-fight42/ft_transcendance/" },
+	},
+	{
+		slug: "portfolio",
+		title: "ficelo.dev",
+		// TODO (Théophile) : texte à écrire (garder la phrase de transparence sur la refonte).
+		description: "TODO — This portfolio: a scroll-driven star map built with Astro.",
+		longDescription: `
+			<p>
+				TODO — description du projet.<br>
+				<br>
+				<em>I built the first version on my own. The 2026 redesign was developed with an AI coding assistant (Claude Code), from my design and direction.</em><br>
+			</p>`,
+		category: "Web",
+		tag: "Web  ·  Astro  ·  TypeScript",
+		year: "May 2026",
+		image: pfCover,
+		alt: "The star map of the portfolio",
+		links: { github: "https://github.com/ficeloo/ficeloo.github.io" },
 	},
 ]
 

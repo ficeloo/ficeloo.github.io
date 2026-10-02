@@ -1,11 +1,16 @@
 ---
-import { projects } from '../data/projects';
+import { projects as allProjects } from '../data/projects';
 import { getImage } from 'astro:assets';
 import InProgressBadge from './InProgressBadge.astro';
 import type { ImageMetadata } from 'astro';
 import styles from '../styles/components/star-map.module.css';
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+// Projets regroupés par système, dans l'ordre d'apparition des catégories :
+// c'est l'ordre de parcours de la carte, donc celui des numéros 01, 02…
+const cats = [...new Set(allProjects.map((p) => p.category))];
+const projects = cats.flatMap((c) => allProjects.filter((p) => p.category === c));
 
 // Vignettes (HUD, popup, aperçu « View all ») : jamais affichées à plus de 640px de large.
 // Un GIF est gardé tel quel, sinon la conversion lui ferait perdre son animation.
@@ -24,7 +29,6 @@ const data = await Promise.all(projects.map(async (p) => ({
 	alt: p.alt,
 })));
 
-const cats = [...new Set(projects.map((p) => p.category))];
 const systems = cats.map((c, g) => ({
 	num: pad(g + 1),
 	label: c,
