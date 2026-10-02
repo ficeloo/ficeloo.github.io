@@ -75,16 +75,24 @@ import styles from '../styles/components/hero.module.css'
 			});
 		}
 
-		function loop() {
+		// Perf : la boucle s'arrête quand le Hero est invisible et repart quand il revient.
+		let running = false;
+		function start() {
+			if (running) return;
+			running = true;
 			requestAnimationFrame(loop);
+		}
+
+		function loop() {
 			// Effacer un canvas plein écran coûte : seulement s'il y a quelque chose dessus.
 			if (dirty) ctx.clearRect(0, 0, W, H);
 			dirty = false;
-			// Perf : Hero invisible → on ne dessine rien (et on vide les filantes).
 			if (slot?.hasAttribute('data-hidden')) {
 				shooting = [];
+				running = false;
 				return;
 			}
+			requestAnimationFrame(loop);
 			sinceShoot++;
 			if (sinceShoot > 70 && Math.random() < 0.035) {
 				spawn();
@@ -113,6 +121,12 @@ import styles from '../styles/components/hero.module.css'
 				if (sh.life >= sh.max) shooting.splice(i, 1);
 			}
 		}
-		requestAnimationFrame(loop);
+		// La star map pose/retire data-hidden sur le slot du Hero.
+		if (slot) {
+			new MutationObserver(() => {
+				if (!slot.hasAttribute('data-hidden')) start();
+			}).observe(slot, { attributes: true, attributeFilter: ['data-hidden'] });
+		}
+		start();
 	}
 </script>

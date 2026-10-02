@@ -1,9 +1,9 @@
 .project {
 	display: flex;
 	flex-direction: column;
-	padding: 1em;
-	font-size: 1rem;
-	gap: 1em;
+	padding: 2em 3em;
+	font-size: 1.15em;
+	gap: 2em;
 	max-width: 80rem;
 	margin: 0 auto;
 }
@@ -173,35 +173,33 @@
 }
 
 .embed iframe {
-	display: none;
+	display: block;
+	border: 1px solid;
+	aspect-ratio: 16/9;
+	margin: 1rem auto;
 }
 
+/* Message affiché à la place du jeu quand l'écran est trop petit. */
 .on-mobile {
-	display: flex;
+	display: none;
 	justify-content: center;
 	color: var(--color-text);
 }
 
-@media(min-width: 1280px) {
-	.on-mobile {display: none;}
+/* Le jeu itch.io fait 1280px de large : en dessous, on n'affiche que le message. */
+@media (max-width: 1279px) {
 	.embed iframe {
+		display: none;
+	}
+	.on-mobile {
 		display: flex;
-		align-items: start;
-		border: 1px solid;
-		aspect-ratio: 16/9;
-		margin: 1rem auto;
 	}
 }
 
-@media(min-width: 768px) {
-
+@media (max-width: 768px) {
 	.project {
-		font-size: 1.15em;
-		padding: 2em 3em;
-		gap: 2em;
-	}
-
-	.gallery {
-		width: 100%;
+		padding: 1em;
+		font-size: 1rem;
+		gap: 1em;
 	}
 }
