@@ -261,6 +261,8 @@ export function initStarMap(styles: Record<string, string>) {
 	const popLink = root.querySelector<HTMLAnchorElement>('[data-popup-link]');
 	const popClose = root.querySelector<HTMLElement>('[data-popup-close]');
 	const keysEl = root.querySelector<HTMLElement>('[data-keys]');
+	const goPrev = root.querySelector<HTMLButtonElement>('[data-go="prev"]');
+	const goNext = root.querySelector<HTMLButtonElement>('[data-go="next"]');
 
 	// Overlay "Tout voir"
 	const overlayEl = root.querySelector<HTMLElement>('[data-overlay]');
@@ -814,6 +816,8 @@ export function initStarMap(styles: Record<string, string>) {
 
 		// Compteur + HUD + nav (textes réécrits seulement quand le projet change)
 		txt(counterEl, pad(kN + 1) + ' / ' + pad(N));
+		if (goPrev && changed(goPrev, '#disabled', String(kN === 0))) goPrev.disabled = kN === 0;
+		if (goNext && changed(goNext, '#disabled', String(kN === N - 1))) goNext.disabled = kN === N - 1;
 		const inWheel = p > 0.96;
 		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));

@@ -439,9 +439,18 @@
 	vertical-align: middle;
 	border: 1px solid rgba(var(--rgb-secondary), 0.7);
 	border-radius: 4px;
-	font-family: inherit;
+	/* Police système : les flèches de Syne Mono sont minuscules. */
+	font-family: system-ui, sans-serif;
+	font-size: 1.15rem;
+	letter-spacing: 0;
 	text-align: center;
 	color: var(--color-text);
+}
+
+/* Touche avec un mot (« esc ») : plus petite que les symboles. */
+.keys .kbd-word {
+	font-size: 0.75rem;
+	letter-spacing: 0.08em;
 }
 
 .keys kbd:first-child {
@@ -588,6 +597,11 @@
 .touch-nav button:active {
 	color: var(--color-accent);
 	border-color: var(--color-accent);
+}
+
+/* Premier / dernier projet : Prev / Next n'ont plus d'effet. */
+.touch-nav button:disabled {
+	opacity: 0.35;
 }
 
 @media (pointer: coarse) {
