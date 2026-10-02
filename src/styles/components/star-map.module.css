@@ -415,7 +415,7 @@
 .keys {
 	position: absolute;
 	left: 50%;
-	bottom: 1.6rem;
+	bottom: 3rem;
 	z-index: 43; /* au-dessus du fond assombri de la popup */
 	transform: translateX(-50%);
 	font-family: var(--font-display);
