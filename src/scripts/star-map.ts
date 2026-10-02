@@ -25,6 +25,7 @@ const hash = (n: number) => {
 const pad = (n: number) => String(n).padStart(2, '0');
 // Rythme du scroll dans la carte (réglages à affiner à l'usage) :
 const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
+const STEP_K_TOUCH = 0.35; // idem sur écran tactile (pas de snap : projets plus rapprochés)
 const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
 const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
 const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
@@ -78,6 +79,8 @@ export function initStarMap(styles: Record<string, string>) {
 		return;
 	}
 
+	// Écran tactile : le doigt pilote seul le scroll dans la carte (pas de snap).
+	const coarse = window.matchMedia('(pointer: coarse)').matches;
 	let vw = 1280;
 	let vh = 800;
 	let lastH = 0;
@@ -332,7 +335,7 @@ export function initStarMap(styles: Record<string, string>) {
 		measurePop = true; // la taille d'écran a pu changer la hauteur de la popup
 		starEls.forEach((d, i) => (d.style.top = vertical ? '0' : starBase[i].y.toFixed(2) + '%'));
 		T = vh * 0.9;
-		STEP = vh * STEP_K;
+		STEP = vh * (coarse ? STEP_K_TOUCH : STEP_K);
 		Utot = L.U[N - 1] || 0;
 		const h = vh + T + Utot * STEP;
 		root!.style.height = h + 'px';
@@ -459,6 +462,8 @@ export function initStarMap(styles: Record<string, string>) {
 			animScroll(toAbout ? aboutY : mapEnd);
 			return;
 		}
+		// Tactile : dans la carte, on s'arrête là où le doigt nous laisse.
+		if (coarse) return;
 		const { U, u } = m;
 		let k = 0;
 		if (scrollDir > 0) {
@@ -811,7 +816,8 @@ export function initStarMap(styles: Record<string, string>) {
 		// Compteur + HUD + nav (textes réécrits seulement quand le projet change)
 		txt(counterEl, pad(kN + 1) + ' / ' + pad(N));
 		const inWheel = p > 0.96;
-		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
+		// Sans snap (tactile), on peut s'arrêter entre deux projets : le HUD reste visible.
+		const hudOp = !inWheel ? 0 : coarse ? 1 : cl(1 - Math.abs(u - U[kN]) * 3, 0, 1);
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ai];
 		txt(hud.cat, 'Selected · ' + cur.num + ' · ' + cur.cat);
@@ -916,7 +922,6 @@ export function initStarMap(styles: Record<string, string>) {
 	};
 	// Mobile : la barre d'adresse qui apparaît/disparaît au scroll déclenche un resize
 	// (hauteur seule, ~60-120px). On l'ignore, sinon la carte se recalcule et saute.
-	const coarse = window.matchMedia('(pointer: coarse)').matches;
 	const onResize = () => {
 		if (coarse && window.innerWidth === vw && Math.abs(window.innerHeight - lastH) < 160) return;
 		readVp();
