@@ -5,6 +5,18 @@
 	--color-text: #F3F6F6;
 	--color-text-muted: #A5A99E;
 	--color-secondary: #537970;
+	--color-text-dim: rgba(243, 246, 246, 0.62); /* texte secondaire (labels, métadonnées) */
+	--color-accent-light: #FFB199; /* reflet du shimmer sur « ficelo » */
+	--color-panel: #131240; /* fond des panneaux de la carte (HUD, popup, overlay) */
+
+	/* Les mêmes couleurs en canaux R, G, B, pour les variantes transparentes :
+	   rgba(var(--rgb-secondary), 0.4) */
+	--rgb-accent: 253, 96, 53;
+	--rgb-text: 243, 246, 246;
+	--rgb-secondary: 83, 121, 112;
+	--rgb-bg: 19, 18, 84;
+	--rgb-bg-deep: 12, 11, 56;
+	--rgb-panel: 19, 18, 64;
 
 	/* Fond — dégradé (du plus clair en haut au plus profond en bas) */
 	--color-bg-hi: #171566;

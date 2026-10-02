@@ -51,6 +51,11 @@ const txt = (el: { textContent: string | null } | null, v: string) => {
 };
 const f1 = (v: number) => v.toFixed(1);
 
+// Couleurs du thème (tokens.css) pour les styles écrits par le moteur.
+const ACCENT = 'var(--color-accent)';
+const TEXT = 'var(--color-text)';
+const TEXT_DIM = 'var(--color-text-dim)';
+
 export function initStarMap(styles: Record<string, string>) {
 	const root = document.querySelector<HTMLElement>('[data-starmap]');
 	const dataEl = document.getElementById('starmap-data');
@@ -105,7 +110,7 @@ export function initStarMap(styles: Record<string, string>) {
 				d: r() < 0.85 ? 1 : 2,
 				o: +(0.2 + r() * 0.6).toFixed(2),
 				z: [0.3, 0.6, 1][Math.floor(r() * 3)],
-				c: q < 0.05 ? '253,96,53' : q < 0.16 ? '83,121,112' : '243,246,246', // rgb (alpha = o)
+				c: q < 0.05 ? 'accent' : q < 0.16 ? 'secondary' : 'text', // token --rgb-* (alpha = o)
 			};
 		});
 	})();
@@ -126,7 +131,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const d = document.createElement('div');
 		d.className = styles.star;
 		// Opacité propre portée par la couleur (le groupe anime sa propre opacité par-dessus).
-		d.style.background = `rgba(${s.c},${s.o})`;
+		d.style.background = `rgba(var(--rgb-${s.c}), ${s.o})`;
 		d.style.width = s.d + 'px';
 		d.style.height = s.d + 'px';
 		starGroups[idx % TWINKLE_GROUPS].appendChild(d);
@@ -139,7 +144,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const mkPath = (dash?: string, w = '1') => {
 		const p = document.createElementNS(NS, 'path');
 		p.setAttribute('fill', 'none');
-		p.setAttribute('stroke', 'rgba(83,121,112,0.6)');
+		p.style.stroke = 'rgba(var(--rgb-secondary), 0.6)';
 		p.setAttribute('stroke-width', w);
 		p.setAttribute('vector-effect', 'non-scaling-stroke'); // trait constant malgré le zoom du <g>
 		if (dash) {
@@ -151,10 +156,10 @@ export function initStarMap(styles: Record<string, string>) {
 	const legPath = mkPath('2 7', '1.2');
 	const sysPath = mkPath();
 	const sysTPath = mkPath(undefined, '1.5');
-	sysTPath.setAttribute('stroke', '#FD6035');
+	sysTPath.style.stroke = ACCENT;
 	sysTPath.setAttribute('stroke-opacity', '0.75');
 	const legTPath = mkPath('2 7', '1.2');
-	legTPath.setAttribute('stroke', '#FD6035');
+	legTPath.style.stroke = ACCENT;
 	legTPath.setAttribute('stroke-opacity', '0.8');
 	// Chemins en coordonnées "monde", construits une fois ; seul le <g> bouge (caméra).
 	const pathsG = document.createElementNS(NS, 'g');
@@ -585,21 +590,11 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function applyFilter() {
-		chips.forEach((ch) => {
-			const on = ch.dataset.filter === filter;
-			ch.style.background = on ? '#FD6035' : 'transparent';
-			ch.style.color = on ? '#131254' : '#F3F6F6';
-			ch.style.borderColor = on ? '#FD6035' : 'rgba(83,121,112,0.7)';
-		});
-		rows.forEach((r) => {
-			const show = filter === 'All' || r.dataset.cat === filter;
-			r.style.display = show ? 'grid' : 'none';
-		});
+		chips.forEach((ch) => ch.toggleAttribute('data-active', ch.dataset.filter === filter));
+		rows.forEach((r) => (r.hidden = filter !== 'All' && r.dataset.cat !== filter));
 	}
 	function applyHover() {
-		rows.forEach((r) => {
-			r.style.color = Number(r.dataset.rowIdx) === hovIdx ? '#FD6035' : '#F3F6F6';
-		});
+		rows.forEach((r) => r.toggleAttribute('data-hover', Number(r.dataset.rowIdx) === hovIdx));
 		const pr = projects[hovIdx] || projects[0];
 		if (previewImg && previewImg.getAttribute('src') !== pr.img) {
 			previewImg.src = pr.img;
@@ -753,7 +748,7 @@ export function initStarMap(styles: Record<string, string>) {
 				? g0.g === curG ? Math.max(110, s.y - R - 28) : s.y - R - 28
 				: g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
 			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
-			css(label, 'color', g0.g === curG ? '#F3F6F6' : '#537970');
+			css(label, 'color', g0.g === curG ? TEXT : 'var(--color-secondary)');
 			css(label, 'opacity', dim.toFixed(3));
 		});
 
@@ -770,8 +765,8 @@ export function initStarMap(styles: Record<string, string>) {
 			const w = 8 + 8 * act; // diamètre : 16px de base (CSS) mis à l'échelle
 			const op = cl(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1) * dim;
 			css(dot, 'transform', `${at(s.x, s.y)} translate(-50%,-50%) scale(${(w / 16).toFixed(3)})`);
-			css(dot, 'background', hi ? '#FD6035' : '#F3F6F6');
-			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(253,96,53,0.18), 0 0 24px rgba(253,96,53,0.5)' : 'none');
+			css(dot, 'background', hi ? ACCENT : TEXT);
+			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(var(--rgb-accent), 0.18), 0 0 24px rgba(var(--rgb-accent), 0.5)' : 'none');
 			css(dot, 'opacity', op.toFixed(3));
 			css(dot, 'z-index', hi ? '5' : '2');
 			const flip = W[q].x < W[q].gx - 1 || s.x + 200 > vw - navW - 16;
@@ -780,7 +775,7 @@ export function initStarMap(styles: Record<string, string>) {
 			css(label, 'opacity', op.toFixed(3));
 			css(label, 'z-index', hi ? '5' : '2');
 			css(label, 'font-size', (hi ? 15 : 12) + 'px');
-			css(label, 'color', hi ? '#FD6035' : 'rgba(243,246,246,0.62)');
+			css(label, 'color', hi ? ACCENT : TEXT_DIM);
 		});
 
 		// Poussière
@@ -830,11 +825,11 @@ export function initStarMap(styles: Record<string, string>) {
 		txt(hud.year, cur.year);
 		navRows.forEach((rowEl, gi) => {
 			const on = gi === curG;
-			css(rowEl, 'color', on ? '#F3F6F6' : 'rgba(243,246,246,0.62)');
+			css(rowEl, 'color', on ? TEXT : TEXT_DIM);
 			const bar = navBars[gi];
 			if (bar) {
 				css(bar, 'width', (on ? 28 : 12) + 'px');
-				css(bar, 'background', on ? '#FD6035' : 'rgba(83,121,112,0.5)');
+				css(bar, 'background', on ? ACCENT : 'rgba(var(--rgb-secondary), 0.5)');
 			}
 		});
 

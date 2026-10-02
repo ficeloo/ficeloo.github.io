@@ -32,7 +32,7 @@
 
 .legal p {
 	margin: 0;
-	color: rgba(243, 246, 246, 0.72);
+	color: rgba(var(--rgb-text), 0.72);
 }
 
 .legal a {

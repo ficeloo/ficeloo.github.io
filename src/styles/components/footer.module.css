@@ -4,7 +4,7 @@
 	overflow: hidden;
 
 	color: var(--color-text);
-	background-color: #131240;
+	background-color: var(--color-panel);
 	font-family: var(--font-body);
 
 	display: flex;
@@ -12,7 +12,7 @@
 	align-items: center;
 	gap: 2rem;
 	padding: 4rem 5% 2rem;
-	border-top: 1px solid rgba(83, 121, 112, 0.4);
+	border-top: 1px solid rgba(var(--rgb-secondary), 0.4);
 }
 
 /* Lueur d'ambiance discrète derrière le contenu. */
@@ -24,7 +24,7 @@
 	width: 150%;
 	height: 260%;
 	transform: translateX(-50%);
-	background: radial-gradient(50% 50% at 50% 50%, rgba(253, 96, 53, 0.05), transparent 80%);
+	background: radial-gradient(50% 50% at 50% 50%, rgba(var(--rgb-accent), 0.05), transparent 80%);
 	pointer-events: none;
 	z-index: -1;
 }

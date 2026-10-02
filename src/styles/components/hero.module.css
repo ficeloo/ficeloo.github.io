@@ -25,7 +25,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.7rem;
-	border: 1px solid rgba(83, 121, 112, 0.6);
+	border: 1px solid rgba(var(--rgb-secondary), 0.6);
 	border-radius: 999px;
 	padding: 0.45rem 1rem;
 	color: var(--color-secondary);
@@ -33,7 +33,7 @@
 	font-size: 0.8rem;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
-	background: rgba(12, 11, 56, 0.35);
+	background: rgba(var(--rgb-bg-deep), 0.35);
 }
 
 .status-pill .dot {
@@ -41,7 +41,7 @@
 	height: 10px;
 	border-radius: 50%;
 	background: var(--color-accent);
-	box-shadow: 0 0 12px 2px rgba(253, 96, 53, 0.7);
+	box-shadow: 0 0 12px 2px rgba(var(--rgb-accent), 0.7);
 	animation: breath 1.4s infinite alternate ease-in-out;
 }
 
@@ -62,7 +62,7 @@
 	color: var(--color-accent);
 	font-family: var(--font-display);
 	font-weight: 400;
-	background: linear-gradient(100deg, #FD6035 0%, #ffb199 50%, #FD6035 100%);
+	background: linear-gradient(100deg, var(--color-accent) 0%, var(--color-accent-light) 50%, var(--color-accent) 100%);
 	background-size: 220% auto;
 	-webkit-background-clip: text;
 	background-clip: text;
@@ -84,7 +84,7 @@
 	font-size: clamp(1rem, 1.6vw, 1.5rem);
 	line-height: 1.5;
 	max-width: 60ch;
-	color: rgba(243, 246, 246, 0.75);
+	color: rgba(var(--rgb-text), 0.75);
 }
 
 .hero-meta {
@@ -95,7 +95,7 @@
 	font-size: 0.85rem;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	color: rgba(243, 246, 246, 0.6);
+	color: rgba(var(--rgb-text), 0.6);
 }
 
 .hero-meta .label {
@@ -142,12 +142,12 @@
 
 .primary:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 10px 30px -8px rgba(253, 96, 53, 0.6);
+	box-shadow: 0 10px 30px -8px rgba(var(--rgb-accent), 0.6);
 }
 
 .secondary {
 	color: var(--color-text);
-	border: 1px solid rgba(243, 246, 246, 0.35);
+	border: 1px solid rgba(var(--rgb-text), 0.35);
 }
 
 .secondary:hover {

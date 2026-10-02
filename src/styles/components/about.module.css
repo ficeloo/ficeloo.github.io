@@ -6,7 +6,7 @@
 	gap: 3rem;
 	align-items: start;
 	padding: 6rem 6%;
-	border-top: 1px solid rgba(83, 121, 112, 0.4);
+	border-top: 1px solid rgba(var(--rgb-secondary), 0.4);
 }
 
 .head {
@@ -20,7 +20,7 @@
 	font-size: 0.95rem;
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: rgba(243, 246, 246, 0.62);
+	color: var(--color-text-dim);
 }
 
 .title {
@@ -36,7 +36,7 @@
 	gap: 1.2rem;
 	font-size: clamp(1rem, 1.3vw, 1.4rem);
 	line-height: 1.5;
-	color: rgba(243, 246, 246, 0.72);
+	color: rgba(var(--rgb-text), 0.72);
 	max-width: 60ch;
 }
 
