@@ -540,8 +540,12 @@ export function initStarMap(styles: Record<string, string>) {
 			navK = nk;
 			setOpen(false);
 			animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, e.repeat);
-		} else if (e.key === 'Enter' && !isOpen && Math.abs(m.u - m.U[m.kN]) < 0.1) {
-			setOpen(true, m.ord[m.kN]);
+		} else if (e.key === 'Enter' && !e.repeat) {
+			// Entrée sur un bouton ou un lien focalisé : on laisse le navigateur faire.
+			if ((e.target as Element).closest('a, button')) return;
+			// 1er appui : ouvre la popup du projet courant ; 2e appui : va sur sa page.
+			if (isOpen) location.href = projects[openIdx].link;
+			else if (Math.abs(m.u - m.U[m.kN]) < 0.1) setOpen(true, m.ord[m.kN]);
 		}
 	}
 
