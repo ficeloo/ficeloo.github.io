@@ -33,21 +33,36 @@
 	font-size: clamp(2rem, 3vw, 4rem);
 }
 
+/* E-mail : le moyen de contact principal, entre le titre et les liens en taille. */
+.email {
+	font-family: var(--font-display);
+	font-size: clamp(1.4rem, 1.9vw, 2.2rem);
+	color: var(--color-accent);
+}
+
 .external-link {
 	display: flex;
 	flex-direction: row;
+	flex-wrap: wrap; /* 4 liens : passage à la ligne sur petit écran */
+	justify-content: center;
 	align-items: center;
 	gap: 1rem;
 	font-size: clamp(1rem, 1.25vw, 1.5rem);
 }
 
+.email,
 .external-link a {
 	position: relative;
-	color: var(--color-text);
 	text-decoration: none;
 	transition: color 0.2s ease;
 }
 
+.external-link a {
+	color: var(--color-text);
+}
+
+/* Soulignement orange qui se déroule au survol. */
+.email::after,
 .external-link a::after {
 	content: "";
 	position: absolute;
@@ -61,14 +76,20 @@
 	transition: transform 0.3s ease;
 }
 
+.email:hover {
+	color: var(--color-accent-light);
+}
+
 .external-link a:hover {
 	color: var(--color-accent);
 }
 
+.email:hover::after,
 .external-link a:hover::after {
 	transform: scaleX(1);
 }
 
+.email:focus-visible,
 .external-link a:focus-visible {
 	outline: 2px solid var(--color-accent);
 	outline-offset: 4px;
