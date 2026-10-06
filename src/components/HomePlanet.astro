@@ -1,8 +1,13 @@
 ---
+import { projects } from '../data/projects';
 import { TILT, FLAT, VIEWBOX, PLANET_R, RING_BANDS } from '../scripts/home-planet';
 import styles from '../styles/components/home-planet.module.css';
 
 const viewBox = `${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.width} ${VIEWBOX.height}`;
+
+// Légende HUD : une lune par projet, et les coordonnées de Paris.
+const count = String(projects.length).padStart(2, '0');
+const plural = projects.length > 1 ? 's' : '';
 
 // Bandes de la géante gazeuse (position verticale, épaisseur, teinte 1 à 5).
 const stripes = [
@@ -45,4 +50,8 @@ const stripes = [
 			<use href="#home-planet-ring" clip-path="url(#home-planet-front)" class={styles['ring-front']} />
 		</g>
 	</svg>
+	<div class={styles.hud}>
+		<span><b>{count}</b> moon{plural} · <b>{count}</b> project{plural}</span>
+		<span><b>48.85° N</b> · <b>2.35° E</b></span>
+	</div>
 </div>
