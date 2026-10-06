@@ -11,13 +11,13 @@ const moons = JSON.stringify(moonSlots(projects.map((p) => p.category)));
 <section id="about" class={styles.about} data-orbits data-moons={moons}>
 	<canvas class={styles['orbits-back']} aria-hidden="true" data-orbits-back></canvas>
 	<canvas class={styles['orbits-front']} aria-hidden="true" data-orbits-front></canvas>
-	<div class={styles.head}>
-		<div class={styles.label}>About</div>
-		<h2 class={styles.title}>About <span class="accent">me</span></h2>
+	<div class={styles.label}>About</div>
+	<h2 class={styles.title}>About <span class="accent">me</span></h2>
+	<div class={styles.planet}>
 		<HomePlanet />
 	</div>
 	<div class={styles.body}>
-		<p>I'm <span class="accent">Théophile Cros</span>, a student at 42 Paris, passionate about game design and game development.</p>
+		<p>I'm <span class="accent">Théophile</span>, a student at 42 Paris, passionate about game design and game development.</p>
 		<p>To me, game development is a pure form of artistic expression: I want to create worlds people can fill their dreams with.</p>
 		<p>I build games in <span class="accent">Rust</span> with <span class="accent">Bevy</span>, and dig into graphics programming with <span class="accent">Vulkan</span>.</p>
 		<p>I'm looking for a <span class="accent">first internship or work-study position</span> in game development, for at least 6 months — <span class="accent">available now</span>.</p>
