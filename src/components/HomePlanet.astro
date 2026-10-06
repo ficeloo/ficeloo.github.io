@@ -1,0 +1,48 @@
+---
+import { TILT, FLAT, VIEWBOX, PLANET_R, RING_BANDS } from '../scripts/home-planet';
+import styles from '../styles/components/home-planet.module.css';
+
+const viewBox = `${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.width} ${VIEWBOX.height}`;
+
+// Bandes de la géante gazeuse (position verticale, épaisseur, teinte 1 à 5).
+const stripes = [
+	{ y: -40, h: 11, tone: 3 },
+	{ y: -17, h: 6, tone: 4 },
+	{ y: 3, h: 14, tone: 2 },
+	{ y: 27, h: 5, tone: 5 },
+	{ y: 40, h: 9, tone: 1 },
+];
+---
+
+<div class={styles.planet}>
+	<svg viewBox={viewBox} aria-hidden="true" data-planet>
+		<defs>
+			<clipPath id="home-planet-disc"><circle r={PLANET_R} /></clipPath>
+			<!-- Moitié avant de l'anneau : y > 0 dans le repère incliné (côté spectateur). -->
+			<clipPath id="home-planet-front"><rect x={VIEWBOX.x} y="0" width={VIEWBOX.width} height={VIEWBOX.height} /></clipPath>
+			<radialGradient id="home-planet-shade" cx="34%" cy="28%" r="80%">
+				<stop offset="0%" class={styles['shade-light']} />
+				<stop offset="55%" class={styles['shade-clear']} />
+				<stop offset="100%" class={styles['shade-dark']} />
+			</radialGradient>
+			<g id="home-planet-ring">
+				{RING_BANDS.map((b) => (
+					<ellipse class={styles[b.tone]} rx={b.r} ry={b.r * FLAT} stroke-opacity={b.opacity} stroke-width={b.width} />
+				))}
+			</g>
+		</defs>
+
+		<!-- L'anneau est dessiné deux fois : moitié arrière sous la planète, moitié avant par-dessus. -->
+		<g transform={`rotate(${TILT})`}>
+			<use href="#home-planet-ring" class={styles['ring-back']} />
+			<g clip-path="url(#home-planet-disc)">
+				<circle r={PLANET_R} class={styles.base} />
+				{stripes.map((s) => (
+					<rect x={-PLANET_R} y={s.y} width={PLANET_R * 2} height={s.h} class={styles[`band-${s.tone}`]} />
+				))}
+				<circle r={PLANET_R} fill="url(#home-planet-shade)" />
+			</g>
+			<use href="#home-planet-ring" clip-path="url(#home-planet-front)" class={styles['ring-front']} />
+		</g>
+	</svg>
+</div>

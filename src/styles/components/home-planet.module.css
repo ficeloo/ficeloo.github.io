@@ -1,0 +1,68 @@
+.planet {
+	width: min(100%, 360px);
+	margin-top: 1.5rem;
+}
+
+.planet svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	overflow: visible;
+}
+
+/* Géante gazeuse */
+.base {
+	fill: var(--color-bg-hi);
+}
+
+.band-1 {
+	fill: var(--planet-band-1);
+}
+
+.band-2 {
+	fill: var(--planet-band-2);
+}
+
+.band-3 {
+	fill: var(--planet-band-3);
+}
+
+.band-4 {
+	fill: var(--planet-band-4);
+}
+
+.band-5 {
+	fill: var(--planet-band-5);
+}
+
+/* Ombrage : lumière en haut à gauche, nuit en bas à droite */
+.shade-light {
+	stop-color: rgba(var(--rgb-text), 0.1);
+}
+
+.shade-clear {
+	stop-color: rgba(var(--rgb-bg-deep), 0);
+}
+
+.shade-dark {
+	stop-color: rgba(var(--rgb-bg-deep), 0.8);
+}
+
+/* Anneau : bandes de poussière et de glace */
+.dust {
+	fill: none;
+	stroke: var(--color-secondary);
+}
+
+.ice {
+	fill: none;
+	stroke: var(--color-text);
+}
+
+.ring-back {
+	opacity: 0.7;
+}
+
+.ring-front {
+	opacity: 0.85;
+}
