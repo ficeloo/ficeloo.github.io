@@ -1,9 +1,16 @@
 ---
+import { projects } from '../data/projects';
+import { moonSlots } from '../scripts/home-planet';
 import HomePlanet from './HomePlanet.astro';
 import styles from '../styles/components/about.module.css'
+
+// Un satellite par projet autour de la planète : rangs d'orbite calculés au build.
+const moons = JSON.stringify(moonSlots(projects.map((p) => p.category)));
 ---
 
-<section id="about" class={styles.about}>
+<section id="about" class={styles.about} data-orbits data-moons={moons}>
+	<canvas class={styles['orbits-back']} aria-hidden="true" data-orbits-back></canvas>
+	<canvas class={styles['orbits-front']} aria-hidden="true" data-orbits-front></canvas>
 	<div class={styles.head}>
 		<div class={styles.label}>About</div>
 		<h2 class={styles.title}>About <span class="accent">me</span></h2>
@@ -16,3 +23,10 @@ import styles from '../styles/components/about.module.css'
 		<p>I'm looking for a <span class="accent">first internship or work-study position</span> in game development, for at least 6 months — <span class="accent">available now</span>.</p>
 	</div>
 </section>
+
+<script>
+	import { initOrbits } from '../scripts/home-planet';
+
+	const section = document.querySelector<HTMLElement>('[data-orbits]');
+	if (section) initOrbits(section);
+</script>
