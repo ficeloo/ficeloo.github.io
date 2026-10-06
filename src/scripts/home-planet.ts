@@ -79,6 +79,10 @@ export function moonSlots(categories: string[]): number[] {
 const INNER_SPEED = 0.42;
 /** Première orbite : juste après l'anneau (en rayons d'anneau). */
 const INNER_ORBIT = 1.18;
+/** Dépassement en hauteur de la dernière orbite hors de la section (1 = tient tout juste). */
+const OUTER_REACH = 1.3;
+/** Demi-hauteur à l'écran d'une orbite de rayon 1, une fois aplatie puis inclinée. */
+const HALF_HEIGHT = Math.hypot(Math.sin((TILT * Math.PI) / 180), FLAT * Math.cos((TILT * Math.PI) / 180));
 
 type Moon = {
 	slot: number;
@@ -143,10 +147,13 @@ export function initOrbits(section: HTMLElement) {
 		front!.style.width = front!.style.height = `${2 * R}px`;
 		front!.width = front!.height = Math.round(2 * R * dpr);
 
-		// Distances relatives : 1re orbite après l'anneau, dernière au bord droit de la section,
-		// progression géométrique entre les deux (comme les planètes d'un vrai système).
+		// Distances relatives : 1re orbite après l'anneau, dernière vers le bord droit de la
+		// section, progression géométrique entre les deux (comme les planètes d'un vrai système).
+		// La dernière dépasse un peu de la section en hauteur (OUTER_REACH) : son satellite sort
+		// et revient. Pas plus, sinon on ne voit qu'un morceau d'ellipse qui ne suit plus le plan.
 		const rMin = RING_OUTER * scale * INNER_ORBIT;
-		const rMax = Math.max(rMin * 1.5, (W - cx) * 1.02);
+		const fitHeight = (Math.min(cy, H - cy) * OUTER_REACH) / HALF_HEIGHT;
+		const rMax = Math.max(rMin * 1.5, Math.min((W - cx) * 1.02, fitHeight));
 		moons.forEach((m, i) => {
 			const rank = moons.length > 1 ? i / (moons.length - 1) : 0;
 			m.r = rMin * (rMax / rMin) ** (lastSlot ? m.slot / lastSlot : 0);
