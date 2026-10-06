@@ -43,20 +43,3 @@
 .body p {
 	margin: 0;
 }
-
-.tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.6rem;
-	margin-top: 0.6rem;
-}
-
-.tag {
-	font-family: var(--font-display);
-	font-size: 0.9rem;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
-	border: 1px solid var(--color-secondary);
-	color: var(--color-secondary);
-	padding: 0.3rem 0.7rem;
-}

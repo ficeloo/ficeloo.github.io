@@ -1,8 +1,5 @@
 ---
 import styles from '../styles/components/about.module.css'
-
-// NOTE (Théophile) : copie = BROUILLON à réécrire à ta voix.
-const skills = ['Rust', 'Bevy', 'TypeScript', 'Nuxt 3', 'Game design'];
 ---
 
 <section id="about" class={styles.about}>
@@ -11,10 +8,9 @@ const skills = ['Rust', 'Bevy', 'TypeScript', 'Nuxt 3', 'Game design'];
 		<h2 class={styles.title}>About <span class="accent">me</span></h2>
 	</div>
 	<div class={styles.body}>
-		<p>I'm a student at 42 Paris, learning game design and development through small, focused projects.</p>
-		<p>On the game side I work with <span class="accent">Rust</span> and <span class="accent">Bevy</span>; on the web side with TypeScript and Nuxt. I'm looking for a first internship.</p>
-		<div class={styles.tags}>
-			{skills.map((s) => <span class={styles.tag}>{s}</span>)}
-		</div>
+		<p>I'm <span class="accent">Théophile Cros</span>, a student at 42 Paris, passionate about game design and game development.</p>
+		<p>To me, game development is a pure form of artistic expression: I want to create worlds people can fill their dreams with.</p>
+		<p>I build games in <span class="accent">Rust</span> with <span class="accent">Bevy</span>, and dig into graphics programming with <span class="accent">Vulkan</span>.</p>
+		<p>I'm looking for a <span class="accent">first internship or work-study position</span> in game development, for at least 6 months — <span class="accent">available now</span>.</p>
 	</div>
 </section>
