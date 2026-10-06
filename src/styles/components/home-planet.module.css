@@ -18,24 +18,37 @@
 	fill: var(--color-bg-hi);
 }
 
-.band-1 {
-	fill: var(--planet-band-1);
+/* Bandes : parallèles tracés en traits épais, arrondis aux bouts (au bord de la planète) */
+.stripe-dark,
+.stripe-mid,
+.stripe-light,
+.stripe-dust {
+	fill: none;
+	stroke-linecap: round;
 }
 
-.band-2 {
-	fill: var(--planet-band-2);
+.stripe-dark {
+	stroke: var(--planet-band-dark);
 }
 
-.band-3 {
-	fill: var(--planet-band-3);
+.stripe-mid {
+	stroke: var(--planet-band-mid);
 }
 
-.band-4 {
-	fill: var(--planet-band-4);
+.stripe-light {
+	stroke: var(--planet-band-light);
 }
 
-.band-5 {
-	fill: var(--planet-band-5);
+.stripe-dust {
+	stroke: var(--color-secondary);
+}
+
+.storm {
+	fill: rgba(var(--rgb-secondary), 0.55);
+}
+
+.storm-eye {
+	fill: rgba(var(--rgb-text), 0.25);
 }
 
 /* Ombrage : lumière en haut à gauche, nuit en bas à droite */

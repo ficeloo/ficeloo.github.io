@@ -23,3 +23,34 @@ export const RING_BANDS: { r: number; tone: 'dust' | 'ice'; opacity: number; wid
 	{ r: 150, tone: 'ice', opacity: 0.1, width: 1.5 },
 ];
 export const RING_OUTER = RING_BANDS[RING_BANDS.length - 1].r;
+
+// On regarde le plan de l'anneau d'un peu au-dessus : sin(élévation) = FLAT.
+const SIN_VIEW = FLAT;
+const COS_VIEW = Math.sqrt(1 - FLAT * FLAT);
+
+/**
+ * Point de la surface de la planète (latitude, longitude en radians ; longitude π/2 = face
+ * au spectateur), projeté dans le repère du plan (avant inclinaison).
+ * Renvoie [x, y vers le bas, profondeur] ; profondeur > 0 = face visible.
+ */
+export function projectSphere(lat: number, lon: number): [number, number, number] {
+	const x = PLANET_R * Math.cos(lat) * Math.cos(lon);
+	const toViewer = PLANET_R * Math.cos(lat) * Math.sin(lon);
+	const up = PLANET_R * Math.sin(lat);
+	return [x, -up * COS_VIEW + toViewer * SIN_VIEW, toViewer * COS_VIEW + up * SIN_VIEW];
+}
+
+/** Tracé SVG de la partie visible d'un parallèle (latitude en degrés). */
+export function latitudePath(latDeg: number): string {
+	const lat = (latDeg * Math.PI) / 180;
+	let d = '';
+	let pen = false;
+	for (let i = 0; i <= 120; i++) {
+		const [x, y, depth] = projectSphere(lat, (i * Math.PI) / 60);
+		if (depth > 0) {
+			d += `${pen ? 'L' : 'M'}${x.toFixed(2)} ${y.toFixed(2)} `;
+			pen = true;
+		} else pen = false;
+	}
+	return d.trim();
+}

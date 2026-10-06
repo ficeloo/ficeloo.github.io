@@ -1,6 +1,6 @@
 ---
 import { projects } from '../data/projects';
-import { TILT, FLAT, VIEWBOX, PLANET_R, RING_BANDS } from '../scripts/home-planet';
+import { TILT, FLAT, VIEWBOX, PLANET_R, RING_BANDS, projectSphere, latitudePath } from '../scripts/home-planet';
 import styles from '../styles/components/home-planet.module.css';
 
 const viewBox = `${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.width} ${VIEWBOX.height}`;
@@ -9,14 +9,22 @@ const viewBox = `${VIEWBOX.x} ${VIEWBOX.y} ${VIEWBOX.width} ${VIEWBOX.height}`;
 const count = String(projects.length).padStart(2, '0');
 const plural = projects.length > 1 ? 's' : '';
 
-// Bandes de la géante gazeuse (position verticale, épaisseur, teinte 1 à 5).
+// Bandes de la géante gazeuse : des parallèles de la sphère, donc courbées comme elle.
+// lat en degrés, width en unités du SVG, tone = teinte (voir le module CSS).
 const stripes = [
-	{ y: -40, h: 11, tone: 3 },
-	{ y: -17, h: 6, tone: 4 },
-	{ y: 3, h: 14, tone: 2 },
-	{ y: 27, h: 5, tone: 5 },
-	{ y: 40, h: 9, tone: 1 },
+	{ lat: -62, width: 6, tone: 'dark', opacity: 0.9 },
+	{ lat: -46, width: 9, tone: 'light', opacity: 0.55 },
+	{ lat: -32, width: 3, tone: 'dust', opacity: 0.5 },
+	{ lat: -18, width: 11, tone: 'dark', opacity: 0.9 },
+	{ lat: -4, width: 5, tone: 'light', opacity: 0.6 },
+	{ lat: 10, width: 14, tone: 'mid', opacity: 0.9 },
+	{ lat: 25, width: 3, tone: 'dust', opacity: 0.55 },
+	{ lat: 38, width: 10, tone: 'dark', opacity: 0.9 },
+	{ lat: 55, width: 6, tone: 'light', opacity: 0.5 },
 ];
+
+// Petite tempête ovale, posée sur la sphère.
+const [stormX, stormY] = projectSphere((-22 * Math.PI) / 180, (60 * Math.PI) / 180);
 ---
 
 <div class={styles.planet}>
@@ -43,8 +51,10 @@ const stripes = [
 			<g clip-path="url(#home-planet-disc)">
 				<circle r={PLANET_R} class={styles.base} />
 				{stripes.map((s) => (
-					<rect x={-PLANET_R} y={s.y} width={PLANET_R * 2} height={s.h} class={styles[`band-${s.tone}`]} />
+					<path d={latitudePath(s.lat)} class={styles[`stripe-${s.tone}`]} stroke-width={s.width} stroke-opacity={s.opacity} />
 				))}
+				<ellipse cx={stormX} cy={stormY} rx="9" ry="4" class={styles.storm} />
+				<ellipse cx={stormX} cy={stormY} rx="5" ry="2" class={styles['storm-eye']} />
 				<circle r={PLANET_R} fill="url(#home-planet-shade)" />
 			</g>
 			<use href="#home-planet-ring" clip-path="url(#home-planet-front)" class={styles['ring-front']} />
