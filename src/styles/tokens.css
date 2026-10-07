@@ -34,7 +34,10 @@
 
 	/* Planètes des pages projet : une couleur par projet, --planet-<slug> */
 	--planet-stellar-drift: #8d88bd; /* lavande des astéroïdes du jeu */
+	--planet-endgame: #a5a99e; /* TODO Théophile : couleurs à valider */
+	--planet-scop: #4a6fc4;
 	--planet-ft_transcendence: #4f8c80;
+	--planet-portfolio: #c4643f;
 
 	/* Grain */
 	--grain-opacity: 0.05;
