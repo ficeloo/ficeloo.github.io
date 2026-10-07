@@ -1,0 +1,78 @@
+.section {
+	padding-top: 4rem;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: 1rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.card {
+	grid-column: span var(--span, 2);
+	display: grid;
+	align-content: start;
+	gap: 0.4rem;
+	padding: 1.1rem 1.2rem 1.2rem;
+	background: rgba(var(--rgb-panel), 0.55);
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+	transition: border-color 0.25s;
+}
+
+.card:hover {
+	border-color: var(--color-accent);
+}
+
+/* Libellé précédé d'une petite lune orange */
+.label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+}
+
+.label::before {
+	content: "";
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 30%, var(--color-accent-light), var(--color-accent) 60%);
+	box-shadow: 0 0 8px rgba(var(--rgb-accent), 0.6);
+}
+
+.title {
+	margin: 0;
+	font-family: var(--font-body);
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.text {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--color-text-dim);
+}
+
+/* Tablette : 2 par rangée ; téléphone : une colonne */
+@media (max-width: 960px) {
+	.card {
+		grid-column: span 3;
+	}
+	/* Nombre impair : la dernière carte prend toute la largeur */
+	.card:last-child:nth-child(odd) {
+		grid-column: span 6;
+	}
+}
+
+@media (max-width: 640px) {
+	.card {
+		grid-column: span 6;
+	}
+}

@@ -1,0 +1,54 @@
+---
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import type { Project } from '../../data/projects';
+import styles from '../../styles/components/project/project-media.module.css';
+
+interface Props {
+	project: Project;
+}
+
+// Média principal dans un cadre HUD + vignettes. Le défilement (façon Steam) est géré
+// par src/scripts/project-gallery.ts ; sans JS, seul le média principal s'affiche.
+const { project } = Astro.props;
+const isGif = project.image.format === 'gif';
+
+// Un GIF est servi tel quel (la conversion lui ferait perdre son animation), le reste en webp.
+const full = async (img: ImageMetadata) => (img.format === 'gif' ? img.src : (await getImage({ src: img, width: 1280, format: 'webp' })).src);
+const small = async (img: ImageMetadata) => (img.format === 'gif' ? img.src : (await getImage({ src: img, width: 360, format: 'webp' })).src);
+
+const shots = [project.image, ...(project.screenshots ?? [])];
+const slides = await Promise.all(shots.map(async (img, i) => ({
+	src: await full(img),
+	thumb: await small(img),
+	alt: i === 0 ? project.alt : `${project.title}, screenshot ${i}`,
+})));
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<div class={styles.media} data-gallery>
+	<div class={styles.frame}>
+		<span class={styles.corner}></span><span class={styles.corner}></span>
+		<span class={styles.corner}></span><span class={styles.corner}></span>
+		<div class={styles.screen}>
+			<img data-main src={slides[0].src} alt={slides[0].alt} width={project.image.width} height={project.image.height} loading="eager" />
+			<span class={styles.rec}>{isGif ? 'REC · Gameplay' : 'Preview'}</span>
+			{slides.length > 1 && (
+				<>
+					<button type="button" class:list={[styles.nav, styles.prev]} data-prev aria-label="Previous image">‹</button>
+					<button type="button" class:list={[styles.nav, styles.next]} data-next aria-label="Next image">›</button>
+					<span class={styles.count} data-count>01 / {pad(slides.length)}</span>
+				</>
+			)}
+		</div>
+	</div>
+	{slides.length > 1 && (
+		<div class={styles.thumbs}>
+			{slides.map((s, i) => (
+				<button type="button" class={styles.thumb} data-slide={s.src} data-alt={s.alt} aria-label={`Show image ${i + 1}`} aria-current={i === 0 ? 'true' : undefined}>
+					<img src={s.thumb} alt="" loading="lazy" />
+				</button>
+			))}
+		</div>
+	)}
+</div>

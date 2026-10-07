@@ -1,0 +1,68 @@
+.pager {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	margin-top: 4.5rem;
+}
+
+.pager a {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1.1rem 1.3rem;
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+	color: var(--color-text);
+	text-decoration: none;
+	transition: border-color 0.25s;
+}
+
+.pager a:hover {
+	border-color: var(--color-accent);
+}
+
+.pager a:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
+/* « Suivant » toujours dans la colonne de droite, même sans « précédent » */
+.next {
+	grid-column: 2;
+	flex-direction: row-reverse;
+	text-align: right;
+}
+
+/* Mini-planète teintée par la couleur du projet (--c = var(--planet-<slug>)) */
+.planet {
+	flex: none;
+	width: 2.6rem;
+	height: 2.6rem;
+	border-radius: 50%;
+	background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 85%, white), color-mix(in srgb, var(--c) 30%, var(--color-bg-deep)) 75%);
+	box-shadow: 0 0 14px rgba(var(--rgb-secondary), 0.35);
+}
+
+.label {
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-secondary);
+}
+
+.title {
+	font-family: var(--font-display);
+	font-size: 1.25rem;
+	letter-spacing: 0.05em;
+}
+
+@media (max-width: 640px) {
+	.pager {
+		grid-template-columns: 1fr;
+	}
+	.next {
+		grid-column: auto;
+		flex-direction: row;
+		text-align: left;
+	}
+}

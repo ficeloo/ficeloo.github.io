@@ -1,0 +1,61 @@
+---
+import { getImage } from 'astro:assets';
+import type { Project } from '../../data/projects';
+import styles from '../../styles/components/project/landing-zone.module.css';
+
+interface Props {
+	project: Project;
+}
+
+// « Landing zone » : là où on joue. Le jeu itch.io (1280 px de large) s'ouvre dans une
+// fenêtre par-dessus la page, et ne se charge qu'au clic. Sous 1280 px : texte + lien itch.io.
+const { project } = Astro.props;
+const { embedUrl, links } = project;
+const coverImg = project.screenshots?.[1] ?? project.screenshots?.[0] ?? project.image;
+const cover = coverImg.format === 'gif' ? coverImg.src : (await getImage({ src: coverImg, width: 960, format: 'webp' })).src;
+---
+
+{(embedUrl || links.itch) && (
+	<section class={styles.landing} id="play">
+		<div class={styles.text}>
+			<span class={styles.label}>Landing zone</span>
+			<h2 class={styles.title}>Take the controls</h2>
+			<p>{embedUrl ? `${project.title} runs right in your browser.` : `${project.title} is available on itch.io.`}</p>
+			{embedUrl && <p class={styles.small}>Best played on a computer, with a keyboard.</p>}
+			{links.itch && <a class={styles.itch} href={links.itch}>Open on itch.io ↗</a>}
+		</div>
+		{embedUrl && (
+			<div class={styles.launch}>
+				<img src={cover} alt="" loading="lazy" />
+				<div class={styles['launch-inner']}>
+					<button type="button" class={styles['launch-btn']} data-launch aria-label={`Play ${project.title}`}>▷</button>
+					<span>Play {project.title}</span>
+				</div>
+			</div>
+			<dialog class={styles.dialog} data-game-dialog aria-label={`${project.title}, playable in the browser`}>
+				<div class={styles['dialog-bar']}>
+					<span class={styles.label}>{project.title} · in-browser build</span>
+					<button type="button" class={styles.close} data-close>Close ✕</button>
+				</div>
+				<div class={styles.game} data-game data-src={embedUrl}></div>
+			</dialog>
+		)}
+	</section>
+)}
+
+<script>
+	// Le jeu ne se charge qu'à l'ouverture, et l'iframe est retirée à la fermeture (coupe le son).
+	const dialog = document.querySelector<HTMLDialogElement>('[data-game-dialog]');
+	const slot = dialog?.querySelector<HTMLElement>('[data-game]');
+	document.querySelector('[data-launch]')?.addEventListener('click', () => {
+		if (!dialog || !slot) return;
+		const frame = document.createElement('iframe');
+		frame.src = slot.dataset.src ?? '';
+		frame.title = dialog.getAttribute('aria-label') ?? 'Game';
+		frame.allow = 'autoplay; fullscreen';
+		slot.replaceChildren(frame);
+		dialog.showModal();
+	});
+	dialog?.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
+	dialog?.addEventListener('close', () => slot?.replaceChildren());
+</script>

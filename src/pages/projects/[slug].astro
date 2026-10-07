@@ -1,9 +1,16 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { projects } from '../../data/projects';
-import { Image } from 'astro:assets';
 import InProgressBadge from '../../components/InProgressBadge.astro';
-import styles from '../../styles/pages/project.module.css'
+import SystemMap from '../../components/project/SystemMap.astro';
+import PlanetScene from '../../components/project/PlanetScene.astro';
+import ProjectMedia from '../../components/project/ProjectMedia.astro';
+import SpecSheet from '../../components/project/SpecSheet.astro';
+import SectionHead from '../../components/project/SectionHead.astro';
+import Highlights from '../../components/project/Highlights.astro';
+import LandingZone from '../../components/project/LandingZone.astro';
+import ProjectPager from '../../components/project/ProjectPager.astro';
+import styles from '../../styles/pages/project.module.css';
 
 export function getStaticPaths() {
 	return projects.map((project) => ({
@@ -13,71 +20,42 @@ export function getStaticPaths() {
 }
 
 const { project } = Astro.props;
-// Un GIF est affiché tel quel : la conversion en webp lui ferait perdre son animation.
-const isGif = project.image.format === 'gif';
 ---
 
 <Layout title={`${project.title} — ficelo`} description={project.description} crumb={`Project / ${project.title}`} back={`/#project-${project.slug}`}>
-	<div class={styles.project}>
-		<h1>{project.title} {project.inProgress && <InProgressBadge />}</h1>
-		<div class={styles.tag}>
-			{project.tag} <span class="accent">—</span> {project.year}
+	<main class={styles.page}>
+		<div class={styles.topline}>
+			<span>Project file · {project.category} system</span>
+			<span>Logged · {project.year}</span>
 		</div>
-		<div class={styles.links}>
-			{project.links?.itch && <a class={styles.first} href={project.links.itch}>&#9655; Play in browser</a>}
-			{project.links?.github && <a class={project.links.itch ? styles.second : styles.first} href={project.links.github}>&lt;/&gt; Code</a>}
-			{project.links?.gdd && <a class={styles.second} href={project.links.gdd}>🗎 GDD</a>}
-		</div>
-		<div class={styles["main-img"]}>
-			{isGif ? (
-				<img src={project.image.src} width={project.image.width} height={project.image.height} alt={project.alt} />
-			) : (
-				<Image src={project.image} alt={project.alt} widths={[640, 1280, 1920]} sizes="(min-width: 80rem) 80rem, 100vw" loading="eager" />
-			)}
-			<!-- Capture cliquée dans la galerie, affichée par-dessus le média principal. -->
-			<img class={styles.preview} data-preview alt="" />
-		</div>
-		{project.screenshots && project.screenshots.length > 0 &&
-			(<div class={styles.gallery}>
-				{project.screenshots.map((shot, i) => (
-					<button type="button" class={styles.thumb} data-thumb>
-						<Image src={shot} alt={`${project.title}, screenshot ${i + 1}`} />
-					</button>
-				))}
+
+		<header class={styles.head}>
+			<div class={styles.intro}>
+				<div>
+					<span class={styles.tag}>{project.tag}</span>
+					<h1 class={styles.title}>{project.title} {project.inProgress && <InProgressBadge />}</h1>
+					<p class={styles.pitch}>{project.pitch}</p>
+				</div>
+				<SystemMap project={project} />
 			</div>
-		)}
-		<div class={styles.description} >
-			<h3><span class="accent">Project description</span></h3>
-			<span set:html={project.longDescription}/>
+			<PlanetScene project={project} />
+		</header>
+
+		<div class={styles.grid}>
+			<ProjectMedia project={project} />
+			<SpecSheet project={project} />
 		</div>
-		{project.embedUrl &&
-			(<div class={styles.embed}>
-				Play it here
-				<iframe src={project.embedUrl} title={`${project.title}, playable in the browser`} width="1280" allow="autoplay"/>
-				<p class={styles["on-mobile"]}>This game is not designed to run on your device. Try it on a computer !</p>
-			</div>
+
+		{project.longDescription && (
+			<section class={styles.section}>
+				<SectionHead title="Overview" />
+				<div class={styles.overview} set:html={project.longDescription} />
+			</section>
 		)}
-	</div>
+
+		{project.highlights && project.highlights.length > 0 && <Highlights highlights={project.highlights} />}
+
+		<LandingZone project={project} />
+		<ProjectPager project={project} />
+	</main>
 </Layout>
-
-<script>
-	// Clic sur une capture : elle recouvre le média principal pendant 10 s.
-	const preview = document.querySelector<HTMLImageElement>('[data-preview]');
-	const thumbnails = document.querySelectorAll<HTMLButtonElement>('[data-thumb]');
-
-	let revertTimer = 0;
-
-	thumbnails.forEach(thumb => {
-		thumb.addEventListener('click', () => {
-			const shot = thumb.querySelector('img');
-			if (!preview || !shot)
-				return;
-
-			preview.src = shot.currentSrc || shot.src;
-			preview.toggleAttribute('data-visible', true);
-
-			clearTimeout(revertTimer);
-			revertTimer = window.setTimeout(() => preview.removeAttribute('data-visible'), 10000);
-		});
-	});
-</script>

@@ -1,0 +1,31 @@
+---
+import { mapOrder, type Project } from '../../data/projects';
+import styles from '../../styles/components/project/project-pager.module.css';
+
+interface Props {
+	project: Project;
+}
+
+// Astre précédent / suivant, dans l'ordre de la carte. Masqué aux extrémités.
+const { project } = Astro.props;
+const i = mapOrder.findIndex((p) => p.slug === project.slug);
+const prev = mapOrder[i - 1];
+const next = mapOrder[i + 1];
+---
+
+{(prev || next) && (
+	<nav class={styles.pager} aria-label="Other projects">
+		{prev && (
+			<a class={styles.prev} href={`/projects/${prev.slug}`} style={`--c: var(--planet-${prev.slug})`}>
+				<span class={styles.planet}></span>
+				<span><span class={styles.label}>← Previous body · {prev.category} system</span><br /><span class={styles.title}>{prev.title}</span></span>
+			</a>
+		)}
+		{next && (
+			<a class={styles.next} href={`/projects/${next.slug}`} style={`--c: var(--planet-${next.slug})`}>
+				<span class={styles.planet}></span>
+				<span><span class={styles.label}>Next body · {next.category} system →</span><br /><span class={styles.title}>{next.title}</span></span>
+			</a>
+		)}
+	</nav>
+)}

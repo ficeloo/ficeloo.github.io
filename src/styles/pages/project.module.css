@@ -1,205 +1,109 @@
-.project {
-	display: flex;
-	flex-direction: column;
-	padding: 2em 3em;
-	font-size: 1.15em;
-	gap: 2em;
-	max-width: 80rem;
+/* Page projet : « dossier de mission » — ligne HUD, en-tête (titre + planète), média + fiche,
+   puis Overview, Highlights, Landing zone et astres voisins. */
+.page {
+	max-width: 76rem;
 	margin: 0 auto;
+	padding-inline: clamp(16px, 4vw, 3rem);
+	padding-block: 2.5rem 5rem;
+	overflow-x: clip; /* les orbites de la planète peuvent dépasser sur téléphone */
 }
 
-.project h1 {
-	letter-spacing: 0.1em;
-	font-weight: normal;
+.topline {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 0.5rem 1.5rem;
+	padding-bottom: 0.9rem;
+	border-bottom: 1px solid rgba(var(--rgb-secondary), 0.35);
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-secondary);
+}
+
+.head {
+	display: grid;
+	grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+	gap: 1.5rem 2rem;
+	align-items: center;
+	padding-block: 1.6rem 1.2rem;
+}
+
+.intro {
+	display: grid;
+	gap: 1.3rem;
+	min-width: 0;
 }
 
 .tag {
-	text-transform: uppercase;
 	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-secondary);
+	white-space: pre; /* garde les espaces autour des « · » du tag */
+}
+
+.title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 1rem;
+	margin: 0.4rem 0 0.6rem;
+	font-weight: 400;
+	font-size: clamp(2.4rem, 6vw, 4.6rem);
+	line-height: 1;
+	letter-spacing: 0.06em;
+	text-wrap: balance;
+}
+
+.pitch {
+	margin: 0;
+	max-width: 40ch;
+	font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+	line-height: 1.6;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 19rem;
+	gap: 1.5rem;
+	align-items: start;
+}
+
+.section {
+	padding-top: 4rem;
+}
+
+/* Texte de l'Overview (HTML de longDescription) sur deux colonnes */
+.overview {
+	columns: 2;
+	column-gap: 2rem;
 	color: var(--color-text-dim);
+	line-height: 1.6;
 }
 
-.links {
-	display: flex;
-
-	font-family: var(--font-display);
-	font-size: 0.95em;
-	text-transform: uppercase;
-	gap: 1em;
+.overview :global(p) {
+	margin: 0 0 1em;
 }
 
-.links a {
-	display: inline-flex;
-	text-decoration: none;
-	align-items: center;
-
-	border-radius: 5px;
-	padding: 0.4rem 0.5rem;
-
-	transition: transform 0.25s,
-	background-color 0.25s;
-}
-
-.links a:hover {
-	transform: scale(1.05);
-}
-
-.first {
-	align-items: center;
-
-	background-color: var(--color-accent);
-
-	color: var(--color-bg);
-}
-
-.first:hover {
-	background-color: color-mix(in srgb, var(--color-accent) 85%, white);
-}
-
-.second {
-	color: var(--color-text);
-	border: 1px solid;
-}
-
-.second:hover {
-	background-color: color-mix(in srgb, var(--color-bg) 85%, white);
-}
-
-.main-img {
-	position: relative;
-}
-
-.main-img > img {
-	display: block;
-	width: 100%;
-	height: auto;
-	border-radius: 5px;
-	border: 1px solid rgba(var(--rgb-secondary), 0.4);
-	box-sizing: border-box;
-}
-
-/* Capture de la galerie posée sur le média principal (voir le script de la page). */
-.main-img .preview {
-	position: absolute;
-	inset: 0;
-	height: 100%;
-	object-fit: cover;
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 0.3s ease-in-out;
-}
-
-.main-img .preview[data-visible] {
-	opacity: 1;
-}
-
-.gallery {
-	display: flex;
-	gap: 12px;
-	overflow-x: auto;
-	scroll-snap-type: x mandatory;
-	border-radius: 5px;
-	scrollbar-width: thin;
-	scrollbar-color: rgba(var(--rgb-secondary), 0.6) transparent;
-}
-
-.gallery img {
-	aspect-ratio: 16/9;
-	object-fit: cover;
-	scroll-snap-align: start;
-	border: 1px solid rgba(var(--rgb-secondary), 0.4);
-	border-radius: 5px;
-}
-
-.thumb {
-	flex-shrink: 0;
-	width: 27%;
-	padding: 0;
-	border: 0;
-	border-radius: 5px;
-	background: none;
-	cursor: pointer;
-	scroll-snap-align: start;
-}
-
-.thumb img {
-	display: block;
-	box-sizing: border-box; /* la bordure reste dans le bouton */
-	width: 100%;
-	height: auto;
-}
-
-.thumb:focus-visible {
-	outline: 2px solid var(--color-accent);
-	outline-offset: 2px;
-}
-
-.description {
-	padding: 1rem 0rem;
-	color: var(--color-text);
-	border-bottom: 1px solid rgba(var(--rgb-secondary), 0.4);
-}
-
-.description span:nth-child(1) {
-	font-size: 1.1em;
-}
-
-.description :global(p) {
-	line-height: 1.4;
-}
-
-.description :global(div){
-	font-size: 0.9em;
-	color: rgba(var(--rgb-text), 0.6);
-}
-
-.description :global(ul){
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-
-.description h3 {
-	font-weight: normal;
-}
-
-.embed {
-	display: flex;
-	flex-direction: column;
-	text-transform: uppercase;
-	font-family: var(--font-display);
-	color: rgba(var(--rgb-text), 0.6);
-	gap: 1rem;
-}
-
-.embed iframe {
-	display: block;
-	border: 1px solid;
-	aspect-ratio: 16/9;
-	margin: 1rem auto;
-}
-
-/* Message affiché à la place du jeu quand l'écran est trop petit. */
-.on-mobile {
-	display: none;
-	justify-content: center;
+.overview :global(p:first-child) {
+	font-size: 1.15rem;
 	color: var(--color-text);
 }
 
-/* Le jeu itch.io fait 1280px de large : en dessous, on n'affiche que le message. */
-@media (max-width: 1279px) {
-	.embed iframe {
-		display: none;
+.overview :global(strong) {
+	color: var(--color-text);
+	font-weight: 600;
+}
+
+@media (max-width: 960px) {
+	.head,
+	.grid {
+		grid-template-columns: 1fr;
 	}
-	.on-mobile {
-		display: flex;
-	}
-}
-
-@media (max-width: 768px) {
-	.project {
-		padding: 1em;
-		font-size: 1rem;
-		gap: 1em;
+	.overview {
+		columns: 1;
 	}
 }

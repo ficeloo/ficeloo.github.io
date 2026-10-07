@@ -124,3 +124,9 @@ export const projects: Project[] = [
 		links: { github: "https://github.com/pixel-fight42/ft_transcendance/" },
 	},
 ]
+
+// Systèmes de la star map, dans l'ordre d'apparition, et projets dans l'ordre de la carte
+// (système par système) : sert à la mini-carte et au précédent / suivant des pages projet.
+export const systems = [...new Set(projects.map((p) => p.category))];
+export const mapOrder = systems.flatMap((c) => projects.filter((p) => p.category === c));
+export type { Project };

@@ -1,0 +1,180 @@
+/* Média du projet : cadre HUD à coins orange + vignettes du carrousel. */
+.media {
+	display: grid;
+	gap: 0.8rem;
+	min-width: 0;
+}
+
+.frame {
+	position: relative;
+	padding: 10px;
+}
+
+/* Quatre coins en équerre */
+.corner {
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	border: 0 solid var(--color-accent);
+	pointer-events: none;
+}
+.corner:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.corner:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.corner:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.corner:nth-child(4) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+.screen {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	background: var(--color-panel);
+	overflow: hidden;
+}
+
+.screen img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: opacity 0.25s;
+}
+
+/* Fondu pendant le changement d'image (classe posée par le script) */
+.screen img:global(.swap) {
+	opacity: 0;
+}
+
+.rec {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.2rem 0.5rem;
+	border-radius: 3px;
+	background: rgba(var(--rgb-bg-deep), 0.7);
+	font-family: var(--font-display);
+	font-size: 0.7rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.rec::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--color-accent);
+	animation: blink 1.4s steps(2) infinite;
+}
+
+@keyframes blink {
+	50% { opacity: 0.2; }
+}
+
+.nav {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 2.6rem;
+	height: 2.6rem;
+	border-radius: 50%;
+	border: 1px solid rgba(var(--rgb-secondary), 0.6);
+	background: rgba(var(--rgb-bg-deep), 0.75);
+	color: var(--color-text);
+	font-size: 1.2rem;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 0.2s, border-color 0.2s;
+}
+.prev { left: 0.8rem; }
+.next { right: 0.8rem; }
+.screen:hover .nav,
+.nav:focus-visible { opacity: 1; }
+.nav:hover { border-color: var(--color-accent); }
+
+.count {
+	position: absolute;
+	right: 0.8rem;
+	bottom: 0.7rem;
+	padding: 0.15rem 0.45rem;
+	border-radius: 3px;
+	background: rgba(var(--rgb-bg-deep), 0.7);
+	font-family: var(--font-display);
+	font-size: 0.7rem;
+	letter-spacing: 0.14em;
+	font-variant-numeric: tabular-nums;
+}
+
+.thumbs {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+	gap: 0.6rem;
+}
+
+.thumb {
+	position: relative;
+	padding: 0;
+	aspect-ratio: 16 / 9;
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+	border-radius: 4px;
+	overflow: hidden;
+	background: var(--color-panel);
+	cursor: pointer;
+	opacity: 0.7;
+	transition: opacity 0.2s, border-color 0.2s;
+}
+
+.thumb:hover,
+.thumb[aria-current="true"] {
+	opacity: 1;
+	border-color: var(--color-accent);
+}
+
+.thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Barre de progression sous la vignette active (durée --slide posée par le script) */
+.thumb::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	height: 3px;
+	width: 0;
+	background: var(--color-accent);
+}
+
+.thumb[aria-current="true"]::after {
+	animation: fill var(--slide, 6s) linear forwards;
+}
+
+.media:global(.paused) .thumb::after,
+.media:global(.held) .thumb::after {
+	animation-play-state: paused;
+}
+
+@keyframes fill {
+	to { width: 100%; }
+}
+
+.nav:focus-visible,
+.thumb:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
+}
+
+/* Pas de survol au doigt : flèches toujours visibles */
+@media (hover: none) {
+	.nav { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rec::before { animation: none; }
+	.thumb::after { display: none; }
+}

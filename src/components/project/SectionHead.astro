@@ -1,0 +1,15 @@
+---
+import styles from '../../styles/components/project/section-head.module.css';
+
+interface Props {
+	title: string;
+}
+
+// Titre de section façon HUD : « // OVERVIEW » suivi d'un filet.
+const { title } = Astro.props;
+---
+
+<div class={styles.head}>
+	<span class={styles.mark} aria-hidden="true">//</span>
+	<h2 class={styles.title}>{title}</h2>
+</div>

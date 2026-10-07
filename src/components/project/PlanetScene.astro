@@ -1,0 +1,34 @@
+---
+import type { Project } from '../../data/projects';
+import styles from '../../styles/components/project/planet-scene.module.css';
+
+interface Props {
+	project: Project;
+}
+
+// Planète du projet + sa stack en satellites. Le canvas est animé par src/scripts/project-planet.ts ;
+// sans JS, la stack reste affichée en pastilles sous un emplacement vide.
+const { project } = Astro.props;
+const { planet, stack } = project;
+---
+
+<div
+	class={styles.scene}
+	data-planet-scene
+	data-system={project.category}
+	data-slug={project.slug}
+	data-seed={planet.seed}
+	data-signature={planet.signature}
+	data-retrograde={planet.retrograde ? '' : undefined}
+	data-belt={planet.belt ? '' : undefined}
+	data-rings={planet.rings}
+	data-wip={project.inProgress ? '' : undefined}
+	role="img"
+	aria-label={`Tech stack: ${stack.join(', ')}`}
+>
+	<canvas class={styles.canvas} aria-hidden="true"></canvas>
+	<ul class={styles.sats} aria-hidden="true">
+		{stack.map((tech) => <li class={styles.sat} data-sat>{tech}</li>)}
+	</ul>
+	<span class={styles.caption}>Stack in orbit · <span class={styles.count}>{stack.length} satellites</span></span>
+</div>

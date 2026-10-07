@@ -1,0 +1,28 @@
+.head {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1.6rem;
+}
+
+/* Filet qui prolonge le titre jusqu'au bord */
+.head::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: rgba(var(--rgb-secondary), 0.35);
+}
+
+.mark {
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	color: var(--color-accent);
+}
+
+.title {
+	margin: 0;
+	font-weight: 400;
+	font-size: 1.05rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+}

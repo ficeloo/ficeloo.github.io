@@ -1,0 +1,40 @@
+---
+import { mapOrder, systems, type Project } from '../../data/projects';
+import styles from '../../styles/components/project/system-map.module.css';
+
+interface Props {
+	project: Project;
+}
+
+// Mini-carte du système : les astres du même système (ordre de la carte), celui-ci en
+// surbrillance, et des liens vers les systèmes voisins (dernier astre du précédent,
+// premier astre du suivant : les voisins directs sur la carte).
+const { project } = Astro.props;
+const bodies = mapOrder.filter((p) => p.category === project.category);
+const index = systems.indexOf(project.category);
+const prevSystem = systems[index - 1];
+const nextSystem = systems[index + 1];
+const prevBody = prevSystem && mapOrder.findLast((p) => p.category === prevSystem);
+const nextBody = nextSystem && mapOrder.find((p) => p.category === nextSystem);
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<nav class={styles.sysmap} aria-label={`${project.category} system`}>
+	<span class={styles.label}>{project.category} system · {pad(bodies.length)} {bodies.length > 1 ? 'bodies' : 'body'}</span>
+	<div class={styles.track}>
+		{prevBody && <a class:list={[styles.jump, styles.prev]} href={`/projects/${prevBody.slug}`}>← {prevSystem} system</a>}
+		<div class={styles.bodies}>
+		{bodies.map((b) => {
+			const current = b.slug === project.slug;
+			return (
+				<a class:list={[styles.body, current && styles.current]} href={`/projects/${b.slug}`} aria-current={current ? 'page' : undefined} style={`--c: var(--planet-${b.slug})`}>
+					<span class={styles.dot}></span>
+					<span>{b.title}</span>
+					{current && <small>You are here</small>}
+				</a>
+			);
+		})}
+		</div>
+		{nextBody && <a class:list={[styles.jump, styles.next]} href={`/projects/${nextBody.slug}`}>{nextSystem} system →</a>}
+	</div>
+</nav>
