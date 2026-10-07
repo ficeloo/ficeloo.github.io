@@ -104,6 +104,11 @@
 	.grid {
 		grid-template-columns: 1fr;
 	}
+	/* En pile, la planète ne prend pas toute la largeur */
+	.head > :last-child {
+		max-width: 34rem;
+		justify-self: center;
+	}
 	.overview {
 		columns: 1;
 	}

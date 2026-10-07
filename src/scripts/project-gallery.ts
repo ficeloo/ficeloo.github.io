@@ -14,6 +14,7 @@ document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((gallery) => {
 	const count = gallery.querySelector('[data-count]');
 	if (!main || thumbs.length < 2) return;
 
+	gallery.querySelectorAll<HTMLElement>('[data-prev], [data-next], [data-count]').forEach((el) => { el.hidden = false; });
 	const isGif = (src: string) => /\.gif(\?|$)/i.test(src);
 	let current = 0;
 	let holdTimer = 0;

@@ -9,7 +9,7 @@ interface Props {
 }
 
 // Média principal dans un cadre HUD + vignettes. Le défilement (façon Steam) est géré
-// par src/scripts/project-gallery.ts ; sans JS, seul le média principal s'affiche.
+// par src/scripts/project-gallery.ts ; flèches et compteur restent masqués sans JS.
 const { project } = Astro.props;
 const isGif = project.image.format === 'gif';
 
@@ -35,9 +35,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
 			<span class={styles.rec}>{isGif ? 'REC · Gameplay' : 'Preview'}</span>
 			{slides.length > 1 && (
 				<>
-					<button type="button" class:list={[styles.nav, styles.prev]} data-prev aria-label="Previous image">‹</button>
-					<button type="button" class:list={[styles.nav, styles.next]} data-next aria-label="Next image">›</button>
-					<span class={styles.count} data-count>01 / {pad(slides.length)}</span>
+					<button type="button" class:list={[styles.nav, styles.prev]} data-prev hidden aria-label="Previous image">‹</button>
+					<button type="button" class:list={[styles.nav, styles.next]} data-next hidden aria-label="Next image">›</button>
+					<span class={styles.count} data-count hidden>01 / {pad(slides.length)}</span>
 				</>
 			)}
 		</div>
