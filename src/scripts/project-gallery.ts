@@ -58,3 +58,5 @@ document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((gallery) => {
 
 	thumbs[0].style.setProperty('--slide', isGif(thumbs[0].dataset.slide ?? '') ? '10s' : '6s');
 });
+
+export {}; // module : ses déclarations restent locales au fichier
