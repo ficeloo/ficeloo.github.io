@@ -139,7 +139,8 @@
 	object-fit: cover;
 }
 
-/* Barre de progression sous la vignette active (durée --slide posée par le script) */
+/* Barre de progression sous la vignette active (durée --slide posée par le script).
+   En pause : survol (paused), après un clic (held), hors écran (away). */
 .thumb::after {
 	content: "";
 	position: absolute;
@@ -155,7 +156,8 @@
 }
 
 .media:global(.paused) .thumb::after,
-.media:global(.held) .thumb::after {
+.media:global(.held) .thumb::after,
+.media:global(.away) .thumb::after {
 	animation-play-state: paused;
 }
 
