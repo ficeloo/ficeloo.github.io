@@ -32,6 +32,10 @@
 	--planet-band-mid: #2a2790;
 	--planet-band-light: #3a37b0;
 
+	/* Planètes des pages projet : une couleur par projet, --planet-<slug> */
+	--planet-stellar-drift: #8d88bd; /* lavande des astéroïdes du jeu */
+	--planet-ft_transcendence: #4f8c80;
+
 	/* Grain */
 	--grain-opacity: 0.05;
 
