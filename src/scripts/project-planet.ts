@@ -615,6 +615,7 @@ function frame(s: Scene, ms: number) {
 	if (s.belt) drawBelt(s, time, false);
 	drawSignature(s, time, false);
 	if (s.drone) drawFreeDrone(s, time, false);
+	if (s.builder) drawBuilder(s, time, false);
 	sats.forEach((p) => { if (p[2] <= 0) dot(p); });
 
 	// Planète
@@ -625,7 +626,6 @@ function frame(s: Scene, ms: number) {
 	else drawPlated(s, time);
 	c.restore();
 	if (s.system !== 'facets') rim(s);
-	if (s.builder) drawBuilder(s, time, false);
 
 	// Premier plan
 	if (s.rings) drawRings(s, time, true);
