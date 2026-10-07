@@ -96,6 +96,27 @@
 	color: var(--color-accent);
 }
 
+/* « Système suivant » toujours calé à droite */
+.next {
+	margin-left: auto;
+}
+
+/* Téléphone : les astres sur toute la largeur, les liens de système en dessous */
+@media (max-width: 640px) {
+	.track {
+		flex-wrap: wrap;
+		gap: 0.9rem;
+	}
+	.bodies {
+		flex-basis: 100%;
+		order: -1;
+		gap: 1rem 1.8rem;
+	}
+	.jump {
+		margin-top: 0;
+	}
+}
+
 .body:focus-visible,
 .jump:focus-visible {
 	outline: 2px solid var(--color-accent);

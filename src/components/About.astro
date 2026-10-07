@@ -1,11 +1,11 @@
 ---
-import { projects } from '../data/projects';
+import { mapOrder } from '../data/projects';
 import { moonSlots } from '../scripts/home-planet';
 import HomePlanet from './HomePlanet.astro';
 import styles from '../styles/components/about.module.css'
 
 // Un satellite par projet autour de la planète : rangs d'orbite calculés au build.
-const moons = JSON.stringify(moonSlots(projects.map((p) => p.category)));
+const moons = JSON.stringify(moonSlots(mapOrder.map((p) => p.category)));
 ---
 
 <section id="about" class={styles.about} data-orbits data-moons={moons}>

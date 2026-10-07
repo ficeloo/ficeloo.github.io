@@ -77,10 +77,9 @@
 	padding-top: 4rem;
 }
 
-/* Texte de l'Overview (HTML de longDescription) sur deux colonnes */
+/* Texte de l'Overview (HTML de longDescription), en une colonne de lecture */
 .overview {
-	columns: 2;
-	column-gap: 2rem;
+	max-width: 70ch;
 	color: var(--color-text-dim);
 	line-height: 1.6;
 }
@@ -108,8 +107,5 @@
 	.head > :last-child {
 		max-width: 34rem;
 		justify-self: center;
-	}
-	.overview {
-		columns: 1;
 	}
 }

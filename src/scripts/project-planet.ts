@@ -34,7 +34,7 @@ function hex(value: string): RGB {
 	return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)) as RGB;
 }
 const rootStyle = getComputedStyle(document.documentElement);
-const token = (name: string, fallback = '#ffffff') => hex(rootStyle.getPropertyValue(name) || fallback);
+const token = (name: string) => hex(rootStyle.getPropertyValue(name) || rootStyle.getPropertyValue('--color-text'));
 const C = {
 	accent: token('--color-accent'),
 	accentLight: token('--color-accent-light'),
@@ -120,7 +120,7 @@ function setup(box: HTMLElement): Scene {
 	const rnd = seeded(Number(ds.seed) || 11);
 	const s: Scene = {
 		box, cv, ctx: cv.getContext('2d')!, system,
-		color: token(`--planet-${ds.slug}`, '#8d88bd'),
+		color: rootStyle.getPropertyValue(`--planet-${ds.slug}`) ? token(`--planet-${ds.slug}`) : C.secondary, // projet sans token : vert-gris du site
 		wip: 'wip' in ds, rnd,
 		W: 0, H: 0, R: 0, cx: 0, cy: 0,
 		orbitStart: 'belt' in ds ? 0.78 : 0.72,
