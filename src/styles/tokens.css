@@ -38,6 +38,7 @@
 	--planet-scop: #4a6fc4;
 	--planet-ft_transcendence: #4f8c80;
 	--planet-portfolio: #c4643f;
+	--planet-portfolio-ring: #F3F6F6; /* anneaux Web : --planet-<slug>-ring (orange --color-accent si absent) */
 
 	/* Grain */
 	--grain-opacity: 0.05;

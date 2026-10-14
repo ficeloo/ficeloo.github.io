@@ -82,6 +82,7 @@ interface Scene {
 	ctx: CanvasRenderingContext2D;
 	system: System;
 	color: RGB;
+	ringColor: RGB;
 	wip: boolean;
 	rnd: () => number;
 	W: number; H: number; R: number;
@@ -121,6 +122,7 @@ function setup(box: HTMLElement): Scene {
 	const s: Scene = {
 		box, cv, ctx: cv.getContext('2d')!, system,
 		color: rootStyle.getPropertyValue(`--planet-${ds.slug}`) ? token(`--planet-${ds.slug}`) : C.secondary, // projet sans token : vert-gris du site
+		ringColor: rootStyle.getPropertyValue(`--planet-${ds.slug}-ring`) ? token(`--planet-${ds.slug}-ring`) : C.accent, // anneaux Web : orange par défaut
 		wip: 'wip' in ds, rnd,
 		W: 0, H: 0, R: 0, cx: 0, cy: 0,
 		orbitStart: 'belt' in ds ? 0.78 : 0.72,
@@ -393,7 +395,7 @@ function drawRings(s: Scene, time: number, front: boolean) {
 			prev = ok;
 		}
 		c.setLineDash([16, 9]); c.lineDashOffset = -g.dir * t0 * g.speed;
-		c.strokeStyle = rgba(C.accent, front ? 0.85 : 0.25); c.lineWidth = 2.2; c.stroke();
+		c.strokeStyle = rgba(s.ringColor, front ? 0.85 : 0.25); c.lineWidth = 2.2; c.stroke();
 		c.setLineDash([]);
 	});
 }

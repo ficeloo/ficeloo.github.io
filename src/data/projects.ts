@@ -9,7 +9,7 @@ import ftChat from '../assets/ft-transcendence/chat.png'
 import ftPrivacy from '../assets/ft-transcendence/privacy-policy.png'
 import ftGame from '../assets/ft-transcendence/game.png'
 import ftWin from '../assets/ft-transcendence/win.png'
-// TODO (Théophile) : remplacer les cover.png provisoires par les vraies images
+// TODO (Théophile) : remplacer les cover.png provisoires d'Endgame et Scop par les vraies images
 // (même nom, ou changer l'extension ici si c'est un .gif / .jpg).
 import egCover from '../assets/endgame/cover.png'
 import scopCover from '../assets/scop/cover.png'
@@ -134,18 +134,18 @@ export const projects: Project[] = [
 		slug: "scop",
 		title: "Scop",
 		// TODO (Théophile) : texte à écrire.
-		description: "TODO — A 42 project: loading and displaying a textured 3D object with Rust and Vulkan.",
+		description: "[PLACEHOLDER] A 42 project: loading and rendering a textured 3D object with Rust and Vulkan.",
 		longDescription: `
 			<p>
 				<em>This project is part of the 42 curriculum.</em><br>
 				<br>
-				TODO — description du projet.<br>
+				[PLACEHOLDER] A graphics project from the 42 curriculum: loading a 3D object and rendering it with Vulkan, written in Rust. Full write-up coming soon.<br>
 			</p>`,
 		category: "Graphics",
 		tag: "Graphics  ·  Rust  ·  Vulkan",
 		year: "2026",
 		// TODO Théophile : pitch, contexte (solo ?), durée, highlights
-		pitch: "TODO — Loading and rendering a textured 3D object from scratch, with Rust and Vulkan.",
+		pitch: "[PLACEHOLDER] Loading and rendering a textured 3D object from scratch, with Rust and Vulkan.",
 		context: "42 curriculum",
 		stack: ["Rust", "Vulkan"],
 		planet: { seed: 7, signature: "teapot" },
@@ -194,21 +194,22 @@ export const projects: Project[] = [
 		slug: "portfolio",
 		title: "ficelo.dev",
 		// TODO (Théophile) : texte à écrire (garder la phrase de transparence sur la refonte).
-		description: "TODO — This portfolio: a scroll-driven star map built with Astro.",
+		description: "[PLACEHOLDER] This portfolio: a scroll-driven star map built with Astro.",
 		longDescription: `
 			<p>
-				TODO — description du projet.<br>
+				[PLACEHOLDER] The site you are browsing: projects laid out as a space map you travel through by scrolling, built with Astro. Full write-up coming soon.<br>
 				<br>
 				<em>I built the first version on my own. The 2026 redesign was developed with an AI coding assistant (Claude Code), from my design and direction.</em><br>
 			</p>`,
 		category: "Web",
 		tag: "Web  ·  Astro  ·  TypeScript",
 		year: "May 2026",
-		// TODO Théophile : pitch, durée, highlights ; anneaux blancs prévus (le moteur les dessine en orange pour l'instant)
-		pitch: "TODO — This portfolio: a scroll-driven star map, built with Astro.",
+		// TODO Théophile : pitch, durée, highlights
+		pitch: "[PLACEHOLDER] This portfolio: a scroll-driven star map, built with Astro.",
 		context: "Solo · personal project",
 		stack: ["Astro", "TypeScript"],
 		planet: { seed: 9, signature: "beacon", rings: 1 },
+		inProgress: true,
 		image: pfCover,
 		alt: "The star map of the portfolio",
 		links: { github: "https://github.com/ficeloo/ficeloo.github.io" },
