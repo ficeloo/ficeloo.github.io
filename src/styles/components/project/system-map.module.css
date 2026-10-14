@@ -14,6 +14,11 @@
 	color: var(--color-secondary);
 }
 
+/* Nom du système : sa couleur (--sys, posée sur la page projet). */
+.system {
+	color: var(--sys, var(--color-secondary));
+}
+
 .track {
 	display: flex;
 	align-items: flex-start;

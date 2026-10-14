@@ -21,12 +21,15 @@ interface Props {
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
 const project = getMapOrder(lang).find((p) => p.slug === Astro.props.slug)!;
+// Teinte du système (tokens.css), héritée par la mini-carte : lueur de fond et nom du système.
+const sys = project.category.toLowerCase();
+const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb: var(--rgb-system-${sys}, var(--rgb-secondary))`;
 ---
 
 <Layout title={t('meta.project.title', { title: project.title })} description={project.description} crumb={t('crumb.project', { title: project.title })} back={localizePath(`/#project-${project.slug}`, lang)}>
-	<main class={styles.page}>
+	<main class={styles.page} style={sysStyle}>
 		<div class={styles.topline}>
-			<span>{t('project.file')} · {t('map.system', { name: project.category })}</span>
+			<span>{t('project.file')} · <span class={styles.system}>{t('map.system', { name: project.category })}</span></span>
 			<span>{t('project.logged')} · {project.year}</span>
 		</div>
 

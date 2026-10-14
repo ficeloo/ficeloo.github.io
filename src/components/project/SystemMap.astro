@@ -24,7 +24,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
 <nav class={styles.sysmap} aria-label={t('map.system', { name: project.category })}>
-	<span class={styles.label}>{t('map.system', { name: project.category })} · {pad(bodies.length)} {t(bodies.length > 1 ? 'project.bodies' : 'project.body')}</span>
+	<span class={styles.label}><span class={styles.system}>{t('map.system', { name: project.category })}</span> · {pad(bodies.length)} {t(bodies.length > 1 ? 'project.bodies' : 'project.body')}</span>
 	<div class={styles.track}>
 		{prevBody && <a class:list={[styles.jump, styles.prev]} href={localizePath(`/projects/${prevBody.slug}`, lang)}>← {t('map.system', { name: prevSystem })}</a>}
 		<div class={styles.bodies}>

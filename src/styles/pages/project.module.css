@@ -6,6 +6,14 @@
 	padding-inline: clamp(16px, 4vw, 3rem);
 	padding-block: 2.5rem 5rem;
 	overflow-x: clip; /* les orbites de la planète peuvent dépasser sur téléphone */
+	/* Lueur de la couleur du système (--sys-rgb, posée sur la page) derrière la planète.
+	   closest-side : elle s'éteint avant les bords de la colonne, donc jamais de bord net. */
+	background: radial-gradient(closest-side at 76% 18rem, rgba(var(--sys-rgb), 0.12), transparent);
+}
+
+/* Nom du système dans la ligne du haut. */
+.system {
+	color: var(--sys);
 }
 
 .topline {
