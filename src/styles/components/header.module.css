@@ -13,8 +13,17 @@
 	font-size: clamp(0.95rem, 2vw, 1.6rem);
 }
 
-.indicator {
+/* Côté droit : fil d'Ariane (ou « Portfolio / année ») + sélecteur de langue. */
+.end {
 	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 1.2rem;
+	min-width: 0;
+}
+
+.indicator {
 	text-align: right;
 	letter-spacing: 0.18em;
 	color: var(--color-text-dim);
@@ -101,8 +110,31 @@
 	text-shadow: 0 0 12px var(--color-accent);
 }
 
+/* Sélecteur de langue : pastille discrète, orange au survol. */
+.lang a {
+	display: inline-block;
+	padding: 0.35em 0.6em;
+	font-size: 0.7em;
+	letter-spacing: 0.18em;
+	color: var(--color-text-dim);
+	text-decoration: none;
+	border: 1px solid rgba(var(--rgb-text), 0.25);
+	transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.lang a:hover {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+
+.lang a:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
 @media(max-width: 768px) {
 	.indicator { display: none; }
+	.end { flex: 0; }
 	.header nav {
 		flex: 0;
 		gap: 1rem;

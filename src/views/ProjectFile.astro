@@ -1,0 +1,62 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getMapOrder } from '../data/projects';
+import { getLang, localizePath, useTranslations } from '../i18n';
+import InProgressBadge from '../components/InProgressBadge.astro';
+import SystemMap from '../components/project/SystemMap.astro';
+import PlanetScene from '../components/project/PlanetScene.astro';
+import ProjectMedia from '../components/project/ProjectMedia.astro';
+import SpecSheet from '../components/project/SpecSheet.astro';
+import SectionHead from '../components/project/SectionHead.astro';
+import Highlights from '../components/project/Highlights.astro';
+import LandingZone from '../components/project/LandingZone.astro';
+import ProjectPager from '../components/project/ProjectPager.astro';
+import styles from '../styles/pages/project.module.css';
+
+interface Props {
+	slug: string;
+}
+
+// Page projet (« fiche de mission »), partagée par toutes les langues.
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const project = getMapOrder(lang).find((p) => p.slug === Astro.props.slug)!;
+---
+
+<Layout title={t('meta.project.title', { title: project.title })} description={project.description} crumb={t('crumb.project', { title: project.title })} back={localizePath(`/#project-${project.slug}`, lang)}>
+	<main class={styles.page}>
+		<div class={styles.topline}>
+			<span>{t('project.file')} · {t('map.system', { name: project.category })}</span>
+			<span>{t('project.logged')} · {project.year}</span>
+		</div>
+
+		<header class={styles.head}>
+			<div class={styles.intro}>
+				<div>
+					<span class={styles.tag}>{project.tag}</span>
+					<h1 class={styles.title}>{project.title} {project.inProgress && <InProgressBadge />}</h1>
+					<p class={styles.pitch}>{project.pitch}</p>
+				</div>
+				<SystemMap project={project} />
+			</div>
+			<PlanetScene project={project} />
+		</header>
+
+		<div class={styles.grid}>
+			<ProjectMedia project={project} />
+			<SpecSheet project={project} />
+		</div>
+
+		{project.longDescription && (
+			<section class={styles.section}>
+				<SectionHead title={t('project.overview')} />
+				<div class={styles.overview} set:html={project.longDescription} />
+			</section>
+		)}
+
+		{project.highlights && project.highlights.length > 0 && <Highlights highlights={project.highlights} />}
+
+		<LandingZone project={project} />
+		<ProjectPager project={project} />
+	</main>
+</Layout>

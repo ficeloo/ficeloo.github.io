@@ -1,61 +1,10 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { projects } from '../../data/projects';
-import InProgressBadge from '../../components/InProgressBadge.astro';
-import SystemMap from '../../components/project/SystemMap.astro';
-import PlanetScene from '../../components/project/PlanetScene.astro';
-import ProjectMedia from '../../components/project/ProjectMedia.astro';
-import SpecSheet from '../../components/project/SpecSheet.astro';
-import SectionHead from '../../components/project/SectionHead.astro';
-import Highlights from '../../components/project/Highlights.astro';
-import LandingZone from '../../components/project/LandingZone.astro';
-import ProjectPager from '../../components/project/ProjectPager.astro';
-import styles from '../../styles/pages/project.module.css';
+import ProjectFile from '../../views/ProjectFile.astro';
+import { slugs } from '../../data/projects';
 
 export function getStaticPaths() {
-	return projects.map((project) => ({
-		params: { slug: project.slug },
-		props: { project },
-	}));
+	return slugs.map((slug) => ({ params: { slug } }));
 }
-
-const { project } = Astro.props;
 ---
 
-<Layout title={`${project.title} — ficelo`} description={project.description} crumb={`Project / ${project.title}`} back={`/#project-${project.slug}`}>
-	<main class={styles.page}>
-		<div class={styles.topline}>
-			<span>Project file · {project.category} system</span>
-			<span>Logged · {project.year}</span>
-		</div>
-
-		<header class={styles.head}>
-			<div class={styles.intro}>
-				<div>
-					<span class={styles.tag}>{project.tag}</span>
-					<h1 class={styles.title}>{project.title} {project.inProgress && <InProgressBadge />}</h1>
-					<p class={styles.pitch}>{project.pitch}</p>
-				</div>
-				<SystemMap project={project} />
-			</div>
-			<PlanetScene project={project} />
-		</header>
-
-		<div class={styles.grid}>
-			<ProjectMedia project={project} />
-			<SpecSheet project={project} />
-		</div>
-
-		{project.longDescription && (
-			<section class={styles.section}>
-				<SectionHead title="Overview" />
-				<div class={styles.overview} set:html={project.longDescription} />
-			</section>
-		)}
-
-		{project.highlights && project.highlights.length > 0 && <Highlights highlights={project.highlights} />}
-
-		<LandingZone project={project} />
-		<ProjectPager project={project} />
-	</main>
-</Layout>
+<ProjectFile slug={Astro.params.slug} />

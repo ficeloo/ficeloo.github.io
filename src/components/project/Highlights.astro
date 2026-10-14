@@ -2,6 +2,7 @@
 import SectionHead from './SectionHead.astro';
 import type { Project } from '../../data/projects';
 import styles from '../../styles/components/project/highlights.module.css';
+import { getLang, useTranslations } from '../../i18n';
 
 interface Props {
 	highlights: NonNullable<Project['highlights']>;
@@ -10,6 +11,7 @@ interface Props {
 // Cartes sur une grille de 6 colonnes : 3 par rangée, et la dernière rangée s'élargit
 // pour ne jamais laisser une carte seule (5 → 3 + 2, 4 → 2 + 2, 7 → 3 + 2 + 2).
 const { highlights } = Astro.props;
+const t = useTranslations(getLang(Astro.currentLocale));
 const n = highlights.length;
 const span = (i: number) => {
 	if (n === 1) return 6;
@@ -21,7 +23,7 @@ const span = (i: number) => {
 ---
 
 <section class={styles.section}>
-	<SectionHead title="Highlights" />
+	<SectionHead title={t('project.highlights')} />
 	<ul class={styles.grid}>
 		{highlights.map((h, i) => (
 			<li class={styles.card} style={`--span: ${span(i)}`}>

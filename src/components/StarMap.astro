@@ -1,11 +1,15 @@
 ---
-import { mapOrder as projects, systems as cats } from '../data/projects';
+import { getMapOrder, systems as cats } from '../data/projects';
+import { getLang, localizePath, useTranslations } from '../i18n';
 import { getImage } from 'astro:assets';
 import InProgressBadge from './InProgressBadge.astro';
 import type { ImageMetadata } from 'astro';
 import styles from '../styles/components/star-map.module.css';
 
 const pad = (n: number) => String(n).padStart(2, '0');
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const projects = getMapOrder(lang);
 
 // Projets dans l'ordre de parcours de la carte (système par système, voir projects.ts) :
 // c'est celui des numéros 01, 02…
@@ -25,14 +29,24 @@ const data = await Promise.all(projects.map(async (p) => ({
 	wip: !!p.inProgress,
 	img: await thumb(p.image),
 	alt: p.alt,
+	link: localizePath(`/projects/${p.slug}`, lang),
 })));
+
+// Textes écrits par le moteur de la carte (src/scripts/star-map.ts) : {name} et {n} y sont remplacés.
+const text = {
+	entering: t('map.entering'),
+	system: t('map.system'),
+	selected: t('map.selected'),
+	project: t('map.project'),
+	projects: t('map.projects'),
+};
 
 const systems = cats.map((c, g) => ({
 	num: pad(g + 1),
 	label: c,
 	count: pad(projects.filter((p) => p.category === c).length),
 }));
-const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...systems.map((s) => ({ key: s.label, label: s.label, count: s.count }))];
+const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.length) }, ...systems.map((s) => ({ key: s.label, label: s.label, count: s.count }))];
 ---
 
 <section class={styles.stage} data-starmap>
@@ -49,15 +63,15 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 
 			<div class={styles.topbar}>
 				<div class={styles.counter} data-counter>01 / {pad(projects.length)}</div>
-				<h2 class={styles.title}><span class="accent">Discover</span> my Work</h2>
-				<button class={styles['see-all']} type="button" data-see-all>View all ☰</button>
+				<h2 class={styles.title} set:html={t('map.title')} />
+				<button class={styles['see-all']} type="button" data-see-all>{t('map.viewAll')} ☰</button>
 			</div>
 
 			<div class={styles.nav}>
-				<div class={styles['nav-heading']}>Systems</div>
+				<div class={styles['nav-heading']}>{t('map.systems')}</div>
 				{systems.map((sys) => (
 					<button class={styles['nav-row']} type="button" data-nav-row>
-						<span>{sys.num}<span class={styles['nav-name']}>. {sys.label} System</span></span>
+						<span>{sys.num}<span class={styles['nav-name']}>. {t('map.system', { name: sys.label })}</span></span>
 						<span class={styles['nav-count']}>{sys.count}</span>
 						<span class={styles['nav-bar']} data-nav-bar></span>
 					</button>
@@ -65,7 +79,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 			</div>
 
 			<div class={styles.hud} data-hud>
-				<div class={styles['hud-label']} data-hud-cat>Selected</div>
+				<div class={styles['hud-label']} data-hud-cat>{t('map.selected')}</div>
 				<div class={styles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
 				<h3 class={styles['hud-title']}><span class={styles['title-text']} data-hud-title></span><InProgressBadge data-hud-wip hidden /></h3>
 				<div class={styles['hud-meta']}>
@@ -75,14 +89,14 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 				</div>
 			</div>
 
-			<a class={styles['about-link']} href="#about">About me ↓</a>
+			<a class={styles['about-link']} href="#about">{t('map.aboutLink')} ↓</a>
 
 			<!-- Tactile : remplace le swipe dans la carte (affiché seulement sur écran tactile). -->
-			<nav class={styles['touch-nav']} aria-label="Projects">
-				<button type="button" data-go="top" aria-label="Back to top">↑</button>
-				<button type="button" data-go="prev">← Prev</button>
-				<button type="button" data-go="next">Next →</button>
-				<button type="button" data-go="bottom" aria-label="Go to the bottom of the page">↓</button>
+			<nav class={styles['touch-nav']} aria-label={t('map.touchAria')}>
+				<button type="button" data-go="top" aria-label={t('map.top')}>↑</button>
+				<button type="button" data-go="prev">← {t('map.prev')}</button>
+				<button type="button" data-go="next">{t('map.next')} →</button>
+				<button type="button" data-go="bottom" aria-label={t('map.bottom')}>↓</button>
 			</nav>
 		</div>
 
@@ -107,7 +121,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 				<div class={styles['popup-body']}>
 					<div class={styles['popup-meta']}>
 						<span data-popup-meta></span>
-						<button class={styles['popup-close']} type="button" data-popup-close aria-label="Close">✕</button>
+						<button class={styles['popup-close']} type="button" data-popup-close aria-label={t('map.close')}>✕</button>
 					</div>
 					<h3 class={styles['popup-title']}><span class={styles['title-text']} data-popup-title></span><InProgressBadge data-popup-wip hidden /></h3>
 					<p class={styles['popup-desc']} data-popup-desc></p>
@@ -117,7 +131,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 						<span data-popup-year></span>
 					</div>
 					<div class={styles['popup-link-wrap']}>
-						<a class={styles['popup-link']} data-popup-link href="#">View project →</a>
+						<a class={styles['popup-link']} data-popup-link href="#">{t('map.viewProject')} →</a>
 					</div>
 				</div>
 			</div>
@@ -125,8 +139,8 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 
 		<!-- Raccourcis clavier : une ligne pour la carte, une pour la popup ouverte. -->
 		<div class={styles.keys} data-keys aria-hidden="true">
-			<span class={styles['keys-map']}><kbd>←</kbd><kbd>→</kbd> navigate <kbd>↵</kbd> open</span>
-			<span class={styles['keys-popup']}><kbd>↵</kbd> view project <kbd class={styles['kbd-word']}>esc</kbd> close</span>
+			<span class={styles['keys-map']}><kbd>←</kbd><kbd>→</kbd> {t('map.keyNavigate')} <kbd>↵</kbd> {t('map.keyOpen')}</span>
+			<span class={styles['keys-popup']}><kbd>↵</kbd> {t('map.keyViewProject')} <kbd class={styles['kbd-word']}>esc</kbd> {t('map.keyClose')}</span>
 		</div>
 	</div>
 
@@ -134,8 +148,8 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 	<div class={styles.overlay} data-overlay role="dialog" aria-modal="true" aria-labelledby="overlay-title" inert>
 		<div class={styles['overlay-inner']}>
 			<div class={styles['overlay-head']}>
-				<h2 class={styles['overlay-title']} id="overlay-title">All <span class="accent">projects</span></h2>
-				<button class={styles['overlay-close']} type="button" data-list-close>Close ✕</button>
+				<h2 class={styles['overlay-title']} id="overlay-title" set:html={t('map.allProjects')} />
+				<button class={styles['overlay-close']} type="button" data-list-close>{t('map.close')} ✕</button>
 			</div>
 			<div class={styles['overlay-filters']}>
 				{filters.map((fl) => (
@@ -169,7 +183,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 	<ul class={styles.fallback}>
 		{projects.map((p, i) => (
 			<li>
-				<a href={`/projects/${p.slug}`}>
+				<a href={localizePath(`/projects/${p.slug}`, lang)}>
 					<span class={styles['f-num']}>{pad(i + 1)}</span>
 					<span>{p.title} {p.inProgress && <InProgressBadge />}</span>
 					<span class={styles['f-tag']}>{p.tag}</span>
@@ -179,6 +193,7 @@ const filters = [{ key: 'All', label: 'All', count: pad(projects.length) }, ...s
 	</ul>
 
 	<script type="application/json" id="starmap-data" set:html={JSON.stringify(data)} />
+	<script type="application/json" id="starmap-text" set:html={JSON.stringify(text)} />
 </section>
 
 <script>

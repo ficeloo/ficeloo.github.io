@@ -1,5 +1,6 @@
 ---
-import { mapOrder, type Project } from '../../data/projects';
+import { getMapOrder, type Project } from '../../data/projects';
+import { getLang, localizePath, useTranslations } from '../../i18n';
 import styles from '../../styles/components/project/project-pager.module.css';
 
 interface Props {
@@ -8,23 +9,26 @@ interface Props {
 
 // Astre précédent / suivant, dans l'ordre de la carte. Masqué aux extrémités.
 const { project } = Astro.props;
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const mapOrder = getMapOrder(lang);
 const i = mapOrder.findIndex((p) => p.slug === project.slug);
 const prev = mapOrder[i - 1];
 const next = mapOrder[i + 1];
 ---
 
 {(prev || next) && (
-	<nav class={styles.pager} aria-label="Other projects">
+	<nav class={styles.pager} aria-label={t('pager.aria')}>
 		{prev && (
-			<a class={styles.prev} href={`/projects/${prev.slug}`} style={`--c: var(--planet-${prev.slug})`}>
+			<a class={styles.prev} href={localizePath(`/projects/${prev.slug}`, lang)} style={`--c: var(--planet-${prev.slug})`}>
 				<span class={styles.planet}></span>
-				<span><span class={styles.label}>← Previous body · {prev.category} system</span><br /><span class={styles.title}>{prev.title}</span></span>
+				<span><span class={styles.label}>← {t('pager.prev')} · {t('map.system', { name: prev.category })}</span><br /><span class={styles.title}>{prev.title}</span></span>
 			</a>
 		)}
 		{next && (
-			<a class={styles.next} href={`/projects/${next.slug}`} style={`--c: var(--planet-${next.slug})`}>
+			<a class={styles.next} href={localizePath(`/projects/${next.slug}`, lang)} style={`--c: var(--planet-${next.slug})`}>
 				<span class={styles.planet}></span>
-				<span><span class={styles.label}>Next body · {next.category} system →</span><br /><span class={styles.title}>{next.title}</span></span>
+				<span><span class={styles.label}>{t('pager.next')} · {t('map.system', { name: next.category })} →</span><br /><span class={styles.title}>{next.title}</span></span>
 			</a>
 		)}
 	</nav>

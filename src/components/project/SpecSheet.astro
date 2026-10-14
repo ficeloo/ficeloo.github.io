@@ -2,6 +2,7 @@
 import InProgressBadge from '../InProgressBadge.astro';
 import type { Project } from '../../data/projects';
 import styles from '../../styles/components/project/spec-sheet.module.css';
+import { getLang, useTranslations } from '../../i18n';
 
 interface Props {
 	project: Project;
@@ -10,24 +11,25 @@ interface Props {
 // Fiche technique : ce qu'un recruteur lit en quelques secondes, et tous les liens du projet.
 const { project } = Astro.props;
 const { links } = project;
+const t = useTranslations(getLang(Astro.currentLocale));
 // « Play » mène au jeu de la page s'il est intégré, sinon à itch.io
 const play = project.embedUrl ? '#play' : links.itch;
 ---
 
-<aside class={styles.spec} aria-label="Spec sheet">
+<aside class={styles.spec} aria-label={t('spec.title')}>
 	<div class={styles.head}>
-		<span class={styles.label}>Spec sheet</span>
-		{project.inProgress ? <InProgressBadge /> : <span class={styles.status}>Shipped</span>}
+		<span class={styles.label}>{t('spec.title')}</span>
+		{project.inProgress ? <InProgressBadge /> : <span class={styles.status}>{t('spec.shipped')}</span>}
 	</div>
 	<dl class={styles.rows}>
-		<div class={styles.row}><dt>Context</dt><dd>{project.context}</dd></div>
-		{project.duration && <div class={styles.row}><dt>Duration</dt><dd>{project.duration}</dd></div>}
-		<div class={styles.row}><dt>{project.inProgress ? 'Started' : 'Released'}</dt><dd>{project.year}</dd></div>
-		<div class={styles.row}><dt>Stack</dt><dd>{project.stack.join(' · ')}</dd></div>
+		<div class={styles.row}><dt>{t('spec.context')}</dt><dd>{project.context}</dd></div>
+		{project.duration && <div class={styles.row}><dt>{t('spec.duration')}</dt><dd>{project.duration}</dd></div>}
+		<div class={styles.row}><dt>{t(project.inProgress ? 'spec.started' : 'spec.released')}</dt><dd>{project.year}</dd></div>
+		<div class={styles.row}><dt>{t('spec.stack')}</dt><dd>{project.stack.join(' · ')}</dd></div>
 	</dl>
 	<div class={styles.links}>
-		{play && <a href={play}><span>▷ Play in browser</span><span>itch.io</span></a>}
-		{links.github && <a href={links.github}><span>&lt;/&gt; Source code</span><span>GitHub</span></a>}
-		{links.gdd && <a href={links.gdd}><span>🗎 Game design doc</span><span>GDD</span></a>}
+		{play && <a href={play}><span>{t('spec.play')}</span><span>itch.io</span></a>}
+		{links.github && <a href={links.github}><span>{t('spec.source')}</span><span>GitHub</span></a>}
+		{links.gdd && <a href={links.gdd}><span>{t('spec.gdd')}</span><span>GDD</span></a>}
 	</div>
 </aside>

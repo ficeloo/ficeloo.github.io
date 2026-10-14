@@ -1,0 +1,10 @@
+---
+import ProjectFile from '../../../views/ProjectFile.astro';
+import { slugs } from '../../../data/projects';
+
+export function getStaticPaths() {
+	return slugs.map((slug) => ({ params: { slug } }));
+}
+---
+
+<ProjectFile slug={Astro.params.slug} />

@@ -1,31 +1,34 @@
 ---
 import styles from '../styles/components/hero.module.css'
+import { getLang, useTranslations } from '../i18n'
+
+const t = useTranslations(getLang(Astro.currentLocale));
 ---
 
 <section class={styles.hero} data-hero>
 	<canvas class={styles['hero-stars']} data-hero-stars aria-hidden="true"></canvas>
 
 	<div class={`${styles["status-pill"]} ${styles.reveal}`} style="--i:0">
-		<span class={styles.dot}></span>Currently learning · Rust · Bevy
+		<span class={styles.dot}></span>{t('hero.learning')}
 	</div>
 
-	<h1 class={styles.reveal} style="--i:1">I'm <span class={styles.name}>ficelo</span>, <br /> a junior game designer & developer.</h1>
+	<h1 class={styles.reveal} style="--i:1">{t('hero.greeting')} <span class={styles.name}>ficelo</span>, <br /> {t('hero.role')}</h1>
 
-	<p class={`${styles.lede} ${styles.reveal}`} style="--i:2">With my games, I'm exploring ways to leave a mark. Small projects and a lot of fun — trying to do better every time.</p>
+	<p class={`${styles.lede} ${styles.reveal}`} style="--i:2">{t('hero.lede')}</p>
 
 	<div class={`${styles["hero-meta"]} ${styles.reveal}`} style="--i:3">
-		<span><span class={styles.label}>Based</span><strong>Paris, Fr</strong></span>
+		<span><span class={styles.label}>{t('hero.based')}</span><strong>{t('hero.basedValue')}</strong></span>
 		<span class={styles.sep}>/</span>
-		<span><span class={styles.label}>School</span><strong>42 (In progress)</strong></span>
+		<span><span class={styles.label}>{t('hero.school')}</span><strong>{t('hero.schoolValue')}</strong></span>
 		<span class={styles.sep}>/</span>
-		<span><span class={styles.label}>Skilled in</span><strong>C/C++ · Godot</strong></span>
+		<span><span class={styles.label}>{t('hero.skilled')}</span><strong>C/C++ · Godot</strong></span>
 		<span class={styles.sep}>/</span>
-		<span><span class={styles.label}>Looking for</span><strong>Internship / work-study · Available now</strong></span>
+		<span><span class={styles.label}>{t('hero.lookingFor')}</span><strong>{t('hero.lookingForValue')}</strong></span>
 	</div>
 
 	<div class={`${styles["hero-cta"]} ${styles.reveal}`} style="--i:4">
-		<a href="#work" class={styles.primary}>See my work <span class={styles.arrow}>→</span></a>
-		<a href="#contact" class={styles.secondary}>Say hi ! <span class={styles.arrow}>→</span></a>
+		<a href="#work" class={styles.primary}>{t('hero.ctaWork')} <span class={styles.arrow}>→</span></a>
+		<a href="#contact" class={styles.secondary}>{t('hero.ctaHi')} <span class={styles.arrow}>→</span></a>
 	</div>
 </section>
 

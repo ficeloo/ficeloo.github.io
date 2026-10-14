@@ -1,8 +1,10 @@
 ---
 import styles from '../styles/components/in-progress-badge.module.css'
+import { getLang, useTranslations } from '../i18n'
 
 // Attributs en plus transmis au badge (ex. data-hud-wip et hidden, pilotés par la star map).
 const attrs = Astro.props;
+const t = useTranslations(getLang(Astro.currentLocale));
 ---
 
-<span class={styles.badge} {...attrs}><span class={styles.dot}></span>In progress</span>
+<span class={styles.badge} {...attrs}><span class={styles.dot}></span>{t('badge.inProgress')}</span>

@@ -2,6 +2,7 @@
 import { getImage } from 'astro:assets';
 import type { Project } from '../../data/projects';
 import styles from '../../styles/components/project/landing-zone.module.css';
+import { getLang, useTranslations } from '../../i18n';
 
 interface Props {
 	project: Project;
@@ -11,6 +12,8 @@ interface Props {
 // fenêtre par-dessus la page, et ne se charge qu'au clic. Sous 1280 px : texte + lien itch.io.
 const { project } = Astro.props;
 const { embedUrl, links } = project;
+const t = useTranslations(getLang(Astro.currentLocale));
+const title = project.title;
 const coverImg = project.screenshots?.[1] ?? project.screenshots?.[0] ?? project.image;
 const cover = coverImg.format === 'gif' ? coverImg.src : (await getImage({ src: coverImg, width: 960, format: 'webp' })).src;
 ---
@@ -18,24 +21,24 @@ const cover = coverImg.format === 'gif' ? coverImg.src : (await getImage({ src: 
 {(embedUrl || links.itch) && (
 	<section class={styles.landing} id="play">
 		<div class={styles.text}>
-			<span class={styles.label}>Landing zone</span>
-			<h2 class={styles.title}>Take the controls</h2>
-			<p>{embedUrl ? `${project.title} runs right in your browser.` : `${project.title} is available on itch.io.`}</p>
-			{embedUrl && <p class={styles.small}>Best played on a computer, with a keyboard.</p>}
-			{links.itch && <a class={styles.itch} href={links.itch}>Open on itch.io ↗</a>}
+			<span class={styles.label}>{t('landing.label')}</span>
+			<h2 class={styles.title}>{t('landing.title')}</h2>
+			<p>{t(embedUrl ? 'landing.browser' : 'landing.itch', { title })}</p>
+			{embedUrl && <p class={styles.small}>{t('landing.best')}</p>}
+			{links.itch && <a class={styles.itch} href={links.itch}>{t('landing.open')}</a>}
 		</div>
 		{embedUrl && (
 			<div class={styles.launch}>
 				<img src={cover} alt="" loading="lazy" />
 				<div class={styles['launch-inner']}>
-					<button type="button" class={styles['launch-btn']} data-launch aria-label={`Play ${project.title}`}>▷</button>
-					<span>Play {project.title}</span>
+					<button type="button" class={styles['launch-btn']} data-launch aria-label={t('landing.play', { title })}>▷</button>
+					<span>{t('landing.play', { title })}</span>
 				</div>
 			</div>
-			<dialog class={styles.dialog} data-game-dialog aria-label={`${project.title}, playable in the browser`}>
+			<dialog class={styles.dialog} data-game-dialog aria-label={t('landing.dialog', { title })}>
 				<div class={styles['dialog-bar']}>
-					<span class={styles.label}>{project.title} · in-browser build</span>
-					<button type="button" class={styles.close} data-close>Close ✕</button>
+					<span class={styles.label}>{t('landing.build', { title })}</span>
+					<button type="button" class={styles.close} data-close>{t('landing.close')}</button>
 				</div>
 				<div class={styles.game} data-game data-src={embedUrl}></div>
 			</dialog>

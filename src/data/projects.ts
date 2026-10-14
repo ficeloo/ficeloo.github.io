@@ -16,6 +16,7 @@ import scopCover from '../assets/scop/cover.png'
 import pfCover from '../assets/portfolio/cover.png'
 
 import type { ImageMetadata } from 'astro';
+import { pick, type Lang, type Localized } from '../i18n';
 
 // Planète de la page projet. La technique de rendu vient du système (category) ;
 // la couleur vient de tokens.css (--planet-<slug>), le reste est l'« ADN » du projet.
@@ -27,37 +28,40 @@ interface Planet {
 	rings?: number; // Web : 1 anneau par couche du projet (front, back, BDD…), 3 max
 }
 
-interface Highlight {
-	label: string; // catégorie courte (Physics, Flow…)
-	title: string;
-	text: string;
+interface Highlight<T = Localized> {
+	label: T; // catégorie courte (Physics, Flow…)
+	title: T;
+	text: T;
 }
 
-interface Project {
+// Les textes (T) s'écrivent "en anglais seulement" ou { en: "…", fr: "…" } : voir src/i18n.
+// Les composants reçoivent un Project déjà traduit (getProjects / getMapOrder).
+interface ProjectData<T = Localized> {
 	slug: string; //identifiant URL
-	title: string;
-	description: string;
-	longDescription?: string;
-	category: string; // Système de la star map : les projets y sont regroupés par catégorie
-	tag: string;
-	year: string;
-	pitch: string; // Une phrase sous le titre de la page projet
-	context: string; // Solo / équipe, cadre (42, jam…), rôle
-	duration?: string;
+	title: T;
+	description: T;
+	longDescription?: T; // HTML
+	category: string; // Système de la star map : les projets y sont regroupés par catégorie (clé, non traduite)
+	tag: T;
+	year: T;
+	pitch: T; // Une phrase sous le titre de la page projet
+	context: T; // Solo / équipe, cadre (42, jam…), rôle
+	duration?: T;
 	stack: string[]; // Technos principales : satellites de la planète + fiche technique
-	highlights?: Highlight[];
+	highlights?: Highlight<T>[];
 	planet: Planet;
 	inProgress?: boolean; // Projet pas encore terminé : badge « In progress » partout où il apparaît
 	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
-	alt: string;
+	alt: T;
 	screenshots?: ImageMetadata[]; // Tableau de screenshots
 	links: { itch?: string; github?: string; gdd?: string };
 	embedUrl?: string; // Pour les projets jouables sur navigateur (WASM)
 }
+type Project = ProjectData<string>;
 
 // Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
 // (Game → Graphics → Web). Les numéros 01, 02… suivent cet ordre de parcours.
-export const projects: Project[] = [
+const projects: ProjectData[] = [
 	{
 		slug: "stellar-drift",
 		title: "Stellar Drift",
@@ -216,8 +220,31 @@ export const projects: Project[] = [
 	},
 ]
 
-// Systèmes de la star map, dans l'ordre d'apparition, et projets dans l'ordre de la carte
-// (système par système) : sert à la mini-carte et au précédent / suivant des pages projet.
+// Systèmes de la star map, dans l'ordre d'apparition.
 export const systems = [...new Set(projects.map((p) => p.category))];
-export const mapOrder = systems.flatMap((c) => projects.filter((p) => p.category === c));
+
+/** Les projets dans une langue (dans l'ordre du tableau). */
+export function getProjects(lang: Lang): Project[] {
+	return projects.map((p) => ({
+		...p,
+		title: pick(p.title, lang),
+		description: pick(p.description, lang),
+		longDescription: pick(p.longDescription, lang),
+		tag: pick(p.tag, lang),
+		year: pick(p.year, lang),
+		pitch: pick(p.pitch, lang),
+		context: pick(p.context, lang),
+		duration: pick(p.duration, lang),
+		highlights: p.highlights?.map((h) => ({ label: pick(h.label, lang), title: pick(h.title, lang), text: pick(h.text, lang) })),
+		alt: pick(p.alt, lang),
+	}));
+}
+
+/** Les projets dans l'ordre de la carte (système par système) : numéros 01, 02…, mini-carte, précédent / suivant. */
+export function getMapOrder(lang: Lang): Project[] {
+	const list = getProjects(lang);
+	return systems.flatMap((c) => list.filter((p) => p.category === c));
+}
+
+export const slugs = projects.map((p) => p.slug);
 export type { Project };

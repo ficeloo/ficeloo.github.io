@@ -12,8 +12,11 @@ type Raw = {
 	wip: boolean; // projet en cours : badge « In progress »
 	img: string;
 	alt: string;
+	link: string; // page projet, dans la langue de la page
 };
-type Proj = Raw & { i: number; num: string; link: string };
+type Proj = Raw & { i: number; num: string };
+// Textes de l'interface, traduits au build (StarMap.astro) : {name} et {n} y sont remplacés.
+type Text = { entering: string; system: string; selected: string; project: string; projects: string };
 type Pt = { x: number; y: number };
 type Node = Pt & { g: number; gx: number; gy: number };
 type Group = { c: string; g: number; mem: number[]; gx: number; gy: number; Rc: number; pos: Pt[] | null };
@@ -73,8 +76,9 @@ export function initStarMap(styles: Record<string, string>) {
 		...p,
 		i,
 		num: pad(i + 1),
-		link: `/projects/${p.slug}`,
 	}));
+	const text = JSON.parse(document.getElementById('starmap-text')?.textContent || '{}') as Text;
+	const sysName = (c: string) => text.system.replace('{name}', c);
 	if (!projects.length) return;
 
 	// Reduced-motion : pas de carte animée ni de scroll-jacking.
@@ -223,7 +227,7 @@ export function initStarMap(styles: Record<string, string>) {
 	arrivalEl.className = styles.arrival;
 	const arrLabel = document.createElement('div');
 	arrLabel.className = styles['arrival-label'];
-	arrLabel.textContent = 'Entering system';
+	arrLabel.textContent = text.entering;
 	const arrTitle = document.createElement('div');
 	arrTitle.className = styles['arrival-title'];
 	const arrNum = document.createElement('span');
@@ -379,7 +383,7 @@ export function initStarMap(styles: Record<string, string>) {
 			du.wy = g0.gy + Math.sin(a) * rr * (vertical ? 1.1 : 0.8);
 		});
 
-		G.forEach((g0, gi) => txt(groupEls[gi].label, pad(g0.g + 1) + ' · ' + g0.c + ' system'));
+		G.forEach((g0, gi) => txt(groupEls[gi].label, pad(g0.g + 1) + ' · ' + sysName(g0.c)));
 	}
 
 	type Metrics = ReturnType<typeof layout> & {
@@ -819,8 +823,8 @@ export function initStarMap(styles: Record<string, string>) {
 			css(pulseEl, 'transform', at(ds.x - pr, ds.y - pr));
 			css(pulseEl, 'opacity', (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3));
 			txt(arrNum, pad(dg.g + 1));
-			txt(arrName, ' ' + dg.c + ' system');
-			txt(arrCount, pad(dg.mem.length) + ' projects');
+			txt(arrName, ' ' + sysName(dg.c));
+			txt(arrCount, (dg.mem.length > 1 ? text.projects : text.project).replace('{n}', pad(dg.mem.length)));
 			css(arrivalEl, 'opacity', arrOp.toFixed(3));
 		} else {
 			css(pulseEl, 'opacity', '0');
@@ -835,7 +839,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ai];
-		txt(hud.cat, 'Selected · ' + cur.num + ' · ' + cur.cat);
+		txt(hud.cat, text.selected + ' · ' + cur.num + ' · ' + cur.cat);
 		if (hud.img && hud.img.getAttribute('src') !== cur.img) hud.img.src = cur.img;
 		txt(hud.title, cur.title);
 		txt(hud.tag, cur.tag);

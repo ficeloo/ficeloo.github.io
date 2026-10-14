@@ -1,0 +1,15 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getLang, useTranslations } from '../i18n';
+import styles from '../styles/pages/legal.module.css'
+
+// Mentions légales, partagées par toutes les langues.
+const t = useTranslations(getLang(Astro.currentLocale));
+---
+
+<Layout title={t('meta.legal.title')} description={t('meta.legal.description')} crumb={t('crumb.legal')}>
+	<main class={styles.legal}>
+		<h1>{t('legal.title')}</h1>
+		<Fragment set:html={t('legal.body')} />
+	</main>
+</Layout>

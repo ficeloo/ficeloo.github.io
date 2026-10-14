@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro'
+import StarMap from '../components/StarMap.astro'
+import About from '../components/About.astro'
+import { getLang, useTranslations } from '../i18n';
+
+// Accueil, partagé par toutes les langues (src/pages/index.astro, src/pages/fr/index.astro…).
+const t = useTranslations(getLang(Astro.currentLocale));
+---
+
+<Layout title={t('meta.home.title')} description={t('meta.home.description')}>
+	<StarMap>
+		<Hero />
+	</StarMap>
+	<About />
+</Layout>
