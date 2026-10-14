@@ -20,16 +20,32 @@ const next = mapOrder[i + 1];
 {(prev || next) && (
 	<nav class={styles.pager} aria-label={t('pager.aria')}>
 		{prev && (
-			<a class={styles.prev} href={localizePath(`/projects/${prev.slug}`, lang)} style={`--c: var(--planet-${prev.slug})`}>
+			<a class={styles.prev} href={localizePath(`/projects/${prev.slug}`, lang)} data-pager-prev aria-keyshortcuts="ArrowLeft" style={`--c: var(--planet-${prev.slug})`}>
 				<span class={styles.planet}></span>
 				<span><span class={styles.label}>← {t('pager.prev')} · {t('map.system', { name: prev.category })}</span><br /><span class={styles.title}>{prev.title}</span></span>
 			</a>
 		)}
 		{next && (
-			<a class={styles.next} href={localizePath(`/projects/${next.slug}`, lang)} style={`--c: var(--planet-${next.slug})`}>
+			<a class={styles.next} href={localizePath(`/projects/${next.slug}`, lang)} data-pager-next aria-keyshortcuts="ArrowRight" style={`--c: var(--planet-${next.slug})`}>
 				<span class={styles.planet}></span>
 				<span><span class={styles.label}>{t('pager.next')} · {t('map.system', { name: next.category })} →</span><br /><span class={styles.title}>{next.title}</span></span>
 			</a>
 		)}
 	</nav>
 )}
+
+<script>
+	// Flèches ← → : astre précédent / suivant (les liens ci-dessus, dans l'ordre de la carte).
+	// Inactif dans un champ de saisie, avec une touche de modification, ou quand le jeu est
+	// ouvert (le <dialog> de la Landing zone : les flèches servent alors au jeu).
+	document.addEventListener('keydown', (e) => {
+		if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+		if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+		const target = e.target as HTMLElement;
+		if (target.closest('input, textarea, select, [contenteditable]') || document.querySelector('dialog[open]')) return;
+		const link = document.querySelector<HTMLAnchorElement>(e.key === 'ArrowLeft' ? '[data-pager-prev]' : '[data-pager-next]');
+		if (!link) return;
+		e.preventDefault();
+		link.click();
+	});
+</script>

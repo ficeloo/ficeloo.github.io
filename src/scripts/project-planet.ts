@@ -384,8 +384,25 @@ function panelOutline(p: Panel, spin: number): Vec3[] {
 }
 function drawPlated(s: Scene, time: number) {
 	const c = s.ctx, spin = spinOf(s, time);
-	baseFill(s, c);
 	const visible = (p: Panel) => fromLatLon(...panelCenter(p), spin)[2] > 0;
+	// Chantier : les plaques manquantes sont de vrais trous. On dessine d'abord l'intérieur de la
+	// coque (plaques de la face arrière, vues de l'intérieur ; ses propres trous laissent voir le fond),
+	// puis la surface autour des trous seulement (découpe evenodd), comme le filaire de Graphics.
+	const holes = s.wip ? s.panels!.filter((p) => p.hole && visible(p)).map((p) => panelOutline(p, spin)) : [];
+	if (holes.length) {
+		s.panels!.forEach((p) => {
+			if (visible(p)) return;
+			poly(s, panelOutline(p, spin));
+			if (!p.hole) { c.fillStyle = rgba(C.deep, 0.55); c.fill(); }
+			c.strokeStyle = rgba(C.secondary, 0.22); c.lineWidth = 0.7; c.stroke();
+		});
+		c.save();
+		c.beginPath();
+		c.rect(s.cx - s.R - 2, s.cy - s.R - 2, 2 * s.R + 4, 2 * s.R + 4);
+		holes.forEach((q) => q.forEach(([x, y], k) => (k ? c.lineTo(s.cx + x * s.R, s.cy + y * s.R) : c.moveTo(s.cx + x * s.R, s.cy + y * s.R))));
+		c.clip('evenodd');
+	}
+	baseFill(s, c);
 	s.panels!.forEach((p) => {
 		if (!visible(p)) return;
 		poly(s, panelOutline(p, spin));
@@ -404,11 +421,11 @@ function drawPlated(s: Scene, time: number) {
 		}
 	});
 	shade(c, s.cx, s.cy, s.R);
-	// Chantier : plaque manquante = trou sombre + échafaudage en croix
-	s.panels!.forEach((p) => {
-		if (!p.hole || !visible(p)) return;
-		const q = panelOutline(p, spin);
-		poly(s, q); c.fillStyle = rgba(C.deep, 0.92); c.fill();
+	if (!holes.length) return;
+	c.restore();
+	// Bord de chaque trou + échafaudage en croix
+	holes.forEach((q) => {
+		poly(s, q);
 		c.strokeStyle = rgba(C.secondary, 0.7); c.lineWidth = 0.7; c.stroke();
 		const [ax, ay] = toScreen(s, q[0]), [bx, by] = toScreen(s, q[9]), [dx, dy] = toScreen(s, q[4]), [ex, ey] = toScreen(s, q[13]);
 		c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.moveTo(dx, dy); c.lineTo(ex, ey); c.stroke();
