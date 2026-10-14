@@ -112,6 +112,21 @@
 	pointer-events: none;
 }
 
+/* Nébuleuse d'un système : dégradés posés par le JS (teinte pastel --n du système).
+   Taille fixe (= NEB_BOX dans star-map.ts) mise à l'échelle par transform, sur son propre calque :
+   la carte graphique la déplace sans rien repeindre. */
+.nebula {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 600px;
+	height: 600px;
+	border-radius: 50%;
+	transform-origin: 0 0;
+	will-change: transform;
+	pointer-events: none;
+}
+
 .ring {
 	position: absolute;
 	left: 0;
@@ -326,6 +341,15 @@
 }
 .nav-row:hover {
 	color: var(--color-accent);
+}
+
+/* Pastille de la couleur du système. */
+.nav-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--c);
+	flex: none;
 }
 
 .nav-count {

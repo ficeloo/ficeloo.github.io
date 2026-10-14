@@ -28,6 +28,14 @@ const hash = (n: number) => {
 	return s - Math.floor(s);
 };
 const pad = (n: number) => String(n).padStart(2, '0');
+// Couleur d'un système (tokens.css : --system-<catégorie en minuscules>, --rgb-system-…, --rgb-nebula-…).
+// Système sans token : couleurs neutres du site.
+const sysKey = (c: string) => c.toLowerCase();
+const sysColor = (c: string) => `var(--system-${sysKey(c)}, var(--color-secondary))`;
+const sysRgb = (c: string) => `var(--rgb-system-${sysKey(c)}, var(--rgb-secondary))`;
+const nebRgb = (c: string) => `var(--rgb-nebula-${sysKey(c)}, var(--rgb-secondary))`;
+const NEB_BOX = 600; // taille réelle (px) de l'élément nébuleuse, mis à l'échelle par transform
+const NEB_K = 1.9; // rayon de la nébuleuse / rayon de l'anneau du système
 // Rythme du scroll dans la carte (réglages à affiner à l'usage) :
 const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
 const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
@@ -173,14 +181,34 @@ export function initStarMap(styles: Record<string, string>) {
 	mapLayer.appendChild(svg);
 
 	const cats0 = [...new Set(projects.map((p) => p.cat))];
-	const groupEls = cats0.map(() => {
+	// Nébuleuse : un nuage rond et pastel, plus quelques lobes décalés tirés d'une graine
+	// (le n° du système) pour que chacune ait sa petite irrégularité. Dégradés seulement,
+	// pas de filtre de flou : rien à recalculer quand elle bouge.
+	const nebulaBg = (g: number) => {
+		const c = (a: number) => `rgba(var(--n), ${a})`;
+		const lobes = [0, 1, 2, 3].map((q) => {
+			const a = hash(g * 31 + q * 7.7) * Math.PI * 2;
+			const d = 7 + hash(g * 13 + q * 3.3) * 11; // décalage du centre, en %
+			const rx = 24 + hash(g * 7 + q * 5.9) * 14;
+			const ry = rx * (0.75 + hash(g * 17 + q * 2.1) * 0.4);
+			return `radial-gradient(${rx.toFixed(1)}% ${ry.toFixed(1)}% at ${(50 + Math.cos(a) * d).toFixed(1)}% ${(50 + Math.sin(a) * d).toFixed(1)}%, ${c(0.08)}, ${c(0)})`;
+		});
+		return [...lobes, `radial-gradient(closest-side, ${c(0.15)}, ${c(0.08)} 35%, ${c(0.03)} 70%, ${c(0)})`].join(', ');
+	};
+	const groupEls = cats0.map((c, g) => {
+		const nebula = document.createElement('div');
+		nebula.className = styles.nebula;
+		nebula.style.setProperty('--n', nebRgb(c));
+		nebula.style.background = nebulaBg(g);
+		mapLayer.prepend(nebula); // sous les chemins, anneaux et nœuds
 		const ring = document.createElement('div');
 		ring.className = styles.ring;
+		ring.style.borderColor = `rgba(${sysRgb(c)}, 0.35)`;
 		const label = document.createElement('div');
 		label.className = styles['sys-label'];
 		mapLayer.appendChild(ring);
 		mapLayer.appendChild(label);
-		return { ring, label };
+		return { nebula, ring, label };
 	});
 
 	const nodeEls = projects.map((pr, idx) => {
@@ -210,6 +238,7 @@ export function initStarMap(styles: Record<string, string>) {
 			const sz = hash(d * 11.3 + g) < 0.8 ? 2 : 3;
 			el.style.width = sz + 'px';
 			el.style.height = sz + 'px';
+			el.style.background = `rgb(${nebRgb(cats0[g])})`;
 			mapLayer.appendChild(el);
 			dustEls.push({ el, g, d, o: 0.25 + hash(d * 7.9 + g * 3) * 0.45, sz, wx: 0, wy: 0 });
 		}
@@ -755,11 +784,16 @@ export function initStarMap(styles: Record<string, string>) {
 		G.forEach((g0, gi) => {
 			const s = S({ x: g0.gx, y: g0.gy }, dip);
 			const R = (g0.Rc + 46) * z;
-			const { ring, label } = groupEls[gi];
+			const { nebula, ring, label } = groupEls[gi];
 			// Taille : ne change que pendant un saut (z) ; position : transform.
 			css(ring, 'width', f1(R * 2) + 'px');
 			css(ring, 'height', f1(R * 2) + 'px');
 			css(ring, 'transform', at(s.x - R, s.y - R));
+			// Nébuleuse : taille fixe, mise à l'échelle par transform ; masquée hors écran.
+			const Rn = R * NEB_K;
+			const neb = s.x + Rn > 0 && s.x - Rn < vw && s.y + Rn > 0 && s.y - Rn < vh;
+			css(nebula, 'display', neb ? 'block' : 'none');
+			if (neb) css(nebula, 'transform', `${at(s.x - Rn, s.y - Rn)} scale(${((Rn * 2) / NEB_BOX).toFixed(4)})`);
 			// Vertical : toujours au-dessus de l'anneau (dessous = chemin vers le suivant).
 			// En vertical, seul le système courant reste calé sous la barre du haut
 			// (sinon les labels de deux systèmes se superposent).
@@ -767,7 +801,7 @@ export function initStarMap(styles: Record<string, string>) {
 				? g0.g === curG ? Math.max(110, s.y - R - 28) : s.y - R - 28
 				: g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
 			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
-			css(label, 'color', g0.g === curG ? TEXT : 'var(--color-secondary)');
+			css(label, 'color', g0.g === curG ? sysColor(g0.c) : `rgba(${sysRgb(g0.c)}, 0.55)`);
 			css(label, 'opacity', dim.toFixed(3));
 		});
 
@@ -824,6 +858,7 @@ export function initStarMap(styles: Record<string, string>) {
 			css(pulseEl, 'opacity', (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3));
 			txt(arrNum, pad(dg.g + 1));
 			txt(arrName, ' ' + sysName(dg.c));
+			css(arrTitle, 'color', sysColor(dg.c));
 			txt(arrCount, (dg.mem.length > 1 ? text.projects : text.project).replace('{n}', pad(dg.mem.length)));
 			css(arrivalEl, 'opacity', arrOp.toFixed(3));
 		} else {

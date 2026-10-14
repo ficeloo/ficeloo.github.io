@@ -71,6 +71,7 @@ const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.le
 				<div class={styles['nav-heading']}>{t('map.systems')}</div>
 				{systems.map((sys) => (
 					<button class={styles['nav-row']} type="button" data-nav-row>
+						<span class={styles['nav-dot']} style={`--c: var(--system-${sys.label.toLowerCase()}, var(--color-secondary))`}></span>
 						<span>{sys.num}<span class={styles['nav-name']}>. {t('map.system', { name: sys.label })}</span></span>
 						<span class={styles['nav-count']}>{sys.count}</span>
 						<span class={styles['nav-bar']} data-nav-bar></span>
