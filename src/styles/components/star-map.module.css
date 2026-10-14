@@ -185,7 +185,17 @@
 	pointer-events: none;
 }
 
-/* ===== Saut hyperspace : sonde, pulse, carte d'arrivée ===== */
+/* ===== Saut hyperspace : brume, sonde, pulse, carte d'arrivée ===== */
+/* Brume plein écran (teinte pastel --n posée par le JS), derrière les étoiles ; seule l'opacité change. */
+.veil {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	background: radial-gradient(120% 90% at 50% 50%, rgba(var(--n), 0.2), rgba(var(--n), 0.07) 55%, rgba(var(--n), 0.02));
+	will-change: opacity;
+	pointer-events: none;
+}
+
 .probe {
 	position: absolute;
 	left: 0;
