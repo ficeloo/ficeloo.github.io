@@ -144,7 +144,8 @@ export function initStarMap(styles: Record<string, string>) {
 		const d = document.createElement('div');
 		d.className = styles.star;
 		// Opacité propre portée par la couleur (le groupe anime sa propre opacité par-dessus).
-		d.style.background = `rgba(var(--rgb-${s.c}), ${s.o})`;
+		// --warp : teinte posée sur le calque pendant un saut hyperspace (sinon couleur propre de l'étoile).
+		d.style.background = `rgba(var(--warp, var(--rgb-${s.c})), ${s.o})`;
 		d.style.width = s.d + 'px';
 		d.style.height = s.d + 'px';
 		starGroups[idx % TWINKLE_GROUPS].appendChild(d);
@@ -243,6 +244,13 @@ export function initStarMap(styles: Record<string, string>) {
 			dustEls.push({ el, g, d, o: 0.25 + hash(d * 7.9 + g * 3) * 0.45, sz, wx: 0, wy: 0 });
 		}
 	}
+
+	// Teintes pastel des systèmes en nombres (pour les mélanger au blanc pendant un saut).
+	const rootCss = getComputedStyle(document.documentElement);
+	const rgbOf = (name: string) => rootCss.getPropertyValue(name).split(',').map(Number);
+	const white = rgbOf('--rgb-text');
+	const pastels = new Map(cats0.map((c) => [c, rootCss.getPropertyValue(`--rgb-nebula-${sysKey(c)}`) ? rgbOf(`--rgb-nebula-${sysKey(c)}`) : rgbOf('--rgb-secondary')]));
+	const mixRgb = (a: number[], b: number[], k: number) => a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(', ');
 
 	// Saut hyperspace : sonde, pulse d'arrivée, carte d'arrivée.
 	const probeEl = document.createElement('div');
@@ -779,6 +787,19 @@ export function initStarMap(styles: Record<string, string>) {
 				: `translate(${f1(x)}px,${f1(y)}px) ${rotS} scaleX(${f1(len / s.d)}) translate(-50%,-50%)`;
 			css(starEls[idx], 'transform', tf);
 		});
+		// Pendant un saut, les traînées prennent la teinte du système quitté, passent au blanc,
+		// puis prennent celle du système d'arrivée (dans le sens du trajet). Une seule variable
+		// sur le calque, arrondie au 20e pour ne réécrire que quand la teinte change vraiment.
+		let warp = '';
+		if (leg) {
+			const from = G[dir >= 0 ? W[j].g : W[j + 1].g];
+			const to = G[dir >= 0 ? W[j + 1].g : W[j].g];
+			const kFrom = Math.min(cl(fArr / 0.1, 0, 1), cl((0.4 - fArr) / 0.3, 0, 1));
+			const kTo = Math.min(cl((fArr - 0.6) / 0.3, 0, 1), cl((1 - fArr) / 0.1, 0, 1));
+			const k = Math.round(Math.max(kFrom, kTo) * 20) / 20;
+			if (k > 0) warp = mixRgb(white, pastels.get(kFrom > kTo ? from.c : to.c)!, k);
+		}
+		css(starsLayer!, '--warp', warp);
 
 		// Systèmes (anneaux + labels)
 		G.forEach((g0, gi) => {
