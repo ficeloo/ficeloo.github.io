@@ -83,7 +83,7 @@ interface Scene {
 	system: System;
 	color: RGB;
 	ringColor: RGB;
-	atmo: RGB; // couleur du système : atmosphère et liseré de la planète
+	atmo: RGB; // couleur du système : atmosphère et liseré de la planète (vert-gris du site si en construction)
 	halo?: HTMLCanvasElement; // atmosphère pré-dessinée (refaite seulement au redimensionnement)
 	wip: boolean;
 	rnd: () => number;
@@ -126,7 +126,8 @@ function setup(box: HTMLElement): Scene {
 		box, cv, ctx: cv.getContext('2d')!, system,
 		color: rootStyle.getPropertyValue(`--planet-${ds.slug}`) ? token(`--planet-${ds.slug}`) : C.secondary, // projet sans token : vert-gris du site
 		ringColor: rootStyle.getPropertyValue(`--planet-${ds.slug}-ring`) ? token(`--planet-${ds.slug}-ring`) : C.accent, // anneaux Web : orange par défaut
-		atmo: rootStyle.getPropertyValue(`--system-${sysKey}`) ? token(`--system-${sysKey}`) : C.secondary, // système sans token : vert-gris du site
+		// Pas d'atmosphère sur un projet en construction ; système sans token : vert-gris du site
+		atmo: !('wip' in ds) && rootStyle.getPropertyValue(`--system-${sysKey}`) ? token(`--system-${sysKey}`) : C.secondary,
 		wip: 'wip' in ds, rnd,
 		W: 0, H: 0, R: 0, cx: 0, cy: 0,
 		orbitStart: 'belt' in ds ? 0.78 : 0.72,
@@ -153,7 +154,7 @@ function resize(s: Scene) {
 	s.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 	s.R = Math.min(s.W, s.H) * 0.3;
 	s.cx = s.W * 0.5; s.cy = s.H * 0.44;
-	buildHalo(s, dpr);
+	if (!s.wip) buildHalo(s, dpr);
 }
 
 /** Atmosphère : halo brumeux de la couleur du système, dessiné une fois par taille dans un canvas
@@ -167,12 +168,12 @@ function buildHalo(s: Scene, dpr: number) {
 	const c = cv.getContext('2d')!;
 	c.setTransform(dpr, 0, 0, dpr, 0, 0);
 	let g = c.createRadialGradient(ext, ext, s.R * 0.9, ext, ext, s.R * HALO);
-	g.addColorStop(0, rgba(s.atmo, 0.38)); g.addColorStop(0.3, rgba(s.atmo, 0.15)); g.addColorStop(1, rgba(s.atmo, 0));
+	g.addColorStop(0, rgba(s.atmo, 0.2)); g.addColorStop(0.3, rgba(s.atmo, 0.08)); g.addColorStop(1, rgba(s.atmo, 0));
 	c.fillStyle = g; c.fillRect(0, 0, ext * 2, ext * 2);
 	// voile plus large, décalé vers la lumière (haut gauche)
 	const lx = ext - s.R * 0.15, ly = ext - s.R * 0.15;
 	g = c.createRadialGradient(lx, ly, 0, lx, ly, s.R * (HALO - 0.22));
-	g.addColorStop(0, rgba(s.atmo, 0.14)); g.addColorStop(1, rgba(s.atmo, 0));
+	g.addColorStop(0, rgba(s.atmo, 0.07)); g.addColorStop(1, rgba(s.atmo, 0));
 	c.fillStyle = g; c.fillRect(0, 0, ext * 2, ext * 2);
 	s.halo = cv;
 }
@@ -193,13 +194,13 @@ function baseFill(s: Scene, c: CanvasRenderingContext2D) {
 function rim(s: Scene) {
 	const c = s.ctx;
 	c.beginPath(); c.arc(s.cx, s.cy, s.R + 1, 0, TAU);
-	c.strokeStyle = rgba(s.atmo, 0.55); c.lineWidth = 1.5; c.stroke();
+	c.strokeStyle = rgba(s.atmo, s.wip ? 0.55 : 0.4); c.lineWidth = 1.5; c.stroke(); // en construction : liseré neutre d'origine
 }
 /** Bord du disque teinté par l'atmosphère (lumière diffusée par l'air, par-dessus la surface). */
 function atmoEdge(s: Scene) {
 	const c = s.ctx;
 	const g = c.createRadialGradient(s.cx, s.cy, s.R * 0.72, s.cx, s.cy, s.R);
-	g.addColorStop(0, rgba(s.atmo, 0)); g.addColorStop(1, rgba(s.atmo, 0.3));
+	g.addColorStop(0, rgba(s.atmo, 0)); g.addColorStop(1, rgba(s.atmo, 0.14));
 	c.fillStyle = g; c.beginPath(); c.arc(s.cx, s.cy, s.R, 0, TAU); c.fill();
 }
 function poly(s: Scene, pts: Vec3[]) {
@@ -662,7 +663,7 @@ function frame(s: Scene, ms: number) {
 	else drawPlated(s, time);
 	c.restore();
 	// Low-poly : pas de disque plein (et facettes effacées pendant le chantier), donc ni bord teinté ni liseré
-	if (s.system !== 'facets') { atmoEdge(s); rim(s); }
+	if (s.system !== 'facets') { if (!s.wip) atmoEdge(s); rim(s); }
 
 	// Premier plan
 	if (s.rings) drawRings(s, time, true);
