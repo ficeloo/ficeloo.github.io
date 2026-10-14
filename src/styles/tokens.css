@@ -40,6 +40,19 @@
 	--planet-portfolio: #c4643f;
 	--planet-portfolio-ring: #F3F6F6; /* anneaux Web : --planet-<slug>-ring (orange --color-accent si absent) */
 
+	/* Systèmes de la star map : une teinte d'ambiance symbolique par système, --system-<catégorie en minuscules>.
+	   Ambiance seulement (nébuleuse, nom du système, lueurs, atmosphère) : l'orange reste la couleur d'action.
+	   --rgb-nebula-* = la même teinte en pastel (45 % de blanc), pour les nébuleuses et la brume d'hyperespace. */
+	--system-game: #FF5AC8; /* néon rose d'une salle d'arcade */
+	--system-graphics: #4FE3FF; /* cyan d'un rayon lumineux (ray tracing) */
+	--system-web: #6BFF6B; /* vert phosphore des vieux terminaux */
+	--rgb-system-game: 255, 90, 200;
+	--rgb-system-graphics: 79, 227, 255;
+	--rgb-system-web: 107, 255, 107;
+	--rgb-nebula-game: 255, 164, 225;
+	--rgb-nebula-graphics: 158, 240, 255;
+	--rgb-nebula-web: 174, 255, 174;
+
 	/* Grain */
 	--grain-opacity: 0.05;
 
