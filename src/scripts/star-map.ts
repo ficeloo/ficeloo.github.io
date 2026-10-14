@@ -244,13 +244,6 @@ export function initStarMap(styles: Record<string, string>) {
 		}
 	}
 
-	// Saut hyperspace : brume du système qu'on quitte, puis de celui où l'on arrive
-	// (deux voiles plein écran derrière les étoiles, seule leur opacité change).
-	const veilFrom = document.createElement('div');
-	const veilTo = document.createElement('div');
-	veilFrom.className = veilTo.className = styles.veil;
-	starsLayer.prepend(veilFrom, veilTo);
-
 	// Saut hyperspace : sonde, pulse d'arrivée, carte d'arrivée.
 	const probeEl = document.createElement('div');
 	probeEl.className = styles.probe;
@@ -852,20 +845,6 @@ export function initStarMap(styles: Record<string, string>) {
 		const pq = leg ? S(lp(j, f), dip) : { x: -99, y: -99 };
 		css(probeEl, 'transform', `${at(pq.x, pq.y)} translate(-50%,-50%)`);
 		css(probeEl, 'opacity', (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
-
-		// Brume : celle du départ se dissipe en début de saut, celle de l'arrivée se lève à la fin,
-		// et les deux reviennent à 0 aux extrémités (la nébuleuse du système prend le relais).
-		if (leg) {
-			const from = G[dir >= 0 ? W[j].g : W[j + 1].g];
-			const to = G[dir >= 0 ? W[j + 1].g : W[j].g];
-			css(veilFrom, '--n', nebRgb(from.c));
-			css(veilTo, '--n', nebRgb(to.c));
-			css(veilFrom, 'opacity', Math.min(cl(fArr / 0.06, 0, 1), cl((0.35 - fArr) / 0.25, 0, 1)).toFixed(3));
-			css(veilTo, 'opacity', Math.min(cl((fArr - 0.65) / 0.25, 0, 1), cl((1 - fArr) / 0.08, 0, 1)).toFixed(3));
-		} else {
-			css(veilFrom, 'opacity', '0');
-			css(veilTo, 'opacity', '0');
-		}
 
 		// Pulse + carte d'arrivée (système de destination selon la direction)
 		if (leg) {
