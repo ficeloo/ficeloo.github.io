@@ -1,6 +1,7 @@
 // Moteur de la "star map" : la liste des projets devient une carte spatiale
 // parcourue au scroll (systèmes par catégorie, sauts hyperspace entre systèmes,
 // popup projetée, overlay « View all », clavier et drag).
+import type { NebulaJob, NebulaLayers, Rgb } from './nebula-texture';
 
 type Raw = {
 	slug: string;
@@ -35,7 +36,15 @@ const sysColor = (c: string) => `var(--system-${sysKey(c)}, var(--color-secondar
 const sysRgb = (c: string) => `var(--rgb-system-${sysKey(c)}, var(--rgb-secondary))`;
 const nebRgb = (c: string) => `var(--rgb-nebula-${sysKey(c)}, var(--rgb-secondary))`;
 const NEB_BOX = 600; // taille réelle (px) de l'élément nébuleuse, mis à l'échelle par transform
-const NEB_K = 1.9; // rayon de la nébuleuse / rayon de l'anneau du système
+const NEB_K = 2.55; // rayon de la nébuleuse / rayon de l'anneau du système
+const NEB_TEX = 320; // côté des textures (px) : brumeuses, inutile d'aller plus fin
+// Relief : calques fond / gaz / poussière. Le gaz suit le système ; le fond et la poussière glissent
+// un peu à l'opposé l'un de l'autre, de NEB_PAR px de boîte au plus (atteint vers NEB_RANGE écran
+// d'écart au centre) : le relief reste à l'intérieur de la nébuleuse.
+const NEB_LAYERS = ['back', 'mid', 'front'] as const;
+const NEB_SHIFT = [-0.9, 0, 1];
+const NEB_PAR = 47;
+const NEB_RANGE = 0.33;
 // Rythme du scroll dans la carte (réglages à affiner à l'usage) :
 const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
 const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
@@ -182,25 +191,17 @@ export function initStarMap(styles: Record<string, string>) {
 	mapLayer.appendChild(svg);
 
 	const cats0 = [...new Set(projects.map((p) => p.cat))];
-	// Nébuleuse : un nuage rond et pastel, plus quelques lobes décalés tirés d'une graine
-	// (le n° du système) pour que chacune ait sa petite irrégularité. Dégradés seulement,
-	// pas de filtre de flou : rien à recalculer quand elle bouge.
-	const nebulaBg = (g: number) => {
-		const c = (a: number) => `rgba(var(--n), ${a})`;
-		const lobes = [0, 1, 2, 3].map((q) => {
-			const a = hash(g * 31 + q * 7.7) * Math.PI * 2;
-			const d = 7 + hash(g * 13 + q * 3.3) * 11; // décalage du centre, en %
-			const rx = 24 + hash(g * 7 + q * 5.9) * 14;
-			const ry = rx * (0.75 + hash(g * 17 + q * 2.1) * 0.4);
-			return `radial-gradient(${rx.toFixed(1)}% ${ry.toFixed(1)}% at ${(50 + Math.cos(a) * d).toFixed(1)}% ${(50 + Math.sin(a) * d).toFixed(1)}%, ${c(0.08)}, ${c(0)})`;
-		});
-		return [...lobes, `radial-gradient(closest-side, ${c(0.15)}, ${c(0.08)} 35%, ${c(0.03)} 70%, ${c(0)})`].join(', ');
-	};
-	const groupEls = cats0.map((c, g) => {
+	const groupEls = cats0.map((c) => {
+		// Nébuleuse : 3 calques (canvas) remplis quand le worker a calculé leurs textures.
 		const nebula = document.createElement('div');
 		nebula.className = styles.nebula;
-		nebula.style.setProperty('--n', nebRgb(c));
-		nebula.style.background = nebulaBg(g);
+		const layers = NEB_LAYERS.map(() => {
+			const cv = document.createElement('canvas');
+			cv.className = styles['nebula-layer'];
+			cv.width = cv.height = NEB_TEX;
+			nebula.appendChild(cv);
+			return cv;
+		});
 		mapLayer.prepend(nebula); // sous les chemins, anneaux et nœuds
 		const ring = document.createElement('div');
 		ring.className = styles.ring;
@@ -209,7 +210,7 @@ export function initStarMap(styles: Record<string, string>) {
 		label.className = styles['sys-label'];
 		mapLayer.appendChild(ring);
 		mapLayer.appendChild(label);
-		return { nebula, ring, label };
+		return { nebula, layers, ring, label };
 	});
 
 	const nodeEls = projects.map((pr, idx) => {
@@ -251,6 +252,40 @@ export function initStarMap(styles: Record<string, string>) {
 	const white = rgbOf('--rgb-text');
 	const pastels = new Map(cats0.map((c) => [c, rootCss.getPropertyValue(`--rgb-nebula-${sysKey(c)}`) ? rgbOf(`--rgb-nebula-${sysKey(c)}`) : rgbOf('--rgb-secondary')]));
 	const mixRgb = (a: number[], b: number[], k: number) => a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(', ');
+
+	// Nébuleuses : textures calculées une fois, hors du fil principal (worker), quand le navigateur
+	// est libre ; chaque nébuleuse apparaît en fondu dès que la sienne est prête.
+	// Sans worker : pas de nébuleuse, le système garde son anneau et sa poussière.
+	const tokenRgb = (name: string) => (rootCss.getPropertyValue(name) ? rgbOf(name) : rgbOf('--rgb-secondary')) as Rgb;
+	const loadNebulas = () => {
+		let worker: Worker;
+		try {
+			worker = new Worker(new URL('./nebula.worker.ts', import.meta.url), { type: 'module' });
+		} catch {
+			return;
+		}
+		let left = cats0.length;
+		worker.onmessage = (e: MessageEvent<{ g: number } & NebulaLayers>) => {
+			const { g } = e.data;
+			groupEls[g].layers.forEach((cv, k) => cv.getContext('2d')?.putImageData(new ImageData(e.data[NEB_LAYERS[k]], NEB_TEX, NEB_TEX), 0, 0));
+			groupEls[g].nebula.toggleAttribute('data-ready', true);
+			if (--left === 0) worker.terminate();
+		};
+		worker.onerror = () => worker.terminate();
+		cats0.forEach((c, g) => {
+			const job: NebulaJob = {
+				g,
+				seed: 11 + 37 * g,
+				size: NEB_TEX,
+				vivid: tokenRgb(`--rgb-system-${sysKey(c)}`),
+				pastel: tokenRgb(`--rgb-nebula-${sysKey(c)}`),
+				deep: tokenRgb('--rgb-bg-deep'),
+			};
+			worker.postMessage(job);
+		});
+	};
+	if ('requestIdleCallback' in window) requestIdleCallback(loadNebulas, { timeout: 1500 });
+	else setTimeout(loadNebulas, 300);
 
 	// Saut hyperspace : sonde, pulse d'arrivée, carte d'arrivée.
 	const probeEl = document.createElement('div');
@@ -805,7 +840,7 @@ export function initStarMap(styles: Record<string, string>) {
 		G.forEach((g0, gi) => {
 			const s = S({ x: g0.gx, y: g0.gy }, dip);
 			const R = (g0.Rc + 46) * z;
-			const { nebula, ring, label } = groupEls[gi];
+			const { nebula, layers, ring, label } = groupEls[gi];
 			// Taille : ne change que pendant un saut (z) ; position : transform.
 			css(ring, 'width', f1(R * 2) + 'px');
 			css(ring, 'height', f1(R * 2) + 'px');
@@ -814,7 +849,14 @@ export function initStarMap(styles: Record<string, string>) {
 			const Rn = R * NEB_K;
 			const neb = s.x + Rn > 0 && s.x - Rn < vw && s.y + Rn > 0 && s.y - Rn < vh;
 			css(nebula, 'display', neb ? 'block' : 'none');
-			if (neb) css(nebula, 'transform', `${at(s.x - Rn, s.y - Rn)} scale(${((Rn * 2) / NEB_BOX).toFixed(4)})`);
+			if (neb) {
+				css(nebula, 'transform', `${at(s.x - Rn, s.y - Rn)} scale(${((Rn * 2) / NEB_BOX).toFixed(4)})`);
+				// Relief : décalage selon l'écart au centre de l'écran, sur l'axe du parcours.
+				const off = Math.tanh((vertical ? s.y - vh / 2 : s.x - vw / 2) / ((vertical ? vh : vw) * NEB_RANGE)) * NEB_PAR;
+				layers.forEach((cv, k) => {
+					if (NEB_SHIFT[k]) css(cv, 'transform', `translate${vertical ? 'Y' : 'X'}(${f1(off * NEB_SHIFT[k])}px)`);
+				});
+			}
 			// Vertical : toujours au-dessus de l'anneau (dessous = chemin vers le suivant).
 			// En vertical, seul le système courant reste calé sous la barre du haut
 			// (sinon les labels de deux systèmes se superposent).

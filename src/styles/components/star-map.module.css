@@ -112,19 +112,34 @@
 	pointer-events: none;
 }
 
-/* Nébuleuse d'un système : dégradés posés par le JS (teinte pastel --n du système).
-   Taille fixe (= NEB_BOX dans star-map.ts) mise à l'échelle par transform, sur son propre calque :
-   la carte graphique la déplace sans rien repeindre. */
+/* Nébuleuse d'un système : 3 calques (fond, gaz, poussière) dont les textures sont calculées
+   une fois par le JS (nebula-texture.ts). Taille fixe (= NEB_BOX dans star-map.ts) mise à
+   l'échelle par transform, sur son propre calque : la carte graphique la déplace sans rien
+   repeindre. Apparaît en fondu quand ses textures sont prêtes. */
 .nebula {
 	position: absolute;
 	left: 0;
 	top: 0;
 	width: 600px;
 	height: 600px;
-	border-radius: 50%;
 	transform-origin: 0 0;
 	will-change: transform;
 	pointer-events: none;
+	opacity: 0;
+	transition: opacity 1.2s ease;
+}
+
+.nebula[data-ready] {
+	opacity: 1;
+}
+
+/* Le fond et la poussière glissent un peu (relief) : chacun sur son calque. */
+.nebula-layer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	will-change: transform;
 }
 
 .ring {
