@@ -215,28 +215,23 @@ export function paintNebula({ seed: s, size: N, vivid, pastel, deep }: NebulaJob
 	return { back, mid, front };
 }
 
-/** Intérieur de la nébuleuse (fond de la vue rapprochée) : aucune enveloppe, la brume remplit tout ;
- *  volutes plus larges (vues de près) et filaments, mêmes couleurs que la nébuleuse du système. */
+/** Intérieur de la nébuleuse (fond de la vue rapprochée) : aucune enveloppe, des nuages diffus
+ *  remplissent tout (grandes masses douces + nappes plus fines, très floutées), aux couleurs de la
+ *  nébuleuse du système. Une seule texture par système : elle glisse d'une planète à l'autre. */
 export function paintInterior({ seed: s, vivid, pastel, deep }: NebulaJob, N = INTERIOR_TEX) {
 	const br = blurFor(N), warp = warper(s + 7);
-	const halo = vivid.map((v, i) => v + (deep[i] - v) * 0.45);
+	const halo = vivid.map((v, i) => v + (deep[i] - v) * 0.5);
 	const data = paint(N, (nx, ny) => {
-		const [x, y] = warp(nx, ny, 1.15);
-		const d = smooth(0.2, 0.85, fbm(x, y, s + 101, 5));
-		const lift = Math.pow(d, 1.5);
+		const [x, y] = warp(nx, ny, 0.8);
+		const big = fbm(x * 0.6 + 3, y * 0.6 + 3, s + 101, 3); // grandes masses
+		const fine = fbm(x * 1.6, y * 1.6, s + 131, 4); // nappes
+		const d = smooth(0.3, 0.75, big * 0.65 + fine * 0.35);
 		const col = halo.map((h, ch) => {
-			const gas = (vivid[ch] + pastel[ch]) / 2;
-			return h + (gas - h) * d + (pastel[ch] - gas) * lift * 0.6;
+			const gas = (vivid[ch] + pastel[ch] * 2) / 3;
+			return h + (gas - h) * d;
 		});
-		return [col[0], col[1], col[2], (0.22 + 0.4 * d) * 255];
+		return [col[0], col[1], col[2], (0.22 + 0.58 * d) * 255];
 	});
-	blur(data, N, br(5));
-	const fil = paint(N, (nx, ny) => {
-		const [x, y] = warp(nx, ny, 1.5);
-		const f = Math.pow(1 - Math.abs(2 * fbm(x, y, s + 113, 5) - 1), 9);
-		return f < 0.03 ? null : [pastel[0], pastel[1], pastel[2], f * 0.2 * 255];
-	});
-	blur(fil, N, br(1.5));
-	for (let k = 0; k < fil.length; k += 4) if (fil[k + 3]) over(data, k, fil[k], fil[k + 1], fil[k + 2], fil[k + 3]);
+	blur(data, N, br(6));
 	return data;
 }

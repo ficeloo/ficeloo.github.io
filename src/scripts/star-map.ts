@@ -370,6 +370,10 @@ export function initStarMap(styles: Record<string, string>) {
 			css(starsLayer, 'transform', stars);
 		},
 		interior: (i) => interiors[L.W[L.ord.indexOf(i)]?.g ?? -1] ?? null,
+		inSystem: (i) => { // place du projet dans son système (écart au centre, en rayons du système)
+			const w = L.W[L.ord.indexOf(i)], g0 = w && L.G[w.g];
+			return g0 ? { x: (w.x - w.gx) / g0.Rc, y: (w.y - w.gy) / g0.Rc } : { x: 0, y: 0 };
+		},
 		jumpTo: (i) => goTo(i, true),
 		neighbor: (i, d) => {
 			const q = L.ord.indexOf(i), n = q + d;
@@ -793,9 +797,8 @@ export function initStarMap(styles: Record<string, string>) {
 			if (pts) legT += D(pts.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
 			else sysT += D([W[q], lp(q, ff)]);
 		}
-		// Vue rapprochée : le trajet parcouru est tracé par le zoom lui-même (de planète en planète)
-		attr(sysTPath, 'd', zoomOn ? '' : sysT);
-		attr(legTPath, 'd', zoomOn ? '' : legT);
+		attr(sysTPath, 'd', sysT);
+		attr(legTPath, 'd', legT);
 
 		// Étoiles : parallaxe sur l'axe du parcours (x en horizontal, y en vertical).
 		// En horizontal, top fixe en % (relayout) ; en vertical, top: 0 et y via transform.

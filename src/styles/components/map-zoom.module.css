@@ -233,17 +233,22 @@
 	overflow: hidden;
 	opacity: 0;
 	pointer-events: none;
+	will-change: opacity;
+}
+
+.backdrop canvas {
 	will-change: transform, opacity;
 }
 
-/* Carré qui couvre l'écran ; le calque affiché porte data-on (fondu d'un système à l'autre) */
+/* Carré qui couvre l'écran, même décalé (--bx, --by) et agrandi (--bs) par le script ;
+   le calque affiché porte data-on (fondu d'un système à l'autre) */
 .backdrop canvas {
 	position: absolute;
 	left: 50%;
 	top: 50%;
 	width: 130vmax;
 	height: 130vmax;
-	transform: translate(-50%, -50%);
+	transform: translate(calc(-50% + var(--bx, 0px)), calc(-50% + var(--by, 0px))) scale(var(--bs, 1));
 	opacity: 0;
 	transition: opacity 0.6s ease;
 }
@@ -263,8 +268,7 @@
 }
 
 /* Pointillés des sauts de la carte, en plus marqué (on est en gros plan) */
-.routes path,
-.trip path {
+.routes path {
 	fill: none;
 	stroke: rgba(var(--rgb-text), 0.55);
 	stroke-width: 2;
@@ -272,19 +276,9 @@
 	stroke-linecap: round;
 }
 
-/* Déjà parcouru (vers la planète précédente, et le trajet en cours) : orange, comme sur la carte */
-.routes path[data-done],
-.trip path[data-zoom-trail] {
+/* Déjà parcouru (vers la planète précédente) : orange, comme sur la carte */
+.routes path[data-done] {
 	stroke: rgba(var(--rgb-accent), 0.9);
-}
-
-.trip {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	pointer-events: none;
-	overflow: visible;
 }
 
 .hop {
