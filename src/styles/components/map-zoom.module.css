@@ -1,6 +1,6 @@
-/* Vue rapprochée de la star map : fiche à gauche, planète à droite, avec la même grille que
-   l'en-tête d'une page projet (la planète est déjà presque à sa place quand la page s'ouvre).
-   La caméra, la planète et le viseur sont animés par src/scripts/map-zoom.ts (transform). */
+/* Vue rapprochée de la star map : la caméra zoome sur place jusqu'à la planète du projet,
+   la fiche s'affiche à côté (à gauche ; en bas sur écran étroit ou en portrait).
+   La caméra, la position de la planète et le viseur sont gérés par src/scripts/map-zoom.ts. */
 .zoom {
 	position: absolute;
 	inset: 0;
@@ -8,34 +8,29 @@
 	outline: none; /* reçoit le focus à l'ouverture (souris, toucher) */
 }
 
-.inner {
-	box-sizing: border-box;
-	height: 100%;
-	max-width: 76rem;
-	margin: 0 auto;
-	padding-inline: clamp(16px, 4vw, 3rem);
-	padding-block: 4.5rem 6.5rem; /* place des raccourcis clavier en bas */
-	display: grid;
-	grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-	gap: 1.5rem 2rem;
-	align-items: center;
-}
-
 /* ===== Fiche ===== */
 .cards {
+	position: absolute;
+	left: clamp(16px, 4vw, 3rem);
+	top: 50%;
+	box-sizing: border-box;
+	width: min(400px, 34vw);
+	max-height: calc(100% - 2rem);
+	overflow-y: auto;
+	overscroll-behavior: contain;
 	display: grid;
-	gap: 1.2rem;
-	min-width: 0;
-	max-width: 34rem;
+	gap: 1.1rem;
 	opacity: 0;
-	transform: translateY(12px);
+	transform: translateY(calc(-50% + 12px));
 	transition: opacity 0.35s ease, transform 0.35s ease;
+	pointer-events: none;
 }
 
 /* La fiche n'arrive qu'une fois la caméra posée (le script pose data-ready). */
 .zoom[data-ready] .cards {
 	opacity: 1;
-	transform: none;
+	transform: translateY(-50%);
+	pointer-events: auto;
 }
 
 .card {
@@ -214,11 +209,14 @@
 }
 
 /* ===== Planètes (une par projet, empilées ; la caméra les déplace par transform) ===== */
+/* Taille de la scène (même proportion que l'en-tête des pages projet) ; sa position est posée
+   par le script : sur le nœud du projet, décalée seulement pour ne pas passer sous la fiche. */
 .planets {
-	position: relative;
-	min-width: 0;
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: min(560px, 46vw);
 	aspect-ratio: 1 / 0.6;
-	max-width: 100%;
 }
 
 .planet {
@@ -261,31 +259,30 @@
 	white-space: nowrap;
 }
 
-/* ===== Écran étroit / portrait : planète en haut, fiche dessous ===== */
-@media (max-width: 960px), (orientation: portrait) {
-	.inner {
-		grid-template-columns: 1fr;
-		align-content: center;
-		padding-block: 1rem;
-		gap: 0.5rem;
-		overflow-y: auto;
-		overscroll-behavior: contain;
+/* ===== Écran étroit / portrait : fiche en bas, planète au-dessus ===== */
+@media (max-width: 700px), (orientation: portrait) {
+	.cards {
+		left: 16px;
+		right: 16px;
+		top: auto;
+		bottom: 16px;
+		width: auto;
+		max-height: 58%;
+		gap: 0.8rem;
+		transform: translateY(12px);
+	}
+	.zoom[data-ready] .cards {
+		transform: none;
 	}
 	.planets {
-		order: -1;
-		width: min(100%, 34rem, 62svh);
-		justify-self: center;
-	}
-	.cards {
-		max-width: none;
-		gap: 0.9rem;
+		width: min(calc(100vw - 32px), 34rem);
 	}
 	.card {
 		gap: 0.5rem;
 	}
 	/* Vignette et texte plafonnés : la fiche tient sous la planète */
 	.media {
-		width: min(100%, 30rem, 40svh);
+		width: min(100%, 26rem, 30svh);
 	}
 	.desc {
 		display: -webkit-box;
@@ -293,5 +290,38 @@
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 		font-size: 0.92rem;
+	}
+}
+
+/* Petites hauteurs (téléphone en paysage) : fiche resserrée pour tenir sans défiler */
+@media (max-height: 520px) and (orientation: landscape) {
+	.cards,
+	.card {
+		gap: 0.45rem;
+	}
+	.media {
+		width: 42%;
+		margin-bottom: 0;
+	}
+	.title {
+		font-size: 1.3rem;
+	}
+	.tagyear {
+		font-size: 0.8rem;
+	}
+	.link {
+		margin-top: 0;
+		padding: 0.45rem 0.8rem;
+		font-size: 0.75rem;
+	}
+	.btn {
+		min-width: 38px;
+		height: 38px;
+	}
+	.desc {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 }

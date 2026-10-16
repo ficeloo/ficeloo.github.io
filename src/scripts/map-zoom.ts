@@ -1,6 +1,7 @@
 // Vue rapprochée de la star map (MapZoom.astro) : au clic sur un projet, un viseur se referme
-// sur son nœud (« LOCK »), puis la caméra plonge en courbe vers sa planète, qui prend la place
-// qu'elle aura en haut de la page projet ; ses satellites rejoignent ensuite leur orbite un par un.
+// sur son nœud (« LOCK »), puis la caméra zoome sur place jusqu'à sa planète (satellites compris) :
+// la planète reste à la position du projet dans son système, décalée seulement du nécessaire
+// pour ne pas passer sous la fiche, qui s'affiche à côté.
 // ← → passent d'une planète à l'autre sans repasser par la carte, Échap y ramène.
 //
 // La carte n'est pas recalculée pendant le zoom : tout son calque est déplacé et agrandi par un
@@ -19,14 +20,12 @@ export interface ZoomHost {
 
 // Durées (ms) : zoom ×1,5 par rapport à la maquette (demande de Théophile)
 const LOCK = 450; // le viseur se referme
-const DIVE = 1500; // approche en courbe
+const DIVE = 1500; // approche
 const BACK = 800; // retour à la carte
 const HOP = 600; // planète voisine
 const SHOT = 3500; // mini diaporama : une capture
 const SHOT_GIF = 6000; // un GIF (animé) reste plus longtemps
 const NODE_R = 8; // rayon du nœud actif sur la carte (16 px de diamètre)
-const TURN = 0.4; // rotation de la caméra au milieu de l'approche (rad) : la « mise en orbite »
-const CURVE = 0.18; // écart de la trajectoire courbe, en part de la distance parcourue
 
 const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -42,6 +41,9 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	const cards = [...root.querySelectorAll<HTMLElement>('[data-zoom-card]')];
 	const boxes = [...root.querySelectorAll<HTMLElement>('[data-zoom-planet]')];
 	const planets: (Planet | null)[] = boxes.map(() => null);
+	const planetsEl = root.querySelector<HTMLElement>('[data-zoom-planets]')!;
+	const cardsEl = root.querySelector<HTMLElement>('[data-zoom-scroll]')!;
+	const narrow = matchMedia('(max-width: 700px), (orientation: portrait)'); // fiche en bas (CSS)
 	const reticle = root.querySelector<HTMLElement>('[data-zoom-reticle]')!;
 	const reticleText = root.querySelector<HTMLElement>('[data-zoom-reticle-text]')!;
 	const prevBtn = root.querySelector<HTMLButtonElement>('[data-zoom-go="-1"]');
@@ -105,27 +107,31 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		return p;
 	}
 
-	// --- Géométrie : où la planète doit arriver (sa scène telle que la mise en page la place) ---
-	function target(i: number) {
-		const box = boxes[i];
-		box.style.transform = '';
-		const r = box.getBoundingClientRect(), o = root.getBoundingClientRect();
-		const R = Math.min(r.width, r.height) * 0.3; // rayon de la planète (project-planet.ts)
-		return { x: r.left - o.left + r.width * 0.5, y: r.top - o.top + r.height * 0.44, zEnd: Math.max(1, R / NODE_R) };
+	// --- Géométrie : où la planète arrive. Sur le nœud du projet, mais sa scène (planète + orbites)
+	// reste dans l'écran et ne passe pas sous la fiche (à gauche, ou en bas sur écran étroit). ---
+	type Spot = { x: number; y: number; zEnd: number };
+	function place(P: { x: number; y: number }): Spot {
+		const o = root.getBoundingClientRect(), c = cardsEl.getBoundingClientRect();
+		const W = planetsEl.offsetWidth, H = planetsEl.offsetHeight, m = 12;
+		const R = Math.min(W, H) * 0.3; // rayon de la planète (project-planet.ts)
+		const top = H * 0.44 + m; // centre de la planète : 44 % de la hauteur de sa scène
+		const x = narrow.matches ? cl(P.x, W / 2, o.width - W / 2) : cl(P.x, c.right - o.left + W / 2, o.width - W / 2 - m);
+		const y = narrow.matches ? cl(P.y, top, c.top - o.top - H * 0.56 - m) : cl(P.y, top, o.height - H * 0.56 - m);
+		return { x, y, zEnd: Math.max(1, R / NODE_R) };
 	}
+	function setSpot(q: { x: number; y: number }) {
+		planetsEl.style.transform = `translate(${f1(q.x - planetsEl.offsetWidth / 2)}px,${f1(q.y - planetsEl.offsetHeight * 0.44)}px)`;
+	}
+	let spot: Spot = { x: 0, y: 0, zEnd: 1 };
 
 	/** État de la caméra à l'avancement e (0 = carte, 1 = planète) entre le nœud P et la cible Q. */
-	function cameraAt(i: number, P: { x: number; y: number }, Q: ReturnType<typeof target>, e: number, turn: number) {
+	function cameraAt(i: number, P: { x: number; y: number }, Q: Spot, e: number) {
 		const Z = Math.pow(Q.zEnd, e);
-		const th = turn * Math.sin(Math.PI * e);
-		const dx = Q.x - P.x, dy = Q.y - P.y, bend = Math.sin(Math.PI * e) * CURVE;
-		const cx = lerp(P.x, Q.x, e) - dy * bend, cy = lerp(P.y, Q.y, e) + dx * bend; // trajectoire en courbe
+		const cx = lerp(P.x, Q.x, e), cy = lerp(P.y, Q.y, e);
 		// Calque de la carte (origine 0,0) : le nœud P doit tomber sur (cx, cy)
-		const c = Math.cos(th), s = Math.sin(th);
-		const tx = cx - (c * P.x - s * P.y) * Z, ty = cy - (s * P.x + c * P.y) * Z;
-		host.camera(`translate(${f1(tx)}px,${f1(ty)}px) rotate(${th.toFixed(4)}rad) scale(${Z.toFixed(4)})`, 1 - smooth(1.6, 5, Z));
+		host.camera(`translate(${f1(cx - P.x * Z)}px,${f1(cy - P.y * Z)}px) scale(${Z.toFixed(4)})`, 1 - smooth(1.6, 5, Z));
 		const box = boxes[i];
-		box.style.transform = `translate(${f1(cx - Q.x)}px,${f1(cy - Q.y)}px) rotate(${th.toFixed(4)}rad) scale(${(Z / Q.zEnd).toFixed(4)})`;
+		box.style.transform = `translate(${f1(cx - Q.x)}px,${f1(cy - Q.y)}px) scale(${(Z / Q.zEnd).toFixed(4)})`;
 		box.style.opacity = smooth(0.08, 0.35, e).toFixed(3);
 		return { cx, cy, Z };
 	}
@@ -179,12 +185,12 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		root.removeAttribute('data-ready');
 		host.lock(true);
 		setIdx(i);
-		const planet = planetOf(i);
-		planet.intro(Infinity); // satellites sur la planète jusqu'à l'arrivée
+		planetOf(i);
 		showCard(i);
 		if (!loopRaf) loopRaf = requestAnimationFrame(loop);
 		const P = host.nodePoint(i);
-		const Q = target(i);
+		const Q = (spot = place(P));
+		setSpot(Q);
 		const name = host.label(i);
 		boxes[i].style.opacity = '0';
 		chain([
@@ -193,12 +199,11 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 				showReticle(P.x, P.y, lerp(130, 34, e), Math.min(1, t * 3), t > 0.6 ? `${text.lock} · ${name}` : text.targeting);
 			}],
 			[DIVE, (t) => {
-				const { cx, cy, Z } = cameraAt(i, P, Q, inOut(t), TURN);
+				const { cx, cy, Z } = cameraAt(i, P, Q, inOut(t));
 				showReticle(cx, cy, Math.max(34, NODE_R * Z * 2.9), 1 - smooth(0.7, 1, t), `${text.lock} · ${name}`);
 			}],
 		], () => {
 			root.setAttribute('data-ready', '');
-			planet.intro(performance.now());
 			(byKey ? cards[i].querySelector<HTMLElement>('[data-zoom-link]') : root)?.focus({ preventScroll: true });
 		});
 	}
@@ -212,8 +217,9 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		clearTimeout(shotT);
 		const i = idx;
 		const P = host.nodePoint(i);
-		const Q = target(i);
-		play(BACK, (t) => cameraAt(i, P, Q, inOut(1 - t), 0), () => {
+		const Q = (spot = place(P));
+		setSpot(Q);
+		play(BACK, (t) => cameraAt(i, P, Q, inOut(1 - t)), () => {
 			open = false;
 			live.clear();
 			host.camera('', 1);
@@ -235,12 +241,12 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		setIdx(to);
 		live.add(from);
 		boxes[from].hidden = false;
-		const planet = planetOf(to);
-		target(to);
-		planet.intro(performance.now());
+		planetOf(to);
 		showCard(to, d);
+		const A = spot, B = (spot = place(host.nodePoint(to))); // la scène suit la position du nouveau projet
 		play(HOP, (t) => {
 			const e = inOut(t);
+			setSpot({ x: lerp(A.x, B.x, e), y: lerp(A.y, B.y, e) });
 			boxes[from].style.transform = `translateX(${f1(-d * 80 * e)}px) scale(${(1 - 0.2 * e).toFixed(3)})`;
 			boxes[from].style.opacity = (1 - smooth(0, 0.6, t)).toFixed(3);
 			boxes[to].style.transform = `translateX(${f1(d * 80 * (1 - e))}px) scale(${(0.8 + 0.2 * e).toFixed(3)})`;
@@ -256,6 +262,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	function relayout() {
 		if (!open || anim) return;
 		boxes[idx].style.transform = '';
+		setSpot((spot = place(host.nodePoint(idx))));
 		planets[idx]?.resize();
 	}
 

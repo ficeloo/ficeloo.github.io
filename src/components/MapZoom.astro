@@ -11,9 +11,10 @@ interface Props {
 	projects: Project[]; // ordre de la carte
 }
 
-// Vue rapprochée de la star map : au clic sur un projet, la caméra plonge sur sa planète
-// (même cadrage que l'en-tête de sa page). Une fiche et une planète par projet, affichées
-// une à la fois par src/scripts/map-zoom.ts ; les images ne sont chargées qu'à l'ouverture.
+// Vue rapprochée de la star map : au clic sur un projet, un viseur se verrouille sur son nœud et
+// la caméra zoome sur place, jusqu'à sa planète ; la fiche s'affiche à côté. Une fiche et une
+// planète par projet, affichées une à la fois par src/scripts/map-zoom.ts (qui place la planète) ;
+// les images ne sont chargées qu'à l'ouverture.
 const { projects } = Astro.props;
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
@@ -33,37 +34,35 @@ const cards = await Promise.all(projects.map(async (p) => ({
 ---
 
 <div class={styles.zoom} data-zoom tabindex="-1" role="dialog" aria-modal="true" aria-label={t('map.zoomAria')} hidden>
-	<div class={styles.inner} data-zoom-scroll>
-		<div class={styles.cards}>
-			{cards.map(({ p, shots }, i) => (
-				<article class={styles.card} data-zoom-card={i} aria-labelledby={`zoom-title-${i}`} hidden>
-					<div class={styles.media}>
-						<span class={styles.corner}></span><span class={styles.corner}></span>
-						<span class={styles.corner}></span><span class={styles.corner}></span>
-						<div class={styles.screen}>
-							{shots.map((s) => <img data-src={s.src} data-gif={s.gif ? '' : undefined} alt={s.alt} draggable="false" />)}
-						</div>
+	<div class={styles.cards} data-zoom-scroll>
+		{cards.map(({ p, shots }, i) => (
+			<article class={styles.card} data-zoom-card={i} aria-labelledby={`zoom-title-${i}`} hidden>
+				<div class={styles.media}>
+					<span class={styles.corner}></span><span class={styles.corner}></span>
+					<span class={styles.corner}></span><span class={styles.corner}></span>
+					<div class={styles.screen}>
+						{shots.map((s) => <img data-src={s.src} data-gif={s.gif ? '' : undefined} alt={s.alt} draggable="false" />)}
 					</div>
-					<div class={styles.meta}>{pad(i + 1)} / {pad(projects.length)} · {t('map.system', { name: p.category })}</div>
-					<h3 class={styles.title} id={`zoom-title-${i}`}><span class={styles['title-text']}>{p.title}</span>{p.inProgress && <InProgressBadge />}</h3>
-					<p class={styles.desc}>{p.description}</p>
-					<div class={styles.tagyear}><span>{p.tag}</span><span class={styles.sep}>-</span><span>{p.year}</span></div>
-					<a class={styles.link} href={localizePath(`/projects/${p.slug}`, lang)} data-zoom-link>{t('map.viewProject')} →</a>
-				</article>
-			))}
-			<div class={styles.controls}>
-				<button type="button" class={styles.btn} data-zoom-go="-1" aria-label={t('map.prevPlanet')}>←</button>
-				<button type="button" class={styles.btn} data-zoom-go="1" aria-label={t('map.nextPlanet')}>→</button>
-				<button type="button" class:list={[styles.btn, styles.back]} data-zoom-close>{t('map.backToMap')}</button>
-			</div>
-		</div>
-		<div class={styles.planets} data-zoom-planets>
-			{projects.map((p, i) => (
-				<div class={styles.planet} data-zoom-planet={i} hidden>
-					<PlanetScene project={p} manual />
 				</div>
-			))}
+				<div class={styles.meta}>{pad(i + 1)} / {pad(projects.length)} · {t('map.system', { name: p.category })}</div>
+				<h3 class={styles.title} id={`zoom-title-${i}`}><span class={styles['title-text']}>{p.title}</span>{p.inProgress && <InProgressBadge />}</h3>
+				<p class={styles.desc}>{p.description}</p>
+				<div class={styles.tagyear}><span>{p.tag}</span><span class={styles.sep}>-</span><span>{p.year}</span></div>
+				<a class={styles.link} href={localizePath(`/projects/${p.slug}`, lang)} data-zoom-link>{t('map.viewProject')} →</a>
+			</article>
+		))}
+		<div class={styles.controls}>
+			<button type="button" class={styles.btn} data-zoom-go="-1" aria-label={t('map.prevPlanet')}>←</button>
+			<button type="button" class={styles.btn} data-zoom-go="1" aria-label={t('map.nextPlanet')}>→</button>
+			<button type="button" class:list={[styles.btn, styles.back]} data-zoom-close>{t('map.backToMap')}</button>
 		</div>
+	</div>
+	<div class={styles.planets} data-zoom-planets>
+		{projects.map((p, i) => (
+			<div class={styles.planet} data-zoom-planet={i} hidden>
+				<PlanetScene project={p} manual />
+			</div>
+		))}
 	</div>
 	<!-- Viseur : se referme sur le nœud (« LOCK »), puis encadre la planète pendant l'approche. -->
 	<div class={styles.reticle} data-zoom-reticle aria-hidden="true">
