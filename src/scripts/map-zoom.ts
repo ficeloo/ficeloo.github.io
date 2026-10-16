@@ -1,7 +1,7 @@
 // Vue rapprochée de la star map (MapZoom.astro) : au clic sur un projet, un viseur se referme
-// sur son nœud (« LOCK »), puis la caméra zoome sur place jusqu'à sa planète (satellites compris) :
-// la planète reste à la position du projet dans son système, décalée seulement du nécessaire
-// pour ne pas passer sous la fiche, qui s'affiche à côté.
+// sur son nœud (« LOCK »), puis la caméra zoome sur sa planète (satellites compris) : elle se
+// déplace jusqu'à elle, tout le décor défile (la carte, et les étoiles plus lentement, elles sont
+// loin), et la planète finit au centre de l'écran, la fiche à gauche (en bas sur écran étroit).
 // ← → passent d'une planète à l'autre sans repasser par la carte, Échap y ramène.
 //
 // La carte n'est pas recalculée pendant le zoom : tout son calque est déplacé et agrandi par un
@@ -13,7 +13,7 @@ export interface ZoomHost {
 	count: number;
 	nodePoint(i: number): { x: number; y: number }; // position actuelle du nœud du projet i
 	label(i: number): string; // « 03 Scop » (texte du viseur)
-	camera(transform: string, opacity: number): void; // calque de la carte ('' = au repos)
+	camera(map: string, opacity: number, stars: string): void; // calques de la carte et des étoiles ('' = au repos)
 	jumpTo(i: number): void; // cale la carte (cachée) sur le projet i
 	lock(on: boolean): void; // scroll bloqué, chrome de la carte masqué
 }
@@ -26,6 +26,8 @@ const HOP = 600; // planète voisine
 const SHOT = 3500; // mini diaporama : une capture
 const SHOT_GIF = 6000; // un GIF (animé) reste plus longtemps
 const NODE_R = 8; // rayon du nœud actif sur la carte (16 px de diamètre)
+const STARS_PAN = 0.35; // les étoiles, lointaines, ne suivent qu'une partie du déplacement…
+const STARS_ZOOM = 0.12; // … et du zoom (exposant)
 
 const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -107,29 +109,34 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		return p;
 	}
 
-	// --- Géométrie : où la planète arrive. Sur le nœud du projet, mais sa scène (planète + orbites)
-	// reste dans l'écran et ne passe pas sous la fiche (à gauche, ou en bas sur écran étroit). ---
+	// --- Géométrie : où la caméra amène la planète. Au centre de l'écran (sa scène, planète +
+	// orbites, ne passe pas sous la fiche de gauche) ; sur écran étroit, au centre de la place
+	// laissée au-dessus de la fiche. ---
 	type Spot = { x: number; y: number; zEnd: number };
-	function place(P: { x: number; y: number }): Spot {
+	function place(): Spot {
 		const o = root.getBoundingClientRect(), c = cardsEl.getBoundingClientRect();
 		const W = planetsEl.offsetWidth, H = planetsEl.offsetHeight, m = 12;
 		const R = Math.min(W, H) * 0.3; // rayon de la planète (project-planet.ts)
-		const top = H * 0.44 + m; // centre de la planète : 44 % de la hauteur de sa scène
-		const x = narrow.matches ? cl(P.x, W / 2, o.width - W / 2) : cl(P.x, c.right - o.left + W / 2, o.width - W / 2 - m);
-		const y = narrow.matches ? cl(P.y, top, c.top - o.top - H * 0.56 - m) : cl(P.y, top, o.height - H * 0.56 - m);
+		const x = narrow.matches ? o.width / 2 : Math.max(o.width / 2, c.right - o.left + W * 0.4);
+		const y = narrow.matches ? cl((c.top - o.top) / 2, H * 0.44 + m, c.top - o.top - H * 0.56) : o.height / 2;
 		return { x, y, zEnd: Math.max(1, R / NODE_R) };
 	}
 	function setSpot(q: { x: number; y: number }) {
 		planetsEl.style.transform = `translate(${f1(q.x - planetsEl.offsetWidth / 2)}px,${f1(q.y - planetsEl.offsetHeight * 0.44)}px)`;
 	}
-	let spot: Spot = { x: 0, y: 0, zEnd: 1 };
 
 	/** État de la caméra à l'avancement e (0 = carte, 1 = planète) entre le nœud P et la cible Q. */
 	function cameraAt(i: number, P: { x: number; y: number }, Q: Spot, e: number) {
 		const Z = Math.pow(Q.zEnd, e);
 		const cx = lerp(P.x, Q.x, e), cy = lerp(P.y, Q.y, e);
-		// Calque de la carte (origine 0,0) : le nœud P doit tomber sur (cx, cy)
-		host.camera(`translate(${f1(cx - P.x * Z)}px,${f1(cy - P.y * Z)}px) scale(${Z.toFixed(4)})`, 1 - smooth(1.6, 5, Z));
+		// Calque de la carte (origine 0,0) : le nœud P doit tomber sur (cx, cy). Les étoiles suivent
+		// en partie (parallaxe), zoomées autour de P.
+		const Zs = Math.pow(Z, STARS_ZOOM), sx = P.x + (cx - P.x) * STARS_PAN, sy = P.y + (cy - P.y) * STARS_PAN;
+		host.camera(
+			`translate(${f1(cx - P.x * Z)}px,${f1(cy - P.y * Z)}px) scale(${Z.toFixed(4)})`,
+			1 - smooth(1.6, 5, Z),
+			`translate(${f1(sx - P.x * Zs)}px,${f1(sy - P.y * Zs)}px) scale(${Zs.toFixed(4)})`,
+		);
 		const box = boxes[i];
 		box.style.transform = `translate(${f1(cx - Q.x)}px,${f1(cy - Q.y)}px) scale(${(Z / Q.zEnd).toFixed(4)})`;
 		box.style.opacity = smooth(0.08, 0.35, e).toFixed(3);
@@ -189,7 +196,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		showCard(i);
 		if (!loopRaf) loopRaf = requestAnimationFrame(loop);
 		const P = host.nodePoint(i);
-		const Q = (spot = place(P));
+		const Q = place();
 		setSpot(Q);
 		const name = host.label(i);
 		boxes[i].style.opacity = '0';
@@ -217,12 +224,12 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		clearTimeout(shotT);
 		const i = idx;
 		const P = host.nodePoint(i);
-		const Q = (spot = place(P));
+		const Q = place();
 		setSpot(Q);
 		play(BACK, (t) => cameraAt(i, P, Q, inOut(1 - t)), () => {
 			open = false;
 			live.clear();
-			host.camera('', 1);
+			host.camera('', 1, '');
 			boxes[i].hidden = true;
 			boxes[i].style.transform = '';
 			cards[i].hidden = true;
@@ -243,10 +250,8 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		boxes[from].hidden = false;
 		planetOf(to);
 		showCard(to, d);
-		const A = spot, B = (spot = place(host.nodePoint(to))); // la scène suit la position du nouveau projet
 		play(HOP, (t) => {
 			const e = inOut(t);
-			setSpot({ x: lerp(A.x, B.x, e), y: lerp(A.y, B.y, e) });
 			boxes[from].style.transform = `translateX(${f1(-d * 80 * e)}px) scale(${(1 - 0.2 * e).toFixed(3)})`;
 			boxes[from].style.opacity = (1 - smooth(0, 0.6, t)).toFixed(3);
 			boxes[to].style.transform = `translateX(${f1(d * 80 * (1 - e))}px) scale(${(0.8 + 0.2 * e).toFixed(3)})`;
@@ -262,7 +267,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	function relayout() {
 		if (!open || anim) return;
 		boxes[idx].style.transform = '';
-		setSpot((spot = place(host.nodePoint(idx))));
+		setSpot(place());
 		planets[idx]?.resize();
 	}
 

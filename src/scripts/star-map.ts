@@ -350,9 +350,10 @@ export function initStarMap(styles: Record<string, string>) {
 			return nodePos[L.ord.indexOf(i)] ?? { x: vw / 2, y: vh / 2 };
 		},
 		label: (i) => `${projects[i].num} ${projects[i].title}`,
-		camera: (transform, opacity) => {
-			css(mapLayer, 'transform', transform);
+		camera: (map, opacity, stars) => {
+			css(mapLayer, 'transform', map);
 			css(mapLayer, 'opacity', opacity < 1 ? opacity.toFixed(3) : '');
+			css(starsLayer, 'transform', stars);
 		},
 		jumpTo: (i) => goTo(i, true),
 		lock: (on) => {

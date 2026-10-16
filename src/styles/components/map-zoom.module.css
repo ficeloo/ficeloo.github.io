@@ -1,5 +1,5 @@
-/* Vue rapprochée de la star map : la caméra zoome sur place jusqu'à la planète du projet,
-   la fiche s'affiche à côté (à gauche ; en bas sur écran étroit ou en portrait).
+/* Vue rapprochée de la star map : la caméra zoome jusqu'à la planète du projet (au centre),
+   la fiche s'affiche à gauche (en bas sur écran étroit ou en portrait).
    La caméra, la position de la planète et le viseur sont gérés par src/scripts/map-zoom.ts. */
 .zoom {
 	position: absolute;
@@ -14,7 +14,7 @@
 	left: clamp(16px, 4vw, 3rem);
 	top: 50%;
 	box-sizing: border-box;
-	width: min(400px, 34vw);
+	width: min(360px, 30vw);
 	max-height: calc(100% - 2rem);
 	overflow-y: auto;
 	overscroll-behavior: contain;
@@ -210,7 +210,7 @@
 
 /* ===== Planètes (une par projet, empilées ; la caméra les déplace par transform) ===== */
 /* Taille de la scène (même proportion que l'en-tête des pages projet) ; sa position est posée
-   par le script : sur le nœud du projet, décalée seulement pour ne pas passer sous la fiche. */
+   par le script (au centre, à droite de la fiche si elle déborde). */
 .planets {
 	position: absolute;
 	left: 0;
