@@ -22,6 +22,39 @@
 	font-display: swap;
 }
 
+/* Changement de page (navigateurs qui gèrent les View Transitions, sinon navigation normale) :
+   en venant de la vue rapprochée de la star map, seule la planète glisse jusqu'à sa place dans
+   l'en-tête de la page projet ; le reste de la page change d'un coup. */
+@view-transition {
+	navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+}
+
+::view-transition-group(planet) {
+	animation-duration: 0.6s;
+	animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* L'image de départ reste visible tout le trajet ; la vraie planète prend le relais à l'arrivée. */
+::view-transition-old(planet) {
+	animation: none;
+}
+
+::view-transition-new(planet) {
+	animation: none;
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
+	}
+}
+
 body {
 	margin: 0;
 	background: var(--color-bg-deep);

@@ -63,3 +63,9 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 		<ProjectPager project={project} />
 	</main>
 </Layout>
+
+<script>
+	// D'une page projet à une autre (← →, astres voisins) : pas de glissement de planète,
+	// il n'a de sens qu'en venant de la vue rapprochée de la carte.
+	addEventListener('pageswap', (e) => (e as Event & { viewTransition?: { skipTransition(): void } }).viewTransition?.skipTransition());
+</script>

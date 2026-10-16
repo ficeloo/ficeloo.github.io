@@ -163,7 +163,11 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		idx = i;
 		live.clear();
 		live.add(i);
-		boxes.forEach((b, k) => { if (k !== i) b.hidden = true; });
+		boxes.forEach((b, k) => {
+			if (k !== i) b.hidden = true;
+			// Seule la planète affichée glisse vers sa page projet (View Transitions, global.css)
+			b.querySelector<HTMLElement>('[data-planet-scene]')!.style.viewTransitionName = k === i ? 'planet' : '';
+		});
 	}
 
 	// --- Ouverture : verrouillage, puis approche ---

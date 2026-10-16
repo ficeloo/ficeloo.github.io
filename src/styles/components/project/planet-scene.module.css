@@ -6,6 +6,12 @@
 	aspect-ratio: 1 / 0.6;
 }
 
+/* Arrivée depuis la star map : la planète du zoom glisse jusqu'ici (global.css). Dans le zoom,
+   les scènes sont plusieurs : le script ne nomme que celle affichée. */
+.scene:not([data-planet-manual]) {
+	view-transition-name: planet;
+}
+
 .canvas {
 	position: absolute;
 	inset: 0;
