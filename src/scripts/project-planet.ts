@@ -703,24 +703,37 @@ function frame(s: Scene, ms: number) {
 	});
 }
 
-// ---------- Démarrage ----------
+// ---------- Montage ----------
 
-const scenes = [...document.querySelectorAll<HTMLElement>('[data-planet-scene]')].map(setup);
-const visible = new Set<Scene>();
-const io = new IntersectionObserver((entries) => entries.forEach((e) => {
-	const s = scenes.find((sc) => sc.box === e.target);
-	if (s) e.isIntersecting ? visible.add(s) : visible.delete(s);
-}));
-scenes.forEach((s) => { io.observe(s.box); resize(s); frame(s, performance.now()); });
-new ResizeObserver(() => scenes.forEach((s) => { resize(s); frame(s, performance.now()); })).observe(document.body);
+/** Une planète montée sur un élément [data-planet-scene] (ADN lu dans ses data-*). */
+export interface Planet {
+	box: HTMLElement;
+	resize(): void;
+	frame(ms: number): void;
+}
 
-if (!reduce && scenes.length) {
+export function createPlanet(box: HTMLElement): Planet {
+	const s = setup(box);
+	resize(s);
+	return { box, resize: () => resize(s), frame: (ms) => frame(s, ms) };
+}
+
+/** Pages projet : anime les planètes visibles (pause hors écran, 30 images/s en tactile, figées en mouvement réduit). */
+export function animatePlanets(boxes: Iterable<HTMLElement>) {
+	const planets = [...boxes].map(createPlanet);
+	if (!planets.length) return;
+	const visible = new Set<Planet>();
+	const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+		const p = planets.find((pl) => pl.box === e.target);
+		if (p) e.isIntersecting ? visible.add(p) : visible.delete(p);
+	}));
+	planets.forEach((p) => { io.observe(p.box); p.frame(performance.now()); });
+	new ResizeObserver(() => planets.forEach((p) => { p.resize(); p.frame(performance.now()); })).observe(document.body);
+	if (reduce) return;
 	let last = 0;
 	const loop = (ms: number) => {
-		if (!coarse || ms - last > 32) { last = ms; visible.forEach((s) => frame(s, ms)); }
+		if (!coarse || ms - last > 32) { last = ms; visible.forEach((p) => p.frame(ms)); }
 		requestAnimationFrame(loop);
 	};
 	requestAnimationFrame(loop);
 }
-
-export {}; // module : ses déclarations restent locales au fichier

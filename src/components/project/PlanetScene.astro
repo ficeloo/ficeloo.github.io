@@ -36,5 +36,6 @@ const t = useTranslations(getLang(Astro.currentLocale));
 </div>
 
 <script>
-	import '../../scripts/project-planet';
+	import { animatePlanets } from '../../scripts/project-planet';
+	animatePlanets(document.querySelectorAll<HTMLElement>('[data-planet-scene]'));
 </script>
