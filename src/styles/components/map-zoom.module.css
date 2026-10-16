@@ -226,6 +226,82 @@
 	will-change: transform, opacity;
 }
 
+/* ===== Fond : nébuleuse du système (taille, position et opacité posées par le script) ===== */
+.backdrop {
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	pointer-events: none;
+	will-change: transform, opacity;
+}
+
+.backdrop canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* ===== Chemins vers les planètes voisines ===== */
+.routes {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	overflow: visible;
+}
+
+/* Même trait que les sauts entre systèmes sur la carte */
+.routes path {
+	fill: none;
+	stroke: rgba(var(--rgb-secondary), 0.7);
+	stroke-width: 1.2;
+	stroke-dasharray: 2 7;
+	stroke-linecap: round;
+}
+
+.hop {
+	position: absolute;
+	left: 0;
+	top: 0;
+	padding: 0.35rem 0.5rem;
+	background: transparent;
+	border: 0;
+	font-family: var(--font-display);
+	font-size: 0.8rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--color-text-dim);
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+.hop:hover {
+	color: var(--color-accent);
+}
+
+/* Chemins et noms n'apparaissent qu'une fois la planète atteinte (le script pose data-routes) */
+.routes,
+.hop {
+	opacity: 0;
+	transition: opacity 0.4s ease, color 0.2s ease;
+}
+
+.zoom[data-routes] .routes,
+.zoom[data-routes] .hop {
+	opacity: 1;
+}
+
+.hop[hidden] {
+	display: none;
+}
+
+.hop:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
+}
+
 /* ===== Viseur ===== */
 .reticle {
 	position: absolute;

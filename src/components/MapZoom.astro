@@ -12,7 +12,8 @@ interface Props {
 }
 
 // Vue rapprochée de la star map : au clic sur un projet, un viseur se verrouille sur son nœud et
-// la caméra zoome sur place, jusqu'à sa planète ; la fiche s'affiche à côté. Une fiche et une
+// la caméra plonge jusqu'à sa planète, au milieu de la nébuleuse de son système ; la fiche
+// s'affiche à côté, et des chemins en pointillés mènent aux planètes voisines. Une fiche et une
 // planète par projet, affichées une à la fois par src/scripts/map-zoom.ts (qui place la planète) ;
 // les images ne sont chargées qu'à l'ouverture.
 const { projects } = Astro.props;
@@ -34,6 +35,15 @@ const cards = await Promise.all(projects.map(async (p) => ({
 ---
 
 <div class={styles.zoom} data-zoom tabindex="-1" role="dialog" aria-modal="true" aria-label={t('map.zoomAria')} hidden>
+	<!-- Fond : la nébuleuse du système, vue de l'intérieur (textures de la carte, recopiées par le script) -->
+	<div class={styles.backdrop} data-zoom-backdrop aria-hidden="true" hidden><canvas width="512" height="512"></canvas></div>
+	<!-- Chemins en pointillés vers les planètes voisines (comme sur la carte), cliquables par leur nom -->
+	<svg class={styles.routes} data-zoom-routes aria-hidden="true">
+		<path data-zoom-route="-1"></path>
+		<path data-zoom-route="1"></path>
+	</svg>
+	<button type="button" class={styles.hop} data-zoom-hop="-1" aria-label={t('map.prevPlanet')} hidden></button>
+	<button type="button" class={styles.hop} data-zoom-hop="1" aria-label={t('map.nextPlanet')} hidden></button>
 	<div class={styles.cards} data-zoom-scroll>
 		{cards.map(({ p, shots }, i) => (
 			<article class={styles.card} data-zoom-card={i} aria-labelledby={`zoom-title-${i}`} hidden>

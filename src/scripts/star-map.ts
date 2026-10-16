@@ -356,6 +356,16 @@ export function initStarMap(styles: Record<string, string>) {
 			css(starsLayer, 'transform', stars);
 		},
 		jumpTo: (i) => goTo(i, true),
+		neighbor: (i, d) => {
+			const q = L.ord.indexOf(i), n = q + d;
+			if (q < 0 || n < 0 || n >= L.N) return null;
+			return { dx: L.W[n].x - L.W[q].x, dy: L.W[n].y - L.W[q].y, label: `${projects[L.ord[n]].num} ${projects[L.ord[n]].title}` };
+		},
+		nebula: (i) => {
+			const g = L.W[L.ord.indexOf(i)]?.g;
+			const el = g === undefined ? null : groupEls[g];
+			return el?.nebula.hasAttribute('data-ready') ? { key: g, layers: el.layers } : null;
+		},
 		lock: (on) => {
 			zoomOn = on;
 			document.body.style.overflow = on ? 'hidden' : '';
