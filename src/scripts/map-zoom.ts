@@ -134,7 +134,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const Zs = Math.pow(Z, STARS_ZOOM), sx = P.x + (cx - P.x) * STARS_PAN, sy = P.y + (cy - P.y) * STARS_PAN;
 		host.camera(
 			`translate(${f1(cx - P.x * Z)}px,${f1(cy - P.y * Z)}px) scale(${Z.toFixed(4)})`,
-			1 - smooth(1.6, 5, Z),
+			1 - smooth(2.5, 8, Z), // la carte s'efface une fois qu'on a plongé dans la nébuleuse
 			`translate(${f1(sx - P.x * Zs)}px,${f1(sy - P.y * Zs)}px) scale(${Zs.toFixed(4)})`,
 		);
 		const box = boxes[i];
