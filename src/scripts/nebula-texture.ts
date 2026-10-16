@@ -1,7 +1,8 @@
 // Textures des nébuleuses de la star map : trois calques (halo de fond, gaz, voile de poussière)
 // calculés pixel par pixel une seule fois — dans un worker (nebula.worker.ts), hors du fil
 // principal — puis seulement déplacés par transform. Une seule tache au bord irrégulier,
-// brumeuse (floutée à la génération), avec de légers filaments.
+// brumeuse (floutée à la génération), avec de légers filaments. Plus une texture « intérieur »
+// sans bord, pour le fond de la vue rapprochée (on est dans la nébuleuse).
 // Pas de DOM ici : uniquement du calcul sur des tableaux de pixels RGBA.
 
 export type Rgb = [number, number, number];
@@ -14,6 +15,7 @@ export type NebulaJob = {
 	deep: Rgb; // fond le plus profond (--rgb-bg-deep), pour la poussière sombre
 };
 export type NebulaLayers = { back: Uint8ClampedArray<ArrayBuffer>; mid: Uint8ClampedArray<ArrayBuffer>; front: Uint8ClampedArray<ArrayBuffer> };
+export const INTERIOR_TEX = 256; // côté de la texture « intérieur » (très floue, agrandie à la taille de l'écran)
 type Px = [number, number, number, number] | null;
 
 // ---------- bruit ----------
@@ -122,15 +124,19 @@ function over(dst: Uint8ClampedArray, k: number, r: number, g: number, b: number
 	dst[k + 3] = oa * 255;
 }
 
+// Déformation du domaine (volutes) : (nx, ny) → coordonnées tordues, à l'échelle sc.
+const warper = (s: number) => (nx: number, ny: number, sc: number) => {
+	let x = nx * sc + 10, y = ny * sc + 10;
+	x += (fbm(x + 3.1, y + 1.7, s + 11, 4) - 0.5) * 2.8;
+	y += (fbm(x - 2.3, y + 4.9, s + 23, 4) - 0.5) * 2.8;
+	return [x, y];
+};
+const blurFor = (N: number) => (r: number) => Math.max(1, Math.round((r * N) / 288)); // rayons de flou réglés pour 288 px
+
 export function paintNebula({ seed: s, size: N, vivid, pastel, deep }: NebulaJob): NebulaLayers {
 	const env = envelope(s), envBig = envelope(s, 1.06);
-	const br = (r: number) => Math.max(1, Math.round((r * N) / 288)); // rayons de flou réglés pour 288 px
-	const warp = (nx: number, ny: number, sc: number) => {
-		let x = nx * sc + 10, y = ny * sc + 10;
-		x += (fbm(x + 3.1, y + 1.7, s + 11, 4) - 0.5) * 2.8;
-		y += (fbm(x - 2.3, y + 4.9, s + 23, 4) - 0.5) * 2.8;
-		return [x, y];
-	};
+	const br = blurFor(N);
+	const warp = warper(s);
 
 	// Fond : halo profond, teinte vive assombrie, qui enveloppe le gaz.
 	const halo = vivid.map((v, i) => v + (deep[i] - v) * 0.35);
@@ -207,4 +213,30 @@ export function paintNebula({ seed: s, size: N, vivid, pastel, deep }: NebulaJob
 	blur(front, N, br(5));
 
 	return { back, mid, front };
+}
+
+/** Intérieur de la nébuleuse (fond de la vue rapprochée) : aucune enveloppe, la brume remplit tout ;
+ *  volutes plus larges (vues de près) et filaments, mêmes couleurs que la nébuleuse du système. */
+export function paintInterior({ seed: s, vivid, pastel, deep }: NebulaJob, N = INTERIOR_TEX) {
+	const br = blurFor(N), warp = warper(s + 7);
+	const halo = vivid.map((v, i) => v + (deep[i] - v) * 0.45);
+	const data = paint(N, (nx, ny) => {
+		const [x, y] = warp(nx, ny, 1.15);
+		const d = smooth(0.2, 0.85, fbm(x, y, s + 101, 5));
+		const lift = Math.pow(d, 1.5);
+		const col = halo.map((h, ch) => {
+			const gas = (vivid[ch] + pastel[ch]) / 2;
+			return h + (gas - h) * d + (pastel[ch] - gas) * lift * 0.6;
+		});
+		return [col[0], col[1], col[2], (0.22 + 0.4 * d) * 255];
+	});
+	blur(data, N, br(5));
+	const fil = paint(N, (nx, ny) => {
+		const [x, y] = warp(nx, ny, 1.5);
+		const f = Math.pow(1 - Math.abs(2 * fbm(x, y, s + 113, 5) - 1), 9);
+		return f < 0.03 ? null : [pastel[0], pastel[1], pastel[2], f * 0.2 * 255];
+	});
+	blur(fil, N, br(1.5));
+	for (let k = 0; k < fil.length; k += 4) if (fil[k + 3]) over(data, k, fil[k], fil[k + 1], fil[k + 2], fil[k + 3]);
+	return data;
 }

@@ -2,13 +2,14 @@
 // sur son nœud (« LOCK »), puis la caméra zoome sur sa planète (satellites compris) : elle se
 // déplace jusqu'à elle, tout le décor défile (la carte, et les étoiles plus lentement, elles sont
 // loin), et la planète finit au centre de la place libre, la fiche à gauche (en bas sur écran étroit).
-// Autour de la planète : la nébuleuse de son système, agrandie à l'endroit du point (on est dedans),
-// et des chemins en pointillés vers les planètes voisines. ← → (ou un clic sur leur nom) mènent à
-// la voisine : la caméra recule, glisse le long du chemin et replonge. Échap ramène à la carte.
+// Autour de la planète : on plonge dans la nébuleuse de la carte, qui laisse place à un fond qui
+// remplit l'écran (l'intérieur de la nébuleuse du système). Des chemins en pointillés se tracent
+// vers les planètes voisines. ← → (ou un clic sur leur nom) mènent à la voisine : la caméra recule,
+// glisse le long du chemin (qui se trace en orange, comme sur la carte) et replonge.
+// Échap ramène à la carte.
 //
 // La carte n'est pas recalculée pendant le zoom : ses calques sont déplacés et agrandis par un
-// seul transform (le moteur de la carte l'applique via ZoomHost.camera) ; la carte s'efface quand
-// on est près, sa nébuleuse reste.
+// seul transform (le moteur de la carte l'applique via ZoomHost.camera), puis s'effacent.
 import { createPlanet, type Planet } from './project-planet';
 
 /** Ce que la carte fournit au zoom. Coordonnées en px, dans le repère de l'écran de la carte. */
@@ -16,7 +17,8 @@ export interface ZoomHost {
 	count: number;
 	nodePoint(i: number): { x: number; y: number }; // position actuelle du nœud du projet i
 	label(i: number): string; // « 03 Scop » (texte du viseur)
-	camera(map: string, opacity: number, stars: string): void; // calques de la carte et des étoiles ('' = au repos)
+	camera(map: string, opacity: number, nebula: number, stars: string): void; // calques carte, nébuleuses, étoiles ('' = au repos)
+	interior(i: number): HTMLCanvasElement | null; // intérieur de la nébuleuse du système du projet i (si calculé)
 	jumpTo(i: number): void; // cale la carte (cachée) sur le projet i
 	neighbor(i: number, d: number): { dx: number; dy: number; label: string } | null; // projet voisin (d = ±1) : direction sur la carte, nom
 	lock(on: boolean): void; // scroll bloqué, chrome de la carte masqué
@@ -26,15 +28,18 @@ export interface ZoomHost {
 const LOCK = 450; // le viseur se referme
 const DIVE = 1500; // approche
 const BACK = 800; // retour à la carte
-const HOP = 800; // planète voisine : durée de base…
-const HOP_PX = 0.45; // … plus tant de ms par pixel de chemin sur la carte (saut vers un autre système : plus long)
-const HOP_MAX = 1400;
+const HOP = 900; // planète voisine : durée de base…
+const HOP_PX = 0.4; // … plus tant de ms par pixel de chemin sur la carte (saut vers un autre système : plus long)
+const HOP_MAX = 1500;
+const DIP_MIN = 0.3, DIP_MAX = 0.6; // recul pendant le trajet, en part du zoom d'arrivée (léger : pas de mal de mer)
 const SHOT = 3500; // mini diaporama : une capture
 const SHOT_GIF = 6000; // un GIF (animé) reste plus longtemps
 const NODE_R = 8; // rayon du nœud actif sur la carte (16 px de diamètre)
 const STARS_PAN = 0.35; // les étoiles, lointaines, ne suivent qu'une partie du déplacement…
 const STARS_ZOOM = 0.12; // … et du zoom (exposant)
 const KEYS_H = 110; // bas de l'écran réservé aux raccourcis clavier (écran large)
+const GROW = 500; // un chemin se trace en tant de ms
+const BACK_OP = 0.85; // opacité du fond (intérieur de la nébuleuse) une fois arrivé : la fiche reste lisible
 
 const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -54,6 +59,10 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	const cardsEl = root.querySelector<HTMLElement>('[data-zoom-scroll]')!;
 	const narrow = matchMedia('(max-width: 700px), (orientation: portrait)'); // fiche en bas (CSS)
 	const reticle = root.querySelector<HTMLElement>('[data-zoom-reticle]')!;
+	const backdrop = root.querySelector<HTMLElement>('[data-zoom-backdrop]')!;
+	const backCvs = [...backdrop.querySelectorAll('canvas')];
+	const track = root.querySelector<SVGPathElement>('[data-zoom-track]')!;
+	const trail = root.querySelector<SVGPathElement>('[data-zoom-trail]')!;
 	const routes = [-1, 1].map((d) => ({
 		d,
 		path: root.querySelector<SVGPathElement>(`[data-zoom-route="${d}"]`)!,
@@ -137,15 +146,34 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	}
 
 	type Pt = { x: number; y: number };
-	/** Caméra : le point A de la carte (position d'un nœud) est montré au point S de l'écran, zoom Z.
-	 *  Les étoiles suivent en partie (parallaxe). La carte s'efface quand on est près, pas sa nébuleuse. */
-	function setCamera(A: Pt, S: Pt, Z: number) {
+	/** Caméra : le point A de la carte (position d'un nœud) est montré au point S de l'écran, zoom Z
+	 *  (zEnd = zoom d'arrivée). Les étoiles suivent en partie (parallaxe). En approchant, la carte
+	 *  s'efface, puis sa nébuleuse laisse place au fond (intérieur de la nébuleuse), qui grandit. */
+	function setCamera(A: Pt, S: Pt, Z: number, zEnd: number) {
 		const Zs = Math.pow(Z, STARS_ZOOM), sx = A.x + (S.x - A.x) * STARS_PAN, sy = A.y + (S.y - A.y) * STARS_PAN;
+		const near = Math.log(Math.max(1, Z)) / Math.log(Math.max(1.01, zEnd)); // 0 = carte, 1 = arrivé
+		const inside = smooth(0.45, 0.92, near);
 		host.camera(
 			`translate(${f1(S.x - A.x * Z)}px,${f1(S.y - A.y * Z)}px) scale(${Z.toFixed(4)})`,
 			1 - smooth(2.5, 8, Z),
+			1 - inside,
 			`translate(${f1(sx - A.x * Zs)}px,${f1(sy - A.y * Zs)}px) scale(${Zs.toFixed(4)})`,
 		);
+		backdrop.style.opacity = (inside * BACK_OP).toFixed(3);
+		backdrop.style.transform = `scale(${lerp(1.35, 1, inside).toFixed(3)})`;
+	}
+	// Fond : l'intérieur de la nébuleuse du système de i, en fondu depuis celui d'avant
+	let backFor: HTMLCanvasElement | null = null;
+	function showInterior(i: number) {
+		const src = host.interior(i);
+		if (src === backFor) return;
+		backFor = src;
+		const next = backCvs.find((cv) => !cv.hasAttribute('data-on')) ?? backCvs[0];
+		if (src) {
+			next.width = next.height = src.width;
+			next.getContext('2d')!.drawImage(src, 0, 0);
+		}
+		backCvs.forEach((cv) => cv.toggleAttribute('data-on', cv === next && !!src));
 	}
 	/** Planète du projet i (nœud Pi) suivant la caméra : là où son nœud tombe, à la taille du zoom. */
 	function placePlanet(i: number, Pi: Pt, A: Pt, S: Pt, Z: number, Q: Spot) {
@@ -157,14 +185,18 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	/** Plongée à l'avancement e (0 = carte, 1 = planète) : le nœud P glisse vers la cible Q en grossissant. */
 	function cameraAt(i: number, P: Pt, Q: Spot, e: number) {
 		const Z = Math.pow(Q.zEnd, e), S = { x: lerp(P.x, Q.x, e), y: lerp(P.y, Q.y, e) };
-		setCamera(P, S, Z);
+		setCamera(P, S, Z, Q.zEnd);
 		placePlanet(i, P, P, S, Z, Q);
 		boxes[i].style.opacity = smooth(0.08, 0.35, e).toFixed(3);
 		return { cx: S.x, cy: S.y, Z };
 	}
 
-	// --- Chemins vers les voisines : de la planète jusqu'au bord de la place libre, le nom au bout ---
+	// --- Chemins vers les voisines : de la planète jusqu'au bord de la place libre, le nom au bout.
+	// Ils se tracent progressivement depuis la planète ; celui vers la précédente est orange (parcouru). ---
+	let growRaf = 0;
 	function drawRoutes() {
+		cancelAnimationFrame(growRaf);
+		const segs: { path: SVGPathElement; x0: number; y0: number; x1: number; y1: number }[] = [];
 		const o = root.getBoundingClientRect(), c = cardsEl.getBoundingClientRect();
 		const Q = place(), start = Q.zEnd * NODE_R * 1.35, m = 16;
 		const box = {
@@ -192,12 +224,25 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 			const inline = tEnd >= start + 30;
 			const tLine = inline ? tEnd : t;
 			if (tLine < start + 30) { label.hidden = true; return; }
-			path.setAttribute('d', `M${f1(Q.x + ux * start)} ${f1(Q.y + uy * start)}L${f1(Q.x + ux * tLine)} ${f1(Q.y + uy * tLine)}`);
+			path.toggleAttribute('data-done', d < 0);
+			segs.push({ path, x0: Q.x + ux * start, y0: Q.y + uy * start, x1: Q.x + ux * tLine, y1: Q.y + uy * tLine });
 			const lx = !inline || !horiz ? cl(x - lw / 2, box.x0, box.x1 - lw) : ux < 0 ? x : x - lw;
 			const ly = !inline ? cl(y - lh - 6, box.y0, box.y1 - lh) : horiz ? cl(y - lh / 2, box.y0, box.y1 - lh) : uy < 0 ? y : y - lh;
 			label.style.transform = `translate(${f1(lx)}px,${f1(ly)}px)`;
 		});
 		root.setAttribute('data-routes', '');
+		const t0 = performance.now();
+		const grow = (now: number) => {
+			const k = outC(Math.min(1, (now - t0) / GROW));
+			segs.forEach((g) => g.path.setAttribute('d', `M${f1(g.x0)} ${f1(g.y0)}L${f1(lerp(g.x0, g.x1, k))} ${f1(lerp(g.y0, g.y1, k))}`));
+			if (k < 1) growRaf = requestAnimationFrame(grow);
+		};
+		growRaf = requestAnimationFrame(grow);
+	}
+	function hideRoutes() {
+		cancelAnimationFrame(growRaf);
+		root.removeAttribute('data-routes');
+		routes.forEach(({ path }) => path.setAttribute('d', ''));
 	}
 
 	function showReticle(x: number, y: number, size: number, opacity: number, label?: string) {
@@ -258,7 +303,8 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		setSpot(Q);
 		const name = host.label(i);
 		boxes[i].style.opacity = '0';
-		root.removeAttribute('data-routes');
+		showInterior(i);
+		hideRoutes();
 		chain([
 			[LOCK, (t) => {
 				const e = outC(t);
@@ -280,7 +326,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		if (!open) return;
 		skip();
 		root.removeAttribute('data-ready');
-		root.removeAttribute('data-routes');
+		hideRoutes();
 		showReticle(0, 0, 0, 0);
 		clearTimeout(shotT);
 		const i = idx;
@@ -290,7 +336,8 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		play(BACK, (t) => cameraAt(i, P, Q, inOut(1 - t)), () => {
 			open = false;
 			live.clear();
-			host.camera('', 1, '');
+			host.camera('', 1, 1, '');
+			backdrop.style.opacity = '0';
 			boxes[i].hidden = true;
 			boxes[i].style.transform = '';
 			cards[i].hidden = true;
@@ -299,13 +346,13 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		});
 	}
 
-	// --- Planète voisine : la caméra recule, glisse le long du chemin, puis replonge ---
+	// --- Planète voisine : la caméra recule, glisse le long du chemin (tracé en orange au fur et à
+	// mesure), puis replonge. La carte (cachée de près) ne se cale sur la voisine qu'à l'arrivée. ---
 	function hop(d: number) {
 		if (!open) return;
 		skip();
 		const from = idx, to = idx + d;
 		if (to < 0 || to >= host.count) return;
-		host.jumpTo(to); // la carte (cachée) se cale sur la voisine : Échap ramènera au bon projet
 		const A = host.nodePoint(from), B = host.nodePoint(to), Q = place();
 		setIdx(to);
 		live.add(from);
@@ -313,21 +360,27 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		planetOf(to);
 		boxes[to].style.opacity = '1';
 		showCard(to, d);
-		root.removeAttribute('data-routes');
-		// Recul : assez pour voir le chemin (jamais moins que l'échelle de la carte)
+		showInterior(to);
+		hideRoutes();
+		// Recul léger : juste assez pour suivre le chemin, borné (un recul trop fort donne le mal de mer)
 		const dist = Math.hypot(B.x - A.x, B.y - A.y), o = root.getBoundingClientRect();
-		const zDip = cl((o.width * 0.5) / Math.max(dist, 1), 1, Q.zEnd * 0.35);
+		const zDip = Math.max(1, cl((o.width * 0.8) / Math.max(dist, 1), Q.zEnd * DIP_MIN, Q.zEnd * DIP_MAX));
 		play(Math.min(HOP_MAX, HOP + dist * HOP_PX), (t) => {
 			const e = inOut(t);
-			const Z = Q.zEnd * Math.pow(zDip / Q.zEnd, Math.sin(Math.PI * t));
+			const Z = Q.zEnd * Math.pow(zDip / Q.zEnd, Math.sin(Math.PI * t) ** 2); // creux en douceur
 			const C = { x: lerp(A.x, B.x, e), y: lerp(A.y, B.y, e) }; // point de la carte au centre de la vue
-			setCamera(C, Q, Z);
-			placePlanet(from, A, C, Q, Z, Q);
-			placePlanet(to, B, C, Q, Z, Q);
+			setCamera(C, Q, Z, Q.zEnd);
+			const a = placePlanet(from, A, C, Q, Z, Q), b = placePlanet(to, B, C, Q, Z, Q);
+			track.setAttribute('d', `M${f1(a.x)} ${f1(a.y)}L${f1(b.x)} ${f1(b.y)}`);
+			trail.setAttribute('d', t < 1 ? `M${f1(a.x)} ${f1(a.y)}L${f1(Q.x)} ${f1(Q.y)}` : '');
 		}, () => {
+			track.setAttribute('d', '');
+			trail.setAttribute('d', '');
 			live.delete(from);
 			boxes[from].hidden = true;
 			boxes[from].style.transform = '';
+			host.jumpTo(to); // la carte se cale sur la voisine (Échap ramènera au bon projet)…
+			setCamera(host.nodePoint(to), Q, Q.zEnd, Q.zEnd); // … et la caméra reste sur elle
 			drawRoutes();
 		});
 	}
@@ -338,7 +391,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		boxes[idx].style.transform = '';
 		const Q = place();
 		setSpot(Q);
-		setCamera(host.nodePoint(idx), Q, Q.zEnd);
+		setCamera(host.nodePoint(idx), Q, Q.zEnd, Q.zEnd);
 		drawRoutes();
 		planets[idx]?.resize();
 	}

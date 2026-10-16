@@ -1,7 +1,7 @@
 // Moteur de la "star map" : la liste des projets devient une carte spatiale
 // parcourue au scroll (systèmes par catégorie, sauts hyperspace entre systèmes,
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
-import type { NebulaJob, NebulaLayers, Rgb } from './nebula-texture';
+import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
 import { createZoom } from './map-zoom';
 
 type Raw = {
@@ -254,6 +254,8 @@ export function initStarMap(styles: Record<string, string>) {
 		}
 	}
 
+	const interiors: (HTMLCanvasElement | null)[] = cats0.map(() => null); // intérieur de chaque nébuleuse (worker)
+
 	// Teintes pastel des systèmes en nombres (pour les mélanger au blanc pendant un saut).
 	const rootCss = getComputedStyle(document.documentElement);
 	const rgbOf = (name: string) => rootCss.getPropertyValue(name).split(',').map(Number);
@@ -273,9 +275,13 @@ export function initStarMap(styles: Record<string, string>) {
 			return;
 		}
 		let left = cats0.length;
-		worker.onmessage = (e: MessageEvent<{ g: number } & NebulaLayers>) => {
+		worker.onmessage = (e: MessageEvent<{ g: number; interior: Uint8ClampedArray<ArrayBuffer> } & NebulaLayers>) => {
 			const { g } = e.data;
 			groupEls[g].layers.forEach((cv, k) => cv.getContext('2d')?.putImageData(new ImageData(e.data[NEB_LAYERS[k]], NEB_TEX, NEB_TEX), 0, 0));
+			const inside = document.createElement('canvas'); // fond de la vue rapprochée (intérieur de la nébuleuse)
+			inside.width = inside.height = INTERIOR_TEX;
+			inside.getContext('2d')?.putImageData(new ImageData(e.data.interior, INTERIOR_TEX, INTERIOR_TEX), 0, 0);
+			interiors[g] = inside;
 			groupEls[g].nebula.toggleAttribute('data-ready', true);
 			if (--left === 0) worker.terminate();
 		};
@@ -356,13 +362,14 @@ export function initStarMap(styles: Record<string, string>) {
 			return nodePos[L.ord.indexOf(i)] ?? { x: vw / 2, y: vh / 2 };
 		},
 		label: (i) => `${projects[i].num} ${projects[i].title}`,
-		camera: (map, opacity, stars) => {
+		camera: (map, opacity, nebula, stars) => {
 			css(mapLayer, 'transform', map);
 			css(nebLayer, 'transform', map);
 			css(mapLayer, 'opacity', opacity < 1 ? opacity.toFixed(3) : '');
-			css(nebLayer, 'opacity', opacity < 1 ? (0.6 + 0.4 * opacity).toFixed(3) : ''); // de près, la nébuleuse s'atténue un peu
+			css(nebLayer, 'opacity', nebula < 1 ? nebula.toFixed(3) : '');
 			css(starsLayer, 'transform', stars);
 		},
+		interior: (i) => interiors[L.W[L.ord.indexOf(i)]?.g ?? -1] ?? null,
 		jumpTo: (i) => goTo(i, true),
 		neighbor: (i, d) => {
 			const q = L.ord.indexOf(i), n = q + d;
@@ -786,8 +793,9 @@ export function initStarMap(styles: Record<string, string>) {
 			if (pts) legT += D(pts.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
 			else sysT += D([W[q], lp(q, ff)]);
 		}
-		attr(sysTPath, 'd', sysT);
-		attr(legTPath, 'd', legT);
+		// Vue rapprochée : le trajet parcouru est tracé par le zoom lui-même (de planète en planète)
+		attr(sysTPath, 'd', zoomOn ? '' : sysT);
+		attr(legTPath, 'd', zoomOn ? '' : legT);
 
 		// Étoiles : parallaxe sur l'axe du parcours (x en horizontal, y en vertical).
 		// En horizontal, top fixe en % (relayout) ; en vertical, top: 0 et y via transform.

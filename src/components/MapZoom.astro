@@ -35,10 +35,19 @@ const cards = await Promise.all(projects.map(async (p) => ({
 ---
 
 <div class={styles.zoom} data-zoom tabindex="-1" role="dialog" aria-modal="true" aria-label={t('map.zoomAria')} hidden>
-	<!-- Chemins en pointillés vers les planètes voisines (comme sur la carte), cliquables par leur nom -->
+	<!-- Fond : l'intérieur de la nébuleuse du système (deux calques pour passer d'un système à l'autre en fondu) -->
+	<div class={styles.backdrop} data-zoom-backdrop aria-hidden="true">
+		<canvas></canvas><canvas></canvas>
+	</div>
+	<!-- Chemins en pointillés vers les planètes voisines (comme sur la carte), cliquables par leur nom ;
+	     pendant un trajet, le chemin parcouru se trace en orange -->
 	<svg class={styles.routes} data-zoom-routes aria-hidden="true">
 		<path data-zoom-route="-1"></path>
 		<path data-zoom-route="1"></path>
+	</svg>
+	<svg class={styles.trip} aria-hidden="true">
+		<path data-zoom-track></path>
+		<path data-zoom-trail></path>
 	</svg>
 	<button type="button" class={styles.hop} data-zoom-hop="-1" aria-label={t('map.prevPlanet')} hidden></button>
 	<button type="button" class={styles.hop} data-zoom-hop="1" aria-label={t('map.nextPlanet')} hidden></button>
