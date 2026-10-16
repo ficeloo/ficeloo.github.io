@@ -192,6 +192,12 @@ export function initStarMap(styles: Record<string, string>) {
 	svg.appendChild(pathsG);
 	mapLayer.appendChild(svg);
 
+	// Nébuleuses : calque à part, sous la carte. Le zoom sur une planète le déplace comme la carte
+	// mais ne l'efface pas : une fois arrivé, on est dans la nébuleuse, à l'endroit du point.
+	const nebLayer = document.createElement('div');
+	nebLayer.className = styles.nebulas;
+	mapUi.insertBefore(nebLayer, mapLayer);
+
 	const cats0 = [...new Set(projects.map((p) => p.cat))];
 	const groupEls = cats0.map((c) => {
 		// Nébuleuse : 3 calques (canvas) remplis quand le worker a calculé leurs textures.
@@ -204,7 +210,7 @@ export function initStarMap(styles: Record<string, string>) {
 			nebula.appendChild(cv);
 			return cv;
 		});
-		mapLayer.prepend(nebula); // sous les chemins, anneaux et nœuds
+		nebLayer.appendChild(nebula);
 		const ring = document.createElement('div');
 		ring.className = styles.ring;
 		ring.style.borderColor = `rgba(${sysRgb(c)}, 0.35)`;
@@ -352,7 +358,9 @@ export function initStarMap(styles: Record<string, string>) {
 		label: (i) => `${projects[i].num} ${projects[i].title}`,
 		camera: (map, opacity, stars) => {
 			css(mapLayer, 'transform', map);
+			css(nebLayer, 'transform', map);
 			css(mapLayer, 'opacity', opacity < 1 ? opacity.toFixed(3) : '');
+			css(nebLayer, 'opacity', opacity < 1 ? (0.6 + 0.4 * opacity).toFixed(3) : ''); // de près, la nébuleuse s'atténue un peu
 			css(starsLayer, 'transform', stars);
 		},
 		jumpTo: (i) => goTo(i, true),
@@ -360,11 +368,6 @@ export function initStarMap(styles: Record<string, string>) {
 			const q = L.ord.indexOf(i), n = q + d;
 			if (q < 0 || n < 0 || n >= L.N) return null;
 			return { dx: L.W[n].x - L.W[q].x, dy: L.W[n].y - L.W[q].y, label: `${projects[L.ord[n]].num} ${projects[L.ord[n]].title}` };
-		},
-		nebula: (i) => {
-			const g = L.W[L.ord.indexOf(i)]?.g;
-			const el = g === undefined ? null : groupEls[g];
-			return el?.nebula.hasAttribute('data-ready') ? { key: g, layers: el.layers } : null;
 		},
 		lock: (on) => {
 			zoomOn = on;
@@ -830,7 +833,8 @@ export function initStarMap(styles: Record<string, string>) {
 			css(ring, 'transform', at(s.x - R, s.y - R));
 			// Nébuleuse : taille fixe, mise à l'échelle par transform ; masquée hors écran.
 			const Rn = R * NEB_K;
-			const neb = s.x + Rn > 0 && s.x - Rn < vw && s.y + Rn > 0 && s.y - Rn < vh;
+			// (vue rapprochée : toutes affichées, la caméra peut traverser plusieurs systèmes)
+			const neb = zoomOn || (s.x + Rn > 0 && s.x - Rn < vw && s.y + Rn > 0 && s.y - Rn < vh);
 			css(nebula, 'display', neb ? 'block' : 'none');
 			if (neb) {
 				css(nebula, 'transform', `${at(s.x - Rn, s.y - Rn)} scale(${((Rn * 2) / NEB_BOX).toFixed(4)})`);

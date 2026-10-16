@@ -35,8 +35,6 @@ const cards = await Promise.all(projects.map(async (p) => ({
 ---
 
 <div class={styles.zoom} data-zoom tabindex="-1" role="dialog" aria-modal="true" aria-label={t('map.zoomAria')} hidden>
-	<!-- Fond : la nébuleuse du système, vue de l'intérieur (textures de la carte, recopiées par le script) -->
-	<div class={styles.backdrop} data-zoom-backdrop aria-hidden="true" hidden><canvas width="512" height="512"></canvas></div>
 	<!-- Chemins en pointillés vers les planètes voisines (comme sur la carte), cliquables par leur nom -->
 	<svg class={styles.routes} data-zoom-routes aria-hidden="true">
 		<path data-zoom-route="-1"></path>

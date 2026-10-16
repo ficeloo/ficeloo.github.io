@@ -112,6 +112,15 @@
 	left: 0;
 	top: 0;
 	pointer-events: none;
+	overflow: visible; /* zoom sur une planète : la caméra peut montrer plus loin que l'écran */
+}
+
+/* Calque des nébuleuses (sous la carte) : suit la caméra du zoom sans s'effacer. */
+.nebulas {
+	position: absolute;
+	inset: 0;
+	transform-origin: 0 0;
+	pointer-events: none;
 }
 
 /* Nébuleuse d'un système : 3 calques (fond, gaz, poussière) dont les textures sont calculées
