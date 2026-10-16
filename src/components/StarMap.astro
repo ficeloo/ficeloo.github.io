@@ -15,7 +15,7 @@ const projects = getMapOrder(lang);
 // Projets dans l'ordre de parcours de la carte (système par système, voir projects.ts) :
 // c'est celui des numéros 01, 02…
 
-// Vignettes (HUD, popup, aperçu « View all ») : jamais affichées à plus de 640px de large.
+// Vignettes (HUD, aperçu « View all ») : jamais affichées à plus de 640px de large.
 // Un GIF est gardé tel quel, sinon la conversion lui ferait perdre son animation.
 const thumb = async (img: ImageMetadata) =>
 	img.format === 'gif' ? img.src : (await getImage({ src: img, width: 720, format: 'webp' })).src;
@@ -104,49 +104,12 @@ const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.le
 			</nav>
 		</div>
 
-		<div class={styles.backdrop} data-backdrop></div>
-		<svg class={styles.beam} data-beam aria-hidden="true">
-			<defs>
-				<linearGradient id="beamG" x1="0" y1="1" x2="0" y2="0">
-					<stop offset="0" style="stop-color: var(--color-accent)" stop-opacity="0.5"></stop>
-					<stop offset="1" style="stop-color: var(--color-accent)" stop-opacity="0.03"></stop>
-				</linearGradient>
-			</defs>
-			<polygon data-beam-poly points="" fill="url(#beamG)"></polygon>
-		</svg>
-		<div class={styles.popup} data-popup inert>
-			<div class={styles['popup-scanlines']}></div>
-			<div class={`${styles['popup-corner']} ${styles['corner-tl']}`}></div>
-			<div class={`${styles['popup-corner']} ${styles['corner-tr']}`}></div>
-			<div class={`${styles['popup-corner']} ${styles['corner-bl']}`}></div>
-			<div class={`${styles['popup-corner']} ${styles['corner-br']}`}></div>
-			<div class={styles['popup-row']}>
-				<div class={styles['popup-img']}><img data-popup-img src="" alt="" /></div>
-				<div class={styles['popup-body']}>
-					<div class={styles['popup-meta']}>
-						<span data-popup-meta></span>
-						<button class={styles['popup-close']} type="button" data-popup-close aria-label={t('map.close')}>✕</button>
-					</div>
-					<h3 class={styles['popup-title']}><span class={styles['title-text']} data-popup-title></span><InProgressBadge data-popup-wip hidden /></h3>
-					<p class={styles['popup-desc']} data-popup-desc></p>
-					<div class={styles['popup-tagyear']}>
-						<span data-popup-tag></span>
-						<span class="sep">-</span>
-						<span data-popup-year></span>
-					</div>
-					<div class={styles['popup-link-wrap']}>
-						<a class={styles['popup-link']} data-popup-link href="#">{t('map.viewProject')} →</a>
-					</div>
-				</div>
-			</div>
-		</div>
-
 		<MapZoom projects={projects} />
 
-		<!-- Raccourcis clavier : une ligne pour la carte, une pour la popup ouverte. -->
+		<!-- Raccourcis clavier : une ligne pour la carte, une pour la vue rapprochée. -->
 		<div class={styles.keys} data-keys aria-hidden="true">
 			<span class={styles['keys-map']}><kbd>←</kbd><kbd>→</kbd> {t('map.keyNavigate')} <kbd>↵</kbd> {t('map.keyOpen')}</span>
-			<span class={styles['keys-popup']}><kbd>↵</kbd> {t('map.keyViewProject')} <kbd class={styles['kbd-word']}>esc</kbd> {t('map.keyClose')}</span>
+			<span class={styles['keys-zoom']}><kbd>←</kbd><kbd>→</kbd> {t('map.keyNavigate')} <kbd>↵</kbd> {t('map.keyViewProject')} <kbd class={styles['kbd-word']}>esc</kbd> {t('map.keyClose')}</span>
 		</div>
 	</div>
 

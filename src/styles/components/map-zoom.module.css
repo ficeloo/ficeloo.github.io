@@ -5,6 +5,7 @@
 	position: absolute;
 	inset: 0;
 	z-index: 40;
+	outline: none; /* reçoit le focus à l'ouverture (souris, toucher) */
 }
 
 .inner {
@@ -268,6 +269,7 @@
 		padding-block: 1rem;
 		gap: 0.5rem;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 	}
 	.planets {
 		order: -1;

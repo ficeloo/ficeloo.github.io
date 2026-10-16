@@ -1,7 +1,8 @@
 // Moteur de la "star map" : la liste des projets devient une carte spatiale
 // parcourue au scroll (systèmes par catégorie, sauts hyperspace entre systèmes,
-// popup projetée, overlay « View all », clavier et drag).
+// zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import type { NebulaJob, NebulaLayers, Rgb } from './nebula-texture';
+import { createZoom } from './map-zoom';
 
 type Raw = {
 	slug: string;
@@ -17,7 +18,7 @@ type Raw = {
 };
 type Proj = Raw & { i: number; num: string };
 // Textes de l'interface, traduits au build (StarMap.astro) : {name} et {n} y sont remplacés.
-type Text = { entering: string; system: string; selected: string; project: string; projects: string };
+type Text = { entering: string; system: string; selected: string; project: string; projects: string; targeting: string; lock: string };
 type Pt = { x: number; y: number };
 type Node = Pt & { g: number; gx: number; gy: number };
 type Group = { c: string; g: number; mem: number[]; gx: number; gy: number; Rc: number; pos: Pt[] | null };
@@ -86,7 +87,8 @@ export function initStarMap(styles: Record<string, string>) {
 	const mapUi = root?.querySelector<HTMLElement>('[data-map-ui]');
 	const workAnchor = root?.querySelector<HTMLElement>('[data-work-anchor]');
 	const aboutEl = document.getElementById('about'); // section qui suit la carte
-	if (!root || !dataEl || !starsLayer || !mapLayer || !mapUi) return;
+	const zoomEl = root?.querySelector<HTMLElement>('[data-zoom]'); // vue rapprochée (MapZoom.astro)
+	if (!root || !dataEl || !starsLayer || !mapLayer || !mapUi || !zoomEl) return;
 
 	const raw = JSON.parse(dataEl.textContent || '[]') as Raw[];
 	const projects: Proj[] = raw.map((p, i) => ({
@@ -325,20 +327,6 @@ export function initStarMap(styles: Record<string, string>) {
 	const navRows = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-row]'));
 	const navBars = navRows.map((r) => r.querySelector<HTMLElement>('[data-nav-bar]'));
 
-	// Popup
-	const backdropEl = root.querySelector<HTMLElement>('[data-backdrop]');
-	const beamSvg = root.querySelector<SVGSVGElement>('[data-beam]');
-	const beamPoly = root.querySelector<SVGPolygonElement>('[data-beam-poly]');
-	const popupEl = root.querySelector<HTMLElement>('[data-popup]');
-	const popImg = root.querySelector<HTMLImageElement>('[data-popup-img]');
-	const popMeta = root.querySelector<HTMLElement>('[data-popup-meta]');
-	const popTitle = root.querySelector<HTMLElement>('[data-popup-title]');
-	const popDesc = root.querySelector<HTMLElement>('[data-popup-desc]');
-	const popTag = root.querySelector<HTMLElement>('[data-popup-tag]');
-	const popYear = root.querySelector<HTMLElement>('[data-popup-year]');
-	const popLink = root.querySelector<HTMLAnchorElement>('[data-popup-link]');
-	const popClose = root.querySelector<HTMLElement>('[data-popup-close]');
-	const popWip = root.querySelector<HTMLElement>('[data-popup-wip]');
 	const keysEl = root.querySelector<HTMLElement>('[data-keys]');
 	const goPrev = root.querySelector<HTMLButtonElement>('[data-go="prev"]');
 	const goNext = root.querySelector<HTMLButtonElement>('[data-go="next"]');
@@ -351,6 +339,29 @@ export function initStarMap(styles: Record<string, string>) {
 	const rows = Array.from(root.querySelectorAll<HTMLElement>('[data-row-idx]'));
 	const previewImg = root.querySelector<HTMLImageElement>('[data-preview-img]');
 	const previewDesc = root.querySelector<HTMLElement>('[data-preview-desc]');
+
+	// Vue rapprochée : la carte lui donne la position des nœuds et déplace son calque pour elle.
+	let zoomOn = false;
+	const nodePos: Pt[] = []; // position écran des nœuds au dernier rendu (ordre de la carte)
+	const zoom = createZoom(zoomEl, {
+		count: projects.length,
+		nodePoint: (i) => {
+			render();
+			return nodePos[L.ord.indexOf(i)] ?? { x: vw / 2, y: vh / 2 };
+		},
+		label: (i) => `${projects[i].num} ${projects[i].title}`,
+		camera: (transform, opacity) => {
+			css(mapLayer, 'transform', transform);
+			css(mapLayer, 'opacity', opacity < 1 ? opacity.toFixed(3) : '');
+		},
+		jumpTo: (i) => goTo(i, true),
+		lock: (on) => {
+			zoomOn = on;
+			document.body.style.overflow = on ? 'hidden' : '';
+			mapUi.toggleAttribute('data-zoom', on);
+			render();
+		},
+	}, text);
 
 	function layout() {
 		const P = projects;
@@ -417,7 +428,6 @@ export function initStarMap(styles: Record<string, string>) {
 	function relayout() {
 		L = layout();
 		const { W, G, N } = L;
-		measurePop = true; // la taille d'écran a pu changer la hauteur de la popup
 		starEls.forEach((d, i) => (d.style.top = vertical ? '0' : starBase[i].y.toFixed(2) + '%'));
 		T = vh * 0.9;
 		STEP = vh * STEP_K;
@@ -472,13 +482,7 @@ export function initStarMap(styles: Record<string, string>) {
 		return { ...L, stageTop, T, STEP, Utot, local, u, p, kN };
 	}
 
-	// --- État popup / navigation ---
-	let isOpen = false;
-	let popH = 0; // hauteur de la popup ouverte
-	let measurePop = false; // à mesurer au prochain rendu (une fois sa largeur appliquée)
-	let openIdx = 0;
-	let kVal = 0;
-	let kRaf = 0;
+	// --- État navigation ---
 	let moved = false;
 	let dragging = false;
 	let animEnd = 0;
@@ -568,49 +572,11 @@ export function initStarMap(styles: Record<string, string>) {
 		else animScroll(target);
 	}
 
-	function fillPopup(idx: number) {
-		const pr = projects[idx];
-		if (popMeta) popMeta.textContent = pr.num + ' / ' + pad(projects.length) + ' · ' + pr.cat;
-		if (popTitle) popTitle.textContent = pr.title;
-		if (popDesc) popDesc.textContent = pr.description;
-		if (popTag) popTag.textContent = pr.tag;
-		if (popYear) popYear.textContent = pr.year;
-		if (popWip) popWip.hidden = !pr.wip;
-		if (popLink) popLink.setAttribute('href', pr.link);
-		if (popImg) {
-			popImg.src = pr.img;
-			popImg.alt = pr.alt;
-		}
-	}
-
-	function setOpen(o: boolean, idx?: number) {
-		if (o === isOpen) return;
-		isOpen = o;
-		if (popupEl) popupEl.inert = !o; // fermée : ses boutons sortent de l'ordre de tabulation
-		if (idx != null) openIdx = idx;
-		if (o) {
-			fillPopup(openIdx);
-			measurePop = true;
-		}
-		const from = kVal;
-		const to = o ? 1 : 0;
-		const t0 = performance.now();
-		const dur = o ? 520 : 320;
-		cancelAnimationFrame(kRaf);
-		const step = (t: number) => {
-			const q = cl((t - t0) / dur, 0, 1);
-			kVal = from + (to - from) * (1 - Math.pow(1 - q, 3));
-			render();
-			if (q < 1) kRaf = requestAnimationFrame(step);
-		};
-		kRaf = requestAnimationFrame(step);
-	}
-
 	function clickItem(i: number) {
 		if (moved) return;
 		const m = metrics();
 		const k = m.ord.indexOf(i);
-		if (Math.abs(m.u - m.U[k]) < 0.08) setOpen(true, i);
+		if (Math.abs(m.u - m.U[k]) < 0.08) zoom.open(i);
 		else goTo(i);
 	}
 
@@ -621,14 +587,23 @@ export function initStarMap(styles: Record<string, string>) {
 		const nk = cl(base + d, 0, m.N - 1);
 		if (nk === base) return;
 		navK = nk;
-		setOpen(false);
 		animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
 	}
 
 	function onKey(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
-			setOpen(false);
+			zoom.close();
 			closeList();
+			return;
+		}
+		// Vue rapprochée : ← → de planète en planète, Entrée ouvre la page du projet
+		if (zoom.isOpen) {
+			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+				e.preventDefault();
+				if (!e.repeat || !zoom.busy) zoom.hop(e.key === 'ArrowRight' ? 1 : -1);
+			} else if (e.key === 'Enter' && !e.repeat && !(e.target as Element).closest('a, button')) {
+				location.href = zoom.link();
+			}
 			return;
 		}
 		if (listOpen) return;
@@ -641,9 +616,8 @@ export function initStarMap(styles: Record<string, string>) {
 		} else if (e.key === 'Enter' && !e.repeat) {
 			// Entrée sur un bouton ou un lien focalisé : on laisse le navigateur faire.
 			if ((e.target as Element).closest('a, button')) return;
-			// 1er appui : ouvre la popup du projet courant ; 2e appui : va sur sa page.
-			if (isOpen) location.href = projects[openIdx].link;
-			else if (Math.abs(m.u - m.U[m.kN]) < 0.1) setOpen(true, m.ord[m.kN]);
+			// 1er appui : zoom sur la planète du projet courant ; 2e appui (vue rapprochée) : sa page.
+			if (Math.abs(m.u - m.U[m.kN]) < 0.1) zoom.open(m.ord[m.kN], true);
 		}
 	}
 
@@ -686,7 +660,6 @@ export function initStarMap(styles: Record<string, string>) {
 		if (previewDesc) previewDesc.textContent = pr.description;
 	}
 	function openList() {
-		setOpen(false);
 		const m = metrics();
 		hovIdx = m.ord[m.kN];
 		filter = 'All';
@@ -740,7 +713,7 @@ export function initStarMap(styles: Record<string, string>) {
 		css(mapUi!, 'pointer-events', p > 0.8 ? 'auto' : 'none');
 		if (keysEl) {
 			css(keysEl, 'opacity', wheelOp.toFixed(3));
-			if (changed(keysEl, '#popup', String(isOpen))) keysEl.toggleAttribute('data-popup', isOpen);
+			if (changed(keysEl, '#zoom', String(zoomOn))) keysEl.toggleAttribute('data-zoom', zoomOn);
 		}
 
 		let j = 0;
@@ -767,14 +740,13 @@ export function initStarMap(styles: Record<string, string>) {
 		}
 		const wave = leg ? Math.sin(Math.PI * f) : 0;
 		const z = 1 - wave * 0.5;
-		const dip = vh * 0.2 * kVal; // la carte descend quand la popup s'ouvre
 		const hudW = Math.min(300, vw * 0.3);
 		// Vertical : carte un peu à gauche (labels à droite des nœuds), un peu plus haut
 		// (bandeau HUD en bas), pas de nav systèmes.
 		const ox = vertical ? vw * 0.36 : vw >= 1200 ? vw / 2 + hudW * 0.3 - 60 : vw / 2;
 		const navW = vertical ? 0 : vw >= 1200 ? 280 : 120;
 		const oy = vh * (vertical ? 0.42 : 0.45) + (1 - ease) * vh * 0.9;
-		const S = (q: Pt, dp: number): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + dp + (q.y - cam.y) * z });
+		const S = (q: Pt): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + (q.y - cam.y) * z });
 		const at = (x: number, y: number) => `translate(${f1(x)}px,${f1(y)}px)`;
 
 		const kN = m.kN;
@@ -789,8 +761,8 @@ export function initStarMap(styles: Record<string, string>) {
 		const dim = 1 - arrOp * 0.9;
 
 		// Chemins : la base est statique (relayout), seul le <g> suit la caméra.
-		// S(q) = (ox - cam·z, oy + dip - cam·z) + q·z  →  translate + scale.
-		attr(pathsG, 'transform', `translate(${f1(ox - cam.x * z)} ${f1(oy + dip - cam.y * z)}) scale(${z.toFixed(3)})`);
+		// S(q) = (ox - cam·z, oy - cam·z) + q·z  →  translate + scale.
+		attr(pathsG, 'transform', `translate(${f1(ox - cam.x * z)} ${f1(oy - cam.y * z)}) scale(${z.toFixed(3)})`);
 		// Portions parcourues en orange (U croissant : on s'arrête au premier non atteint).
 		let sysT = '';
 		let legT = '';
@@ -838,7 +810,7 @@ export function initStarMap(styles: Record<string, string>) {
 
 		// Systèmes (anneaux + labels)
 		G.forEach((g0, gi) => {
-			const s = S({ x: g0.gx, y: g0.gy }, dip);
+			const s = S({ x: g0.gx, y: g0.gy });
 			const R = (g0.Rc + 46) * z;
 			const { nebula, layers, ring, label } = groupEls[gi];
 			// Taille : ne change que pendant un saut (z) ; position : transform.
@@ -870,7 +842,8 @@ export function initStarMap(styles: Record<string, string>) {
 
 		// Nœuds (hors écran : masqués, on n'écrit rien d'autre)
 		ord.forEach((_, q) => {
-			const s = S(W[q], dip);
+			const s = S(W[q]);
+			nodePos[q] = s;
 			const { dot, label } = nodeEls[q];
 			const on = s.x > -240 && s.x < vw + 240 && s.y > -120 && s.y < vh + 120;
 			css(dot, 'display', on ? 'block' : 'none');
@@ -896,7 +869,7 @@ export function initStarMap(styles: Record<string, string>) {
 
 		// Poussière
 		dustEls.forEach(({ el, o, sz, wx, wy }) => {
-			const s = S({ x: wx, y: wy }, dip);
+			const s = S({ x: wx, y: wy });
 			const on = s.x > -20 && s.x < vw + 20 && s.y > -20 && s.y < vh + 20;
 			css(el, 'display', on ? 'block' : 'none');
 			if (!on) return;
@@ -905,14 +878,14 @@ export function initStarMap(styles: Record<string, string>) {
 		});
 
 		// Sonde
-		const pq = leg ? S(lp(j, f), dip) : { x: -99, y: -99 };
+		const pq = leg ? S(lp(j, f)) : { x: -99, y: -99 };
 		css(probeEl, 'transform', `${at(pq.x, pq.y)} translate(-50%,-50%)`);
 		css(probeEl, 'opacity', (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
 
 		// Pulse + carte d'arrivée (système de destination selon la direction)
 		if (leg) {
 			const dg = G[dir >= 0 ? W[j + 1].g : W[j].g];
-			const ds = S({ x: dg.gx, y: dg.gy }, dip);
+			const ds = S({ x: dg.gx, y: dg.gy });
 			const qp = cl((fArr - 0.72) / 0.28, 0, 1);
 			const pr = (dg.Rc + 20 + qp * 160) * z;
 			css(pulseEl, 'width', f1(pr * 2) + 'px');
@@ -934,7 +907,7 @@ export function initStarMap(styles: Record<string, string>) {
 		if (goPrev && changed(goPrev, '#disabled', String(kN === 0))) goPrev.disabled = kN === 0;
 		if (goNext && changed(goNext, '#disabled', String(kN === N - 1))) goNext.disabled = kN === N - 1;
 		const inWheel = p > 0.96;
-		const hudOp = inWheel ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
+		const hudOp = inWheel && !zoomOn ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ai];
 		txt(hud.cat, text.selected + ' · ' + cur.num + ' · ' + cur.cat);
@@ -952,45 +925,6 @@ export function initStarMap(styles: Record<string, string>) {
 				css(bar, 'background', on ? ACCENT : 'rgba(var(--rgb-secondary), 0.5)');
 			}
 		});
-
-		// Popup + beam + backdrop (géométrie ignorée tant que la popup est fermée)
-		if (popupEl && beamSvg && beamPoly && backdropEl) {
-			const k3 = kVal.toFixed(3);
-			css(backdropEl, 'opacity', k3);
-			css(backdropEl, 'pointer-events', isOpen ? 'auto' : 'none');
-			css(popupEl, 'opacity', k3);
-			css(popupEl, 'pointer-events', isOpen ? 'auto' : 'none');
-			if (kVal > 0) {
-				const so = S(W[Math.max(0, ord.indexOf(openIdx))], vh * 0.2);
-				const popW = Math.min(640, vw - 32);
-				css(popupEl, 'width', popW + 'px');
-				if (measurePop) {
-					popH = popupEl.offsetHeight; // le transform (scale) n'affecte pas offsetHeight
-					measurePop = false;
-				}
-				const itemTop = so.y - 8;
-				// Au-dessus du nœud, mais jamais hors de l'écran (petites hauteurs, portrait).
-				const pb = Math.max(itemTop - 46, popH + 12);
-				// Popup qui recouvre le nœud : le faisceau n'a plus de sens.
-				css(beamSvg, 'opacity', pb < itemTop - 20 ? k3 : '0');
-				const popL = cl(so.x - popW / 2, 16, vw - popW - 16);
-
-				attr(beamSvg, 'width', String(vw));
-				attr(beamSvg, 'height', String(vh));
-				attr(
-					beamPoly,
-					'points',
-					[popL + popW * 0.12, pb, popL + popW * 0.88, pb, so.x + 6, itemTop + 8, so.x - 6, itemTop + 8].map((v) => v.toFixed(1)).join(' '),
-				);
-
-				css(popupEl, 'left', popL + 'px');
-				css(popupEl, 'bottom', vh - pb + 'px');
-				css(popupEl, 'transform', `translateY(${((1 - kVal) * 40).toFixed(1)}px) scale(${(0.3 + 0.7 * kVal).toFixed(3)})`);
-				css(popupEl, 'clip-path', `inset(${((1 - kVal) * 100).toFixed(1)}% 0 0 0)`);
-			} else {
-				css(beamSvg, 'opacity', '0');
-			}
-		}
 	}
 
 	// Nav : clic → voyage vers le premier projet du système.
@@ -1035,11 +969,6 @@ export function initStarMap(styles: Record<string, string>) {
 			if (out && wasOut) return;
 			wasOut = out;
 			render();
-			if (isOpen) {
-				const m = metrics();
-				const k = m.ord.indexOf(openIdx);
-				if (Math.abs(m.u - m.U[k]) > 0.4) setOpen(false);
-			}
 		});
 		clearTimeout(snapT);
 		snapT = window.setTimeout(snap, 170);
@@ -1059,6 +988,7 @@ export function initStarMap(styles: Record<string, string>) {
 		readVp();
 		relayout();
 		render();
+		zoom.relayout();
 	};
 
 	window.addEventListener('scroll', onScroll, { passive: true });
@@ -1077,10 +1007,14 @@ export function initStarMap(styles: Record<string, string>) {
 		onWheel();
 		const [a, b] = mapRange();
 		const y = window.scrollY;
-		swipeY = coarse && !listOpen && y > a - 2 && y < b + 2 ? e.touches[0].clientY : null;
+		swipeY = coarse && !listOpen && !zoom.isOpen && y > a - 2 && y < b + 2 ? e.touches[0].clientY : null;
 	}, { passive: true });
 	window.addEventListener('touchmove', (e) => {
-		if (swipeY !== null && e.cancelable) e.preventDefault();
+		if (!e.cancelable) return;
+		// Vue rapprochée : la page ne défile pas, seule sa colonne (si elle déborde) le peut.
+		if (zoom.isOpen) {
+			if (!(e.target as Element).closest?.('[data-zoom-scroll]')) e.preventDefault();
+		} else if (swipeY !== null) e.preventDefault();
 	}, { passive: false });
 	const onTouchEnd = (e: TouchEvent) => {
 		touching = false;
@@ -1104,12 +1038,10 @@ export function initStarMap(styles: Record<string, string>) {
 	});
 	window.addEventListener('keydown', onKey);
 	mapUi.addEventListener('pointerdown', onDown);
-	backdropEl?.addEventListener('click', () => setOpen(false));
-	popClose?.addEventListener('click', () => setOpen(false));
 	hudEl?.addEventListener('click', () => {
 		if (moved) return;
 		const m = metrics();
-		setOpen(true, m.ord[m.kN]);
+		zoom.open(m.ord[m.kN]);
 	});
 
 	// Boutons tactiles : haut de page, projet précédent / suivant, bas de page.
@@ -1154,7 +1086,7 @@ export function initStarMap(styles: Record<string, string>) {
 		r.addEventListener('click', () => {
 			closeList(false);
 			goTo(i, true);
-			setTimeout(() => setOpen(true, i), 120);
+			zoom.open(i);
 		});
 	});
 

@@ -32,8 +32,8 @@ const cards = await Promise.all(projects.map(async (p) => ({
 })));
 ---
 
-<div class={styles.zoom} data-zoom role="dialog" aria-modal="true" aria-label={t('map.zoomAria')} hidden>
-	<div class={styles.inner}>
+<div class={styles.zoom} data-zoom tabindex="-1" role="dialog" aria-modal="true" aria-label={t('map.zoomAria')} hidden>
+	<div class={styles.inner} data-zoom-scroll>
 		<div class={styles.cards}>
 			{cards.map(({ p, shots }, i) => (
 				<article class={styles.card} data-zoom-card={i} aria-labelledby={`zoom-title-${i}`} hidden>
