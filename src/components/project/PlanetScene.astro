@@ -5,11 +5,12 @@ import { getLang, useTranslations } from '../../i18n';
 
 interface Props {
 	project: Project;
+	manual?: boolean; // animée par un autre script (zoom de la star map) au lieu de démarrer seule
 }
 
 // Planète du projet + sa stack en satellites. Le canvas est animé par src/scripts/project-planet.ts ;
 // sans JS, la stack reste affichée en pastilles sous un emplacement vide.
-const { project } = Astro.props;
+const { project, manual } = Astro.props;
 const { planet, stack } = project;
 const t = useTranslations(getLang(Astro.currentLocale));
 ---
@@ -25,6 +26,7 @@ const t = useTranslations(getLang(Astro.currentLocale));
 	data-belt={planet.belt ? '' : undefined}
 	data-rings={planet.rings}
 	data-wip={project.inProgress ? '' : undefined}
+	data-planet-manual={manual ? '' : undefined}
 	role="img"
 	aria-label={t('project.stackAria', { list: stack.join(', ') })}
 >
@@ -37,5 +39,5 @@ const t = useTranslations(getLang(Astro.currentLocale));
 
 <script>
 	import { animatePlanets } from '../../scripts/project-planet';
-	animatePlanets(document.querySelectorAll<HTMLElement>('[data-planet-scene]'));
+	animatePlanets(document.querySelectorAll<HTMLElement>('[data-planet-scene]:not([data-planet-manual])'));
 </script>

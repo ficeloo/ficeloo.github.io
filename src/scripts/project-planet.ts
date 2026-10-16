@@ -91,6 +91,7 @@ interface Scene {
 	cx: number; cy: number;
 	orbitStart: number;
 	sats: { el: HTMLElement; r: number; a0: number }[];
+	introAt: number | null; // arrivée des satellites (zoom de la carte) : ils rejoignent leur orbite un par un
 	signature: string;
 	sigDir: number;
 	sigR: number;
@@ -132,6 +133,7 @@ function setup(box: HTMLElement): Scene {
 		W: 0, H: 0, R: 0, cx: 0, cy: 0,
 		orbitStart: 'belt' in ds ? 0.78 : 0.72,
 		sats: [],
+		introAt: null,
 		signature: ds.signature ?? 'moon',
 		sigDir: 'retrograde' in ds ? -1 : 1,
 		sigR: 'belt' in ds ? 0.63 : 0.55,
@@ -652,25 +654,37 @@ function drawBuilder(s: Scene, time: number, front: boolean) {
 
 // ---------- Image ----------
 
+/** Arrivée des satellites : 0 = sur la planète, 1 = sur son orbite (lissé). */
+const SAT_IN = 420, SAT_GAP = 210;
+function appear(s: Scene, i: number, ms: number) {
+	if (s.introAt === null || reduce) return 1;
+	const k = Math.max(0, Math.min(1, (ms - s.introAt - i * SAT_GAP) / SAT_IN));
+	return k * k * (3 - 2 * k);
+}
+
 function frame(s: Scene, ms: number) {
 	if (!s.W) return;
 	const c = s.ctx, time = reduce ? 0 : ms / 1000;
 	c.clearRect(0, 0, s.W, s.H);
 	if (s.halo) c.drawImage(s.halo, s.cx - HALO * s.R, s.cy - HALO * s.R, 2 * HALO * s.R, 2 * HALO * s.R);
-	const sats = s.sats.map((o) => proj(s, o.r, o.a0 + time * 0.55 * Math.pow(o.r / 0.52, -1.5)));
-	const dot = ([x, y, d]: Vec3) => { c.beginPath(); c.arc(x, y, d > 0 ? 4 : 3, 0, TAU); c.fillStyle = rgba(C.accent, d > 0 ? 1 : 0.45); c.fill(); };
+	const k = s.sats.map((_, i) => appear(s, i, ms));
+	const sats = s.sats.map((o, i) => proj(s, o.r * (0.5 + 0.5 * k[i]), o.a0 + time * 0.55 * Math.pow(o.r / 0.52, -1.5)));
+	const dot = ([x, y, d]: Vec3, i: number) => {
+		if (!k[i]) return;
+		c.beginPath(); c.arc(x, y, (d > 0 ? 4 : 3) * k[i], 0, TAU); c.fillStyle = rgba(C.accent, d > 0 ? 1 : 0.45); c.fill();
+	};
 	if (s.drone) droneUpdate(s, time);
 
 	// Arrière-plan : moitiés arrière des orbites, de la ceinture, des anneaux ; ce qui est derrière la planète
-	c.lineWidth = 1; c.setLineDash([3, 5]); c.strokeStyle = rgba(C.secondary, 0.45);
-	s.sats.forEach((o) => orbitEllipse(s, o.r, false));
+	c.lineWidth = 1; c.setLineDash([3, 5]);
+	s.sats.forEach((o, i) => { c.strokeStyle = rgba(C.secondary, 0.45 * k[i]); orbitEllipse(s, o.r, false); });
 	c.setLineDash([]);
 	if (s.rings) drawRings(s, time, false);
 	if (s.belt) drawBelt(s, time, false);
 	drawSignature(s, time, false);
 	if (s.drone) drawFreeDrone(s, time, false);
 	if (s.builder) drawBuilder(s, time, false);
-	sats.forEach((p) => { if (p[2] <= 0) dot(p); });
+	sats.forEach((p, i) => { if (p[2] <= 0) dot(p, i); });
 
 	// Planète
 	c.save();
@@ -688,17 +702,17 @@ function frame(s: Scene, ms: number) {
 	drawSignature(s, time, true);
 	if (s.drone) drawFreeDrone(s, time, true);
 	if (s.builder) drawBuilder(s, time, true);
-	c.setLineDash([3, 5]); c.strokeStyle = rgba(C.secondary, 0.7); c.lineWidth = 1;
-	s.sats.forEach((o) => orbitEllipse(s, o.r, true));
+	c.setLineDash([3, 5]); c.lineWidth = 1;
+	s.sats.forEach((o, i) => { c.strokeStyle = rgba(C.secondary, 0.7 * k[i]); orbitEllipse(s, o.r, true); });
 	c.setLineDash([]);
-	sats.forEach((p) => { if (p[2] > 0) dot(p); });
+	sats.forEach((p, i) => { if (p[2] > 0) dot(p, i); });
 
 	// Étiquettes des satellites (HTML) : estompées derrière, masquées derrière le disque
 	s.sats.forEach((o, i) => {
 		const [x, y, d] = sats[i];
 		const hidden = d <= 0 && Math.hypot(x - s.cx, y - s.cy) < s.R * 1.05;
 		o.el.style.transform = `translate(${x}px, ${y - 16}px) translate(-50%, -50%)`;
-		o.el.style.opacity = d > 0 ? '1' : hidden ? '0' : '0.45';
+		o.el.style.opacity = String((d > 0 ? 1 : hidden ? 0 : 0.45) * k[i]);
 		o.el.style.zIndex = d > 0 ? '2' : '0';
 	});
 }
@@ -710,12 +724,13 @@ export interface Planet {
 	box: HTMLElement;
 	resize(): void;
 	frame(ms: number): void;
+	intro(ms: number): void; // les satellites repartent de la planète et rejoignent leur orbite
 }
 
 export function createPlanet(box: HTMLElement): Planet {
 	const s = setup(box);
 	resize(s);
-	return { box, resize: () => resize(s), frame: (ms) => frame(s, ms) };
+	return { box, resize: () => resize(s), frame: (ms) => frame(s, ms), intro: (ms) => { s.introAt = ms; } };
 }
 
 /** Pages projet : anime les planètes visibles (pause hors écran, 30 images/s en tactile, figées en mouvement réduit). */

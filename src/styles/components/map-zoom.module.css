@@ -1,0 +1,295 @@
+/* Vue rapprochée de la star map : fiche à gauche, planète à droite, avec la même grille que
+   l'en-tête d'une page projet (la planète est déjà presque à sa place quand la page s'ouvre).
+   La caméra, la planète et le viseur sont animés par src/scripts/map-zoom.ts (transform). */
+.zoom {
+	position: absolute;
+	inset: 0;
+	z-index: 40;
+}
+
+.inner {
+	box-sizing: border-box;
+	height: 100%;
+	max-width: 76rem;
+	margin: 0 auto;
+	padding-inline: clamp(16px, 4vw, 3rem);
+	padding-block: 4.5rem 6.5rem; /* place des raccourcis clavier en bas */
+	display: grid;
+	grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+	gap: 1.5rem 2rem;
+	align-items: center;
+}
+
+/* ===== Fiche ===== */
+.cards {
+	display: grid;
+	gap: 1.2rem;
+	min-width: 0;
+	max-width: 34rem;
+	opacity: 0;
+	transform: translateY(12px);
+	transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* La fiche n'arrive qu'une fois la caméra posée (le script pose data-ready). */
+.zoom[data-ready] .cards {
+	opacity: 1;
+	transform: none;
+}
+
+.card {
+	display: grid;
+	gap: 0.7rem;
+	min-width: 0;
+}
+
+.card[hidden],
+.planet[hidden] {
+	display: none;
+}
+
+/* Changement de planète (← →) : la nouvelle fiche glisse depuis le côté du voyage. */
+.card[data-enter] {
+	animation: card-in 0.4s ease both;
+}
+.card[data-enter='-1'] {
+	--from: -24px;
+}
+
+@keyframes card-in {
+	from {
+		opacity: 0;
+		transform: translateX(var(--from, 24px));
+	}
+}
+
+/* Cadre HUD à coins orange, comme le média de la page projet */
+.media {
+	position: relative;
+	padding: 8px;
+	margin-bottom: 0.3rem;
+}
+
+.corner {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	border: 0 solid var(--color-accent);
+	pointer-events: none;
+}
+.corner:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.corner:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.corner:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.corner:nth-child(4) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+/* Mini diaporama : images empilées, celle qui porte data-on est visible (fondu enchaîné). */
+.screen {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	max-width: 100%;
+	background: var(--color-panel);
+	overflow: hidden;
+}
+
+.screen img {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0;
+	transition: opacity 0.6s ease;
+}
+
+.screen img[data-on] {
+	opacity: 1;
+}
+
+.meta {
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-text-dim);
+}
+
+.title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.8rem;
+	margin: 0;
+	font-family: var(--font-display);
+	font-weight: 400;
+	font-size: clamp(1.5rem, 2.6vw, 2.3rem);
+	line-height: 1.1;
+	letter-spacing: 0.08em;
+}
+
+.title-text {
+	min-width: 0;
+}
+
+.desc {
+	margin: 0;
+	max-width: 52ch;
+	font-size: 1rem;
+	line-height: 1.5;
+	color: rgba(var(--rgb-text), 0.72);
+}
+
+.tagyear {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1rem;
+	font-size: 0.9rem;
+	color: var(--color-text-dim);
+}
+
+.sep {
+	color: var(--color-accent);
+}
+
+/* Action principale : ouvrir la page du projet (orange = action) */
+.link {
+	justify-self: start;
+	margin-top: 0.3rem;
+	padding: 0.65rem 1.1rem;
+	border: 1px solid var(--color-accent);
+	border-radius: 4px;
+	font-family: var(--font-display);
+	font-size: 0.9rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+	text-decoration: none;
+	transition: background 0.2s ease, color 0.2s ease;
+}
+.link:hover {
+	background: var(--color-accent);
+	color: var(--color-bg);
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.btn {
+	min-width: 45px;
+	height: 45px;
+	padding: 0 0.9rem;
+	font-family: system-ui, sans-serif; /* flèches lisibles (celles de Syne Mono sont minuscules) */
+	font-size: 1.15rem;
+	color: var(--color-text);
+	background: rgba(var(--rgb-panel), 0.75);
+	border: 1px solid rgba(var(--rgb-secondary), 0.7);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: color 0.2s ease, border-color 0.2s ease;
+}
+.btn:hover {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+.btn:disabled {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.back {
+	font-family: var(--font-display);
+	font-size: 0.8rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.btn:focus-visible,
+.link:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
+/* ===== Planètes (une par projet, empilées ; la caméra les déplace par transform) ===== */
+.planets {
+	position: relative;
+	min-width: 0;
+	aspect-ratio: 1 / 0.6;
+	max-width: 100%;
+}
+
+.planet {
+	position: absolute;
+	inset: 0;
+	transform-origin: 50% 44%; /* centre de la planète dans sa scène (project-planet.ts) */
+	will-change: transform, opacity;
+}
+
+/* ===== Viseur ===== */
+.reticle {
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.reticle span {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	border: 0 solid var(--color-accent);
+}
+.reticle span:nth-child(1) { left: 0; top: 0; border-width: 2px 0 0 2px; }
+.reticle span:nth-child(2) { right: 0; top: 0; border-width: 2px 2px 0 0; }
+.reticle span:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 2px 2px; }
+.reticle span:nth-child(4) { right: 0; bottom: 0; border-width: 0 2px 2px 0; }
+
+.reticle b {
+	position: absolute;
+	left: 0;
+	bottom: calc(100% + 6px);
+	font-family: var(--font-display);
+	font-weight: 400;
+	font-size: 0.7rem;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+	white-space: nowrap;
+}
+
+/* ===== Écran étroit / portrait : planète en haut, fiche dessous ===== */
+@media (max-width: 960px), (orientation: portrait) {
+	.inner {
+		grid-template-columns: 1fr;
+		align-content: center;
+		padding-block: 1rem;
+		gap: 0.5rem;
+		overflow-y: auto;
+	}
+	.planets {
+		order: -1;
+		width: min(100%, 34rem, 62svh);
+		justify-self: center;
+	}
+	.cards {
+		max-width: none;
+		gap: 0.9rem;
+	}
+	.card {
+		gap: 0.5rem;
+	}
+	/* Vignette et texte plafonnés : la fiche tient sous la planète */
+	.media {
+		width: min(100%, 30rem, 40svh);
+	}
+	.desc {
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		font-size: 0.92rem;
+	}
+}

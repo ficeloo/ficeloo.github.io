@@ -3,6 +3,7 @@ import { getMapOrder, systems as cats } from '../data/projects';
 import { getLang, localizePath, useTranslations } from '../i18n';
 import { getImage } from 'astro:assets';
 import InProgressBadge from './InProgressBadge.astro';
+import MapZoom from './MapZoom.astro';
 import type { ImageMetadata } from 'astro';
 import styles from '../styles/components/star-map.module.css';
 
@@ -39,6 +40,8 @@ const text = {
 	selected: t('map.selected'),
 	project: t('map.project'),
 	projects: t('map.projects'),
+	targeting: t('map.targeting'),
+	lock: t('map.lock'),
 };
 
 const systems = cats.map((c, g) => ({
@@ -137,6 +140,8 @@ const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.le
 				</div>
 			</div>
 		</div>
+
+		<MapZoom projects={projects} />
 
 		<!-- Raccourcis clavier : une ligne pour la carte, une pour la popup ouverte. -->
 		<div class={styles.keys} data-keys aria-hidden="true">
