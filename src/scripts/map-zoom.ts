@@ -55,7 +55,8 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	const planets: (Planet | null)[] = boxes.map(() => null);
 	const planetsEl = root.querySelector<HTMLElement>('[data-zoom-planets]')!;
 	const cardsEl = root.querySelector<HTMLElement>('[data-zoom-scroll]')!;
-	const narrow = matchMedia('(max-width: 700px), (orientation: portrait)'); // fiche en bas (CSS)
+	const narrow = matchMedia('(max-width: 700px), (orientation: portrait)'); // fiche en bas ou en haut (CSS)
+	const tall = matchMedia('(orientation: portrait) and (min-width: 701px)'); // fiche en haut, planète dessous (CSS)
 	const reticle = root.querySelector<HTMLElement>('[data-zoom-reticle]')!;
 	const backdrop = root.querySelector<HTMLElement>('[data-zoom-backdrop]')!;
 	const backCvs = [...backdrop.querySelectorAll('canvas')];
@@ -134,7 +135,9 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const W = planetsEl.offsetWidth, H = planetsEl.offsetHeight, m = 12;
 		const R = Math.min(W, H) * 0.3; // rayon de la planète (project-planet.ts)
 		const x = narrow.matches ? o.width / 2 : Math.max((c.right - o.left + o.width) / 2, c.right - o.left + W * 0.4);
-		const y = narrow.matches ? cl((c.top - o.top) / 2, H * 0.44 + m, c.top - o.top - H * 0.56) : o.height / 2;
+		const below = c.bottom - o.top; // écran haut : la planète dans la place sous la fiche
+		const y = tall.matches ? cl((below + o.height) / 2, below + H * 0.44 + m, o.height - H * 0.56 - m)
+			: narrow.matches ? cl((c.top - o.top) / 2, H * 0.44 + m, c.top - o.top - H * 0.56) : o.height / 2;
 		return { x, y, zEnd: Math.max(1, R / NODE_R) };
 	}
 	function setSpot(q: { x: number; y: number }) {
@@ -209,7 +212,8 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const Q = place(), start = Q.zEnd * NODE_R * 1.35, m = 16;
 		const box = {
 			x0: narrow.matches ? m : c.right - o.left + m, x1: o.width - m,
-			y0: m, y1: narrow.matches ? c.top - o.top - m : o.height - KEYS_H,
+			y0: tall.matches ? c.bottom - o.top + m : m,
+			y1: tall.matches ? o.height - m : narrow.matches ? c.top - o.top - m : o.height - KEYS_H,
 		};
 		routes.forEach(({ d, path, label }) => {
 			const nb = host.neighbor(idx, d), len = nb ? Math.hypot(nb.dx, nb.dy) : 0;
