@@ -108,6 +108,7 @@ export const en = {
 	'spec.title': 'Spec sheet',
 	'spec.shipped': 'Shipped',
 	'spec.done': 'Done',
+	'spec.active': 'Active',
 	'spec.context': 'Context',
 	'spec.duration': 'Duration',
 	'spec.started': 'Started',

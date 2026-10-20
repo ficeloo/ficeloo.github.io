@@ -19,7 +19,7 @@ const play = project.embedUrl ? '#play' : links.itch;
 <aside class={styles.spec} aria-label={t('spec.title')}>
 	<div class={styles.head}>
 		<span class={styles.label}>{t('spec.title')}</span>
-		{project.inProgress ? <InProgressBadge /> : <span class={styles.status}>{t(project.event ? 'spec.done' : 'spec.shipped')}</span>}
+		{project.inProgress ? <InProgressBadge /> : <span class={styles.status}>{t(project.ongoing ? 'spec.active' : project.event ? 'spec.done' : 'spec.shipped')}</span>}
 	</div>
 	<dl class={styles.rows}>
 		<div class={styles.row}><dt>{t('spec.context')}</dt><dd>{project.context}</dd></div>

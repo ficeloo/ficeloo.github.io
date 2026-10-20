@@ -55,6 +55,7 @@ interface ProjectData<T = Localized> {
 	highlights?: Highlight<T>[];
 	planet: Planet;
 	inProgress?: boolean; // Projet pas encore terminé : badge « In progress » partout où il apparaît
+	ongoing?: boolean; // Engagement toujours actif (association…) : statut « Active » au lieu de « Done » / « Shipped »
 	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
 	alt: T;
 	screenshots?: ImageMetadata[]; // Tableau de screenshots
@@ -256,15 +257,18 @@ const projects: ProjectData[] = [
 		description: "[PLACEHOLDER] A small student association at 42 Paris that organises LAN parties and game jams.",
 		longDescription: `
 			<p>
-				[PLACEHOLDER] GetNextLan is a small student association at 42 Paris: we organise <span class="accent">LAN parties and game jams</span>, and as a small team, everyone does a bit of everything.<br>
+				[PLACEHOLDER] GetNextLan is a student association at 42 Paris that I co-founded in May 2026: we organise <span class="accent">LAN parties and game jams</span>, and as a small team, everyone does a bit of everything.<br>
 				<br>
-				I'm the association's <strong class="accent">partnerships manager</strong>. I also built a large part of the front-end of our website, and at our latest event, the XLAN 2026, I ran the stage control and was the main caster.<br>
+				After a first test event on July 29, 2026, we ran our first big one on October 18–19: the XLAN 2026, the biggest multigaming LAN of 42 Paris.<br>
+				<br>
+				I'm the association's <strong class="accent">partnerships manager</strong>. I also built a large part of the front-end of our website, and at the XLAN I ran the stage control and was the main caster.<br>
 			</p>`,
 		category: "IRL",
 		tag: "IRL  ·  Association  ·  LAN & game jams",
-		year: "2026", // TODO Théophile : année de création de l'asso, ou depuis quand tu y es ?
+		year: "Since May 2026",
 		pitch: "[PLACEHOLDER] A student association at 42 Paris that brings players together, from LAN parties to game jams.",
-		context: "Student association · 42 Paris",
+		context: "Student association · 42 Paris · co-founder",
+		ongoing: true,
 		stack: ["Partnerships", "Casting", "Stage control", "Front-end"],
 		planet: { seed: 41, signature: "joystick", signs: ["joystick", "rj45", "gg", "trophy", "chrono", "pad"] },
 		image: gnlCover,
