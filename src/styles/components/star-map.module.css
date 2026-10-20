@@ -53,6 +53,9 @@
 	pointer-events: none;
 	z-index: 1;
 	transform-origin: 0 0; /* zoom sur une planète : le transform du JS est calculé depuis le coin */
+	/* Calque à part, gardé à sa résolution pendant le zoom : sans ça, Chrome redessine les groupes
+	   d'étoiles à chaque changement d'échelle (images perdues pendant la plongée). */
+	will-change: transform;
 }
 
 .star {
@@ -105,6 +108,12 @@
 	position: absolute;
 	inset: 0;
 	transform-origin: 0 0; /* zoom sur une planète : le transform du JS est calculé depuis le coin */
+}
+
+/* Pendant le zoom, la carte grossit jusqu'à ~30× en s'effaçant : sur son propre calque, gardé à sa
+   résolution (un peu flou en grossissant), sinon Chrome la redessine à chaque image et en perd. */
+.map-ui[data-zoom] .map-layer {
+	will-change: transform;
 }
 
 .paths {
