@@ -45,7 +45,8 @@ const alternates = langs.filter((l) => languages[l].live).map((l) => ({ lang: l,
 		</div>
 		<script>
 			// Pose html[data-idle] quand la fenêtre est inactive (animations au ralenti / en pause).
-			import '../scripts/frame-pace';
+			import { watchFocus } from '../scripts/frame-pace';
+			watchFocus();
 		</script>
 	</body>
 </html>
