@@ -241,7 +241,8 @@ export function initOrbits(section: HTMLElement) {
 			running = false;
 			return;
 		}
-		if (now - last <= frameGap()) {
+		// Vue rapprochée de la star map ouverte : elle recouvre la section, inutile de dessiner
+		if (now - last <= frameGap() || document.documentElement.hasAttribute('data-map-zoom')) {
 			requestAnimationFrame(frame);
 			return;
 		}

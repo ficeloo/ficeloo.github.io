@@ -397,6 +397,7 @@ export function initStarMap(styles: Record<string, string>) {
 			zoomOn = on;
 			document.body.style.overflow = on ? 'hidden' : '';
 			mapUi.toggleAttribute('data-zoom', on);
+			document.documentElement.toggleAttribute('data-map-zoom', on); // la vue rapprochée couvre la page (About en pause)
 			render();
 		},
 	}, text);

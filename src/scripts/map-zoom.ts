@@ -130,8 +130,10 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	// --- Géométrie : où la caméra amène la planète. Au centre de la place laissée libre par la fiche
 	// (à sa droite ; au-dessus sur écran étroit), pour que les chemins des deux côtés aient la place. ---
 	type Spot = { x: number; y: number; zEnd: number };
+	let viewMax = 0; // plus grand côté de la vue, relevé ici (pas à chaque image : relire la mise en page coûte)
 	function place(): Spot {
 		const o = root.getBoundingClientRect(), c = cardsEl.getBoundingClientRect();
+		viewMax = Math.max(o.width, o.height);
 		const W = planetsEl.offsetWidth, H = planetsEl.offsetHeight, m = 12;
 		const R = Math.min(W, H) * 0.3; // rayon de la planète (src/scripts/planet/index.ts)
 		const x = narrow.matches ? o.width / 2 : Math.max((c.right - o.left + o.width) / 2, c.right - o.left + W * 0.4);
@@ -167,7 +169,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	let backScale = 1;
 	let backPos = { x: 0, y: 0 };
 	function moveBackdrop() {
-		const o = root.getBoundingClientRect(), k = Math.max(o.width, o.height) * BACK_PAN;
+		const k = viewMax * BACK_PAN;
 		const x = cl(-backPos.x, -1.2, 1.2) * k, y = cl(-backPos.y, -1.2, 1.2) * k;
 		backdrop.style.setProperty('--bx', f1(x) + 'px');
 		backdrop.style.setProperty('--by', f1(y) + 'px');
