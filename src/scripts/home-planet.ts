@@ -2,6 +2,8 @@
 // Ce fichier est la source unique du « plan » partagé par l'anneau (SVG, généré au build
 // par HomePlanet.astro) et les orbites (canvas, animées ici) : les deux restent alignés.
 
+import { frameGap } from './frame-pace';
+
 /** Inclinaison du plan à l'écran, en degrés (négatif = monte vers la droite). */
 export const TILT = -13;
 /** Aplatissement du plan vu en perspective : un cercle de rayon r devient une ellipse r × r·FLAT. */
@@ -237,6 +239,10 @@ export function initOrbits(section: HTMLElement) {
 	function frame(now: number) {
 		if (!visible) {
 			running = false;
+			return;
+		}
+		if (now - last <= frameGap()) {
+			requestAnimationFrame(frame);
 			return;
 		}
 		const dt = Math.min(0.05, (now - last) / 1000); // pas de bond après une pause

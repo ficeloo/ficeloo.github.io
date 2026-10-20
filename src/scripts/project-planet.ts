@@ -10,6 +10,8 @@
 //
 // Toutes les couleurs viennent de tokens.css (lus au démarrage) ou en sont dérivées.
 
+import { frameGap } from './frame-pace';
+
 type Vec3 = [number, number, number];
 type RGB = [number, number, number];
 type LatLon = [number, number];
@@ -24,7 +26,6 @@ const LIGHT: Vec3 = [-0.5 / LN, -0.55 / LN, 0.67 / LN]; // lumière en haut à g
 const TAU = Math.PI * 2;
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const coarse = matchMedia('(pointer: coarse)').matches; // tactile : 30 images/s suffisent
 
 // ---------- Couleurs (tokens) ----------
 
@@ -718,7 +719,7 @@ export function createPlanet(box: HTMLElement): Planet {
 	return { box, resize: () => resize(s), frame: (ms) => frame(s, ms) };
 }
 
-/** Pages projet : anime les planètes visibles (pause hors écran, 30 images/s en tactile, figées en mouvement réduit). */
+/** Pages projet : anime les planètes visibles (pause hors écran, 30 images/s en tactile ou fenêtre inactive, figées en mouvement réduit). */
 export function animatePlanets(boxes: Iterable<HTMLElement>) {
 	const planets = [...boxes].map(createPlanet);
 	if (!planets.length) return;
@@ -732,7 +733,7 @@ export function animatePlanets(boxes: Iterable<HTMLElement>) {
 	if (reduce) return;
 	let last = 0;
 	const loop = (ms: number) => {
-		if (!coarse || ms - last > 32) { last = ms; visible.forEach((p) => p.frame(ms)); }
+		if (ms - last > frameGap()) { last = ms; visible.forEach((p) => p.frame(ms)); }
 		requestAnimationFrame(loop);
 	};
 	requestAnimationFrame(loop);

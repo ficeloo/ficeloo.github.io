@@ -10,6 +10,7 @@
 // La carte n'est pas recalculée pendant le zoom : ses calques sont déplacés et agrandis par un
 // seul transform (le moteur de la carte l'applique via ZoomHost.camera), puis s'effacent.
 import { createPlanet, type Planet } from './project-planet';
+import { frameGap } from './frame-pace';
 
 /** Ce que la carte fournit au zoom. Coordonnées en px, dans le repère de l'écran de la carte. */
 export interface ZoomHost {
@@ -49,7 +50,6 @@ const f1 = (v: number) => v.toFixed(1);
 type Anim = { finish(): void };
 
 export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting: string; lock: string }) {
-	const coarse = matchMedia('(pointer: coarse)').matches;
 	const cards = [...root.querySelectorAll<HTMLElement>('[data-zoom-card]')];
 	const boxes = [...root.querySelectorAll<HTMLElement>('[data-zoom-planet]')];
 	const planets: (Planet | null)[] = boxes.map(() => null);
@@ -108,12 +108,12 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		while (anim) anim.finish();
 	}
 
-	// --- Planètes : animées tant qu'elles sont affichées (30 images/s en tactile) ---
+	// --- Planètes : animées tant qu'elles sont affichées (30 images/s en tactile ou fenêtre inactive) ---
 	let loopRaf = 0;
 	let lastFrame = 0;
 	const loop = (ms: number) => {
 		if (!open) { loopRaf = 0; return; }
-		if (!coarse || ms - lastFrame > 32) {
+		if (ms - lastFrame > frameGap()) {
 			lastFrame = ms;
 			live.forEach((i) => planets[i]?.frame(ms));
 		}

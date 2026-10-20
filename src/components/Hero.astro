@@ -33,6 +33,8 @@ const t = useTranslations(getLang(Astro.currentLocale));
 </section>
 
 <script>
+	import { frameGap } from '../scripts/frame-pace';
+
 	// Entrée en cascade au chargement. Les étoiles fixes viennent de la star map ;
 	// ici on n'ajoute QUE des étoiles filantes propres au Hero (elles s'estompent
 	// avec le Hero au scroll via l'opacité du slot).
@@ -80,33 +82,42 @@ const t = useTranslations(getLang(Astro.currentLocale));
 
 		// Perf : la boucle s'arrête quand le Hero est invisible et repart quand il revient.
 		let running = false;
+		let last = 0;
 		function start() {
 			if (running) return;
 			running = true;
+			last = performance.now();
 			requestAnimationFrame(loop);
 		}
 
-		function loop() {
-			// Effacer un canvas plein écran coûte : seulement s'il y a quelque chose dessus.
-			if (dirty) ctx.clearRect(0, 0, W, H);
-			dirty = false;
+		function loop(ms: number) {
 			if (slot?.hasAttribute('data-hidden')) {
+				if (dirty) ctx.clearRect(0, 0, W, H);
+				dirty = false;
 				shooting = [];
 				running = false;
 				return;
 			}
 			requestAnimationFrame(loop);
-			sinceShoot++;
-			if (sinceShoot > 70 && Math.random() < 0.035) {
+			if (ms - last <= frameGap()) return;
+			// Vitesses exprimées par image à 60 i/s : k = nombre de ces images écoulées
+			// (même vitesse quel que soit l'écran ou le rythme).
+			const k = Math.min(3, (ms - last) / (1000 / 60));
+			last = ms;
+			// Effacer un canvas plein écran coûte : seulement s'il y a quelque chose dessus.
+			if (dirty) ctx.clearRect(0, 0, W, H);
+			dirty = false;
+			sinceShoot += k;
+			if (sinceShoot > 70 && Math.random() < 0.035 * k) {
 				spawn();
 				sinceShoot = 0;
 			}
 			dirty = shooting.length > 0; // ce qui est dessiné ci-dessous sera à effacer
 			for (let i = shooting.length - 1; i >= 0; i--) {
 				const sh = shooting[i];
-				sh.life++;
-				sh.x += sh.vx;
-				sh.y += sh.vy;
+				sh.life += k;
+				sh.x += sh.vx * k;
+				sh.y += sh.vy * k;
 				const t = sh.life / sh.max;
 				const alpha = t < 0.15 ? t / 0.15 : 1 - t;
 				const norm = Math.hypot(sh.vx, sh.vy);
