@@ -39,6 +39,9 @@
 	--planet-ft_transcendence: #4f8c80;
 	--planet-portfolio: #c4643f;
 	--planet-portfolio-ring: #F3F6F6; /* anneaux Web : --planet-<slug>-ring (orange --color-accent si absent) */
+	/* TODO Théophile : couleurs provisoires du système IRL, à décider */
+	--planet-la-balise: #F2B33D; /* jaune projecteur de scène */
+	--planet-getnextlan: #FF52A2; /* rose du site et du logo GetNextLan */
 
 	/* Systèmes de la star map : une teinte d'ambiance symbolique par système, --system-<catégorie en minuscules>.
 	   Ambiance seulement (nébuleuse, nom du système, lueurs, atmosphère) : l'orange reste la couleur d'action.
@@ -46,12 +49,19 @@
 	--system-game: #FF5AC8; /* néon rose d'une salle d'arcade */
 	--system-graphics: #4FE3FF; /* cyan d'un rayon lumineux (ray tracing) */
 	--system-web: #6BFF6B; /* vert phosphore des vieux terminaux */
+	--system-irl: #FFD86B; /* lumière chaude d'une scène / d'une salle */
 	--rgb-system-game: 255, 90, 200;
 	--rgb-system-graphics: 79, 227, 255;
 	--rgb-system-web: 107, 255, 107;
+	--rgb-system-irl: 255, 216, 107;
 	--rgb-nebula-game: 255, 164, 225;
 	--rgb-nebula-graphics: 158, 240, 255;
 	--rgb-nebula-web: 174, 255, 174;
+	--rgb-nebula-irl: 255, 234, 174;
+
+	/* Planète IRL (néons) : tubes des enseignes, en plus de la teinte du système et de la couleur du projet */
+	--neon-cyan: #9EF0FF;
+	--neon-pink: #FFA4E1;
 
 	/* Grain */
 	--grain-opacity: 0.05;
