@@ -51,7 +51,7 @@ interface ProjectData<T = Localized> {
 	pitch: T; // Une phrase sous le titre de la page projet
 	context: T; // Solo / équipe, cadre (42, jam…), rôle
 	duration?: T;
-	stack: string[]; // Technos principales : satellites de la planète + fiche technique
+	stack: string[]; // Technos principales (compétences pour un événement) : satellites de la planète + fiche technique
 	highlights?: Highlight<T>[];
 	planet: Planet;
 	inProgress?: boolean; // Projet pas encore terminé : badge « In progress » partout où il apparaît
@@ -61,7 +61,8 @@ interface ProjectData<T = Localized> {
 	links: { itch?: string; github?: string; gdd?: string; replay?: string; site?: string }; // replay : vidéo d'un événement ; site : site du projet
 	embedUrl?: string; // Pour les projets jouables sur navigateur (WASM)
 }
-type Project = ProjectData<string>;
+// event : projet d'un système d'événements (EVENT_SYSTEMS), la fiche parle de compétences et de date
+type Project = ProjectData<string> & { event: boolean };
 
 // Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
 // (Game → Graphics → Web → IRL). Les numéros 01, 02… suivent cet ordre de parcours.
@@ -275,6 +276,10 @@ const projects: ProjectData[] = [
 // Systèmes de la star map, dans l'ordre d'apparition.
 export const systems = [...new Set(projects.map((p) => p.category))];
 
+// Systèmes dont les projets sont des événements ou des engagements (pas du code) :
+// stack → compétences, sortie → date.
+const EVENT_SYSTEMS = new Set(['IRL']);
+
 /** Les projets dans une langue (dans l'ordre du tableau). */
 export function getProjects(lang: Lang): Project[] {
 	return projects.map((p) => ({
@@ -289,6 +294,7 @@ export function getProjects(lang: Lang): Project[] {
 		duration: pick(p.duration, lang),
 		highlights: p.highlights?.map((h) => ({ label: pick(h.label, lang), title: pick(h.title, lang), text: pick(h.text, lang) })),
 		alt: pick(p.alt, lang),
+		event: EVENT_SYSTEMS.has(p.category),
 	}));
 }
 

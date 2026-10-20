@@ -19,13 +19,13 @@ const play = project.embedUrl ? '#play' : links.itch;
 <aside class={styles.spec} aria-label={t('spec.title')}>
 	<div class={styles.head}>
 		<span class={styles.label}>{t('spec.title')}</span>
-		{project.inProgress ? <InProgressBadge /> : <span class={styles.status}>{t('spec.shipped')}</span>}
+		{project.inProgress ? <InProgressBadge /> : <span class={styles.status}>{t(project.event ? 'spec.done' : 'spec.shipped')}</span>}
 	</div>
 	<dl class={styles.rows}>
 		<div class={styles.row}><dt>{t('spec.context')}</dt><dd>{project.context}</dd></div>
 		{project.duration && <div class={styles.row}><dt>{t('spec.duration')}</dt><dd>{project.duration}</dd></div>}
-		<div class={styles.row}><dt>{t(project.inProgress ? 'spec.started' : 'spec.released')}</dt><dd>{project.year}</dd></div>
-		<div class={styles.row}><dt>{t('spec.stack')}</dt><dd>{project.stack.join(' · ')}</dd></div>
+		<div class={styles.row}><dt>{t(project.inProgress ? 'spec.started' : project.event ? 'spec.date' : 'spec.released')}</dt><dd>{project.year}</dd></div>
+		<div class={styles.row}><dt>{t(project.event ? 'spec.skills' : 'spec.stack')}</dt><dd>{project.stack.join(' · ')}</dd></div>
 	</dl>
 	<div class={styles.links}>
 		{play && <a href={play}><span>{t('spec.play')}</span><span>itch.io</span></a>}
