@@ -353,6 +353,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const navBars = navRows.map((r) => r.querySelector<HTMLElement>('[data-nav-bar]'));
 
 	const keysEl = root.querySelector<HTMLElement>('[data-keys]');
+	const keyEnds = [...root.querySelectorAll<HTMLButtonElement>('[data-keys] [data-key^="Arrow"]')];
 	const goPrev = root.querySelector<HTMLButtonElement>('[data-go="prev"]');
 	const goNext = root.querySelector<HTMLButtonElement>('[data-go="next"]');
 
@@ -630,34 +631,39 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function onKey(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
+		// Entrée sur un bouton ou un lien focalisé : on laisse le navigateur faire.
+		if (e.key === 'Enter' && (e.repeat || (e.target as Element).closest?.('a, button'))) return;
+		if (press(e.key, e.repeat, true) && e.key.startsWith('Arrow')) e.preventDefault();
+	}
+	/** Action d'une touche, au clavier ou au clic sur la barre de touches ; true si elle a servi. */
+	function press(key: string, repeat = false, byKey = false): boolean {
+		if (key === 'Escape') {
 			zoom.close();
 			closeList();
-			return;
+			return true;
 		}
 		// Vue rapprochée : ← → de planète en planète, Entrée ouvre la page du projet
 		if (zoom.isOpen) {
-			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-				e.preventDefault();
-				if (!e.repeat || !zoom.busy) zoom.hop(e.key === 'ArrowRight' ? 1 : -1);
-			} else if (e.key === 'Enter' && !e.repeat && !(e.target as Element).closest('a, button')) {
-				location.href = zoom.link();
+			if (key === 'ArrowRight' || key === 'ArrowLeft') {
+				if (!repeat || !zoom.busy) zoom.hop(key === 'ArrowRight' ? 1 : -1);
+				return true;
 			}
-			return;
+			if (key === 'Enter') location.href = zoom.link();
+			return key === 'Enter';
 		}
-		if (listOpen) return;
+		if (listOpen) return false;
 		const m = metrics();
-		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return;
-		if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-			e.preventDefault();
-			if (e.repeat && animating && animEnd - performance.now() > 90) return;
-			navigate(e.key === 'ArrowRight' ? 1 : -1, e.repeat);
-		} else if (e.key === 'Enter' && !e.repeat) {
-			// Entrée sur un bouton ou un lien focalisé : on laisse le navigateur faire.
-			if ((e.target as Element).closest('a, button')) return;
-			// 1er appui : zoom sur la planète du projet courant ; 2e appui (vue rapprochée) : sa page.
-			if (Math.abs(m.u - m.U[m.kN]) < 0.1) zoom.open(m.ord[m.kN], true);
+		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return false;
+		if (key === 'ArrowRight' || key === 'ArrowLeft') {
+			if (!(repeat && animating && animEnd - performance.now() > 90)) navigate(key === 'ArrowRight' ? 1 : -1, repeat);
+			return true;
 		}
+		if (key === 'Enter') {
+			// 1er appui : zoom sur la planète du projet courant ; 2e appui (vue rapprochée) : sa page.
+			if (Math.abs(m.u - m.U[m.kN]) < 0.1) zoom.open(m.ord[m.kN], byKey);
+			return true;
+		}
+		return false;
 	}
 
 	function onDown(e: PointerEvent) {
@@ -954,6 +960,8 @@ export function initStarMap(styles: Record<string, string>) {
 		txt(counterEl, pad(kN + 1) + ' / ' + pad(N));
 		if (goPrev && changed(goPrev, '#disabled', String(kN === 0))) goPrev.disabled = kN === 0;
 		if (goNext && changed(goNext, '#disabled', String(kN === N - 1))) goNext.disabled = kN === N - 1;
+		// Barre de touches : ← ou → grisée au premier / dernier projet (carte et vue rapprochée)
+		keyEnds.forEach((b) => { const off = b.dataset.key === 'ArrowLeft' ? kN === 0 : kN === N - 1; if (changed(b, '#disabled', String(off))) b.disabled = off; });
 		const inWheel = p > 0.96;
 		const hudOp = inWheel && !zoomOn ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
@@ -1086,6 +1094,11 @@ export function initStarMap(styles: Record<string, string>) {
 		render();
 	});
 	window.addEventListener('keydown', onKey);
+	// Barre de touches (grand écran) : un clic sur une touche fait la même chose que la touche.
+	keysEl?.addEventListener('click', (e) => {
+		const key = (e.target as Element).closest<HTMLElement>('[data-key]')?.dataset.key;
+		if (key) press(key);
+	});
 	mapUi.addEventListener('pointerdown', onDown);
 	hudEl?.addEventListener('click', () => {
 		if (moved) return;

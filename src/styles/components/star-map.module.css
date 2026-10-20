@@ -505,7 +505,7 @@
 	pointer-events: none;
 }
 
-.keys kbd {
+.keys .key {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -523,15 +523,31 @@
 	letter-spacing: 0;
 	text-align: center;
 	color: var(--color-text);
+	text-transform: uppercase; /* un bouton n'hérite pas de la casse de la barre */
+	background: none;
+	cursor: pointer;
+	pointer-events: auto; /* la barre laisse passer les clics, pas ses touches */
+	transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.keys .key:hover {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+
+/* Pas de projet de ce côté (premier / dernier) */
+.keys .key:disabled {
+	opacity: 0.35;
+	pointer-events: none;
 }
 
 /* Touche avec un mot (« esc ») : plus petite que les symboles. */
-.keys .kbd-word {
+.keys .key-word {
 	font-size: 0.75rem;
 	letter-spacing: 0.08em;
 }
 
-.keys kbd:first-child {
+.keys .key:first-child {
 	margin-left: 0;
 }
 

@@ -106,10 +106,23 @@ const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.le
 
 		<MapZoom projects={projects} />
 
-		<!-- Raccourcis clavier : une ligne pour la carte, une pour la vue rapprochée. -->
+		<!-- Raccourcis clavier : une ligne pour la carte, une pour la vue rapprochée. Chaque touche est
+		     aussi un bouton (souris) qui fait la même chose ; hors du parcours au clavier, qui a les vraies touches. -->
 		<div class={styles.keys} data-keys aria-hidden="true">
-			<span class={styles['keys-map']}><kbd>←</kbd><kbd>→</kbd> {t('map.keyNavigate')} <kbd>↵</kbd> {t('map.keyOpen')}</span>
-			<span class={styles['keys-zoom']}><kbd>←</kbd><kbd>→</kbd> {t('map.keyNavigate')} <kbd>↵</kbd> {t('map.keyViewProject')} <kbd class={styles['kbd-word']}>esc</kbd> {t('map.keyClose')}</span>
+			<span class={styles['keys-map']}>
+				<button type="button" class={styles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={styles.key} data-key="ArrowRight" tabindex="-1">→</button>
+				{t('map.keyNavigate')}
+				<button type="button" class={styles.key} data-key="Enter" tabindex="-1">↵</button>
+				{t('map.keyOpen')}
+			</span>
+			<span class={styles['keys-zoom']}>
+				<button type="button" class={styles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={styles.key} data-key="ArrowRight" tabindex="-1">→</button>
+				{t('map.keyNavigate')}
+				<button type="button" class={styles.key} data-key="Enter" tabindex="-1">↵</button>
+				{t('map.keyViewProject')}
+				<button type="button" class:list={[styles.key, styles['key-word']]} data-key="Escape" tabindex="-1">esc</button>
+				{t('map.keyClose')}
+			</span>
 		</div>
 	</div>
 
