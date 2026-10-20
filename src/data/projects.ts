@@ -224,12 +224,12 @@ const projects: ProjectData[] = [
 	},
 	{
 		slug: "la-balise",
-		title: "La poursuite du son perdu",
+		title: "À la poursuite du son perdu",
 		// TODO (Théophile) : textes à écrire à ta voix (brouillons tirés de tes infos), photos à venir.
 		description: "[PLACEHOLDER] A live radio show at the Philharmonie de Paris (La Balise Live #8), where I was one of the seven interviewers.",
 		longDescription: `
 			<p>
-				[PLACEHOLDER] <em>La poursuite du son perdu</em> is the 8th La Balise Live: a 62-minute radio show recorded in front of an audience at the Philharmonie de Paris.<br>
+				[PLACEHOLDER] <em>À la poursuite du son perdu</em> is the 8th La Balise Live: a 62-minute radio show recorded in front of an audience at the Philharmonie de Paris.<br>
 				<br>
 				I was one of the <span class="accent">seven interviewers</span>, trained for three months by Elodie Maillot, and we co-wrote the narration and the questions with the professionals around us.<br>
 				<br>
@@ -250,26 +250,24 @@ const projects: ProjectData[] = [
 	{
 		slug: "getnextlan",
 		title: "GetNextLan",
+		// La planète présente l'ASSOCIATION ; ses événements (XLAN 2026…) auront leurs pages plus tard, avec photos.
 		// TODO (Théophile) : textes à écrire à ta voix (brouillons tirés de getnextlan.fr et de tes infos), photos à venir.
-		description: "[PLACEHOLDER] The student association of 42 Paris that runs LAN parties and game jams.",
+		description: "[PLACEHOLDER] A small student association at 42 Paris that organises LAN parties and game jams.",
 		longDescription: `
 			<p>
-				[PLACEHOLDER] GetNextLan is a small student association at 42 Paris: we organise <span class="accent">LAN parties and game jams</span>, and everyone does a bit of everything.<br>
+				[PLACEHOLDER] GetNextLan is a small student association at 42 Paris: we organise <span class="accent">LAN parties and game jams</span>, and as a small team, everyone does a bit of everything.<br>
 				<br>
-				Our last event was the biggest multigaming LAN of 42 Paris: three days, 24 duos, 8 games from Trackmania to a C debugging challenge, and a grand final played live in front of the audience in the Amphi Xavier Niel, streamed on Twitch.<br>
-				<br>
-				I'm the association's <strong class="accent">partnerships manager</strong>. During the LAN I ran the stage control and was the main caster, and I built a large part of the website's front-end.<br>
+				I'm the association's <strong class="accent">partnerships manager</strong>. I also built a large part of the front-end of our website, and at our latest event, the XLAN 2026, I ran the stage control and was the main caster.<br>
 			</p>`,
 		category: "IRL",
-		tag: "IRL  ·  Association  ·  Events",
-		year: "October 2026",
-		pitch: "[PLACEHOLDER] The biggest multigaming LAN of 42 Paris: 48 players, 8 games, a grand final streamed live.",
+		tag: "IRL  ·  Association  ·  LAN & game jams",
+		year: "2026", // TODO Théophile : année de création de l'asso, ou depuis quand tu y es ?
+		pitch: "[PLACEHOLDER] A student association at 42 Paris that brings players together, from LAN parties to game jams.",
 		context: "Student association · 42 Paris",
-		duration: "3-day LAN",
 		stack: ["Partnerships", "Casting", "Stage control", "Front-end"],
 		planet: { seed: 41, signature: "joystick", signs: ["joystick", "rj45", "gg", "trophy", "chrono", "pad"] },
 		image: gnlCover,
-		alt: "[PLACEHOLDER] The GetNextLan LAN party at 42 Paris",
+		alt: "[PLACEHOLDER] The GetNextLan association at 42 Paris",
 		links: { site: "https://getnextlan.fr" },
 	},
 ]
