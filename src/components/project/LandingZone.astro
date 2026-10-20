@@ -25,7 +25,7 @@ const cover = coverImg.format === 'gif' ? coverImg.src : (await getImage({ src: 
 			<h2 class={styles.title}>{t('landing.title')}</h2>
 			<p>{t(embedUrl ? 'landing.browser' : 'landing.itch', { title })}</p>
 			{embedUrl && <p class={styles.small}>{t('landing.best')}</p>}
-			{links.itch && <a class={styles.itch} href={links.itch}>{t('landing.open')}</a>}
+			{links.itch && <a class={styles.itch} href={links.itch} target="_blank" rel="noopener noreferrer">{t('landing.open')}</a>}
 		</div>
 		{embedUrl && (
 			<div class={styles.launch}>

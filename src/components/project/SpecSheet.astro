@@ -14,6 +14,8 @@ const { links } = project;
 const t = useTranslations(getLang(Astro.currentLocale));
 // « Play » mène au jeu de la page s'il est intégré, sinon à itch.io
 const play = project.embedUrl ? '#play' : links.itch;
+// Liens vers un autre site : nouvel onglet, comme ceux du footer
+const ext = { target: '_blank', rel: 'noopener noreferrer' };
 ---
 
 <aside class={styles.spec} aria-label={t('spec.title')}>
@@ -28,10 +30,10 @@ const play = project.embedUrl ? '#play' : links.itch;
 		<div class={styles.row}><dt>{t(project.event ? 'spec.skills' : 'spec.stack')}</dt><dd>{project.stack.join(' · ')}</dd></div>
 	</dl>
 	<div class={styles.links}>
-		{play && <a href={play}><span>{t('spec.play')}</span><span>itch.io</span></a>}
-		{links.github && <a href={links.github}><span>{t('spec.source')}</span><span>GitHub</span></a>}
-		{links.gdd && <a href={links.gdd}><span>{t('spec.gdd')}</span><span>GDD</span></a>}
-		{links.replay && <a href={links.replay}><span>{t('spec.replay')}</span><span>YouTube</span></a>}
-		{links.site && <a href={links.site}><span>{t('spec.site')}</span><span>{new URL(links.site).hostname}</span></a>}
+		{play && <a href={play} {...(play === '#play' ? {} : ext)}><span>{t('spec.play')}</span><span>itch.io</span></a>}
+		{links.github && <a href={links.github} {...ext}><span>{t('spec.source')}</span><span>GitHub</span></a>}
+		{links.gdd && <a href={links.gdd} {...ext}><span>{t('spec.gdd')}</span><span>GDD</span></a>}
+		{links.replay && <a href={links.replay} {...ext}><span>{t('spec.replay')}</span><span>YouTube</span></a>}
+		{links.site && <a href={links.site} {...ext}><span>{t('spec.site')}</span><span>{new URL(links.site).hostname}</span></a>}
 	</div>
 </aside>
