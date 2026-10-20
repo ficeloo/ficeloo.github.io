@@ -9,7 +9,7 @@
 //
 // La carte n'est pas recalculée pendant le zoom : ses calques sont déplacés et agrandis par un
 // seul transform (le moteur de la carte l'applique via ZoomHost.camera), puis s'effacent.
-import { createPlanet, type Planet } from './project-planet';
+import { createPlanet, type Planet } from './planet';
 import { frameGap } from './frame-pace';
 
 /** Ce que la carte fournit au zoom. Coordonnées en px, dans le repère de l'écran de la carte. */
@@ -133,7 +133,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	function place(): Spot {
 		const o = root.getBoundingClientRect(), c = cardsEl.getBoundingClientRect();
 		const W = planetsEl.offsetWidth, H = planetsEl.offsetHeight, m = 12;
-		const R = Math.min(W, H) * 0.3; // rayon de la planète (project-planet.ts)
+		const R = Math.min(W, H) * 0.3; // rayon de la planète (src/scripts/planet/index.ts)
 		const x = narrow.matches ? o.width / 2 : Math.max((c.right - o.left + o.width) / 2, c.right - o.left + W * 0.4);
 		const below = c.bottom - o.top; // écran haut : la planète dans la place sous la fiche
 		const y = tall.matches ? cl((below + o.height) / 2, below + H * 0.44 + m, o.height - H * 0.56 - m)

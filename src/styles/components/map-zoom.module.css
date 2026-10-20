@@ -222,7 +222,7 @@
 .planet {
 	position: absolute;
 	inset: 0;
-	transform-origin: 50% 44%; /* centre de la planète dans sa scène (project-planet.ts) */
+	transform-origin: 50% 44%; /* centre de la planète dans sa scène (src/scripts/planet/index.ts) */
 	will-change: transform, opacity;
 }
 

@@ -10,7 +10,7 @@
 //
 // Toutes les couleurs viennent de tokens.css (lus au démarrage) ou en sont dérivées.
 
-import { frameGap } from './frame-pace';
+import { frameGap } from '../frame-pace';
 
 type Vec3 = [number, number, number];
 type RGB = [number, number, number];

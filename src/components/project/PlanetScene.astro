@@ -8,7 +8,7 @@ interface Props {
 	manual?: boolean; // animée par un autre script (zoom de la star map) au lieu de démarrer seule
 }
 
-// Planète du projet + sa stack en satellites. Le canvas est animé par src/scripts/project-planet.ts ;
+// Planète du projet + sa stack en satellites. Le canvas est animé par src/scripts/planet/ ;
 // sans JS, la stack reste affichée en pastilles sous un emplacement vide.
 const { project, manual } = Astro.props;
 const { planet, stack } = project;
@@ -38,6 +38,6 @@ const t = useTranslations(getLang(Astro.currentLocale));
 </div>
 
 <script>
-	import { animatePlanets } from '../../scripts/project-planet';
+	import { animatePlanets } from '../../scripts/planet';
 	animatePlanets(document.querySelectorAll<HTMLElement>('[data-planet-scene]:not([data-planet-manual])'));
 </script>
