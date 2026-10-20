@@ -173,6 +173,14 @@
 	gap: 8px;
 }
 
+/* Grand écran avec clavier : la barre de touches en bas de l'écran (cliquable, star-map.module.css)
+   fait déjà ← → et « fermer » ; condition inverse de celle qui la masque. */
+@media not ((pointer: coarse) or (max-width: 900px) or (orientation: portrait)) {
+	.controls {
+		display: none;
+	}
+}
+
 .btn {
 	min-width: 45px;
 	height: 45px;
