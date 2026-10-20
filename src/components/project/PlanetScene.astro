@@ -25,6 +25,7 @@ const t = useTranslations(getLang(Astro.currentLocale));
 	data-retrograde={planet.retrograde ? '' : undefined}
 	data-belt={planet.belt ? '' : undefined}
 	data-rings={planet.rings}
+	data-signs={planet.signs?.join(',')}
 	data-wip={project.inProgress ? '' : undefined}
 	data-planet-manual={manual ? '' : undefined}
 	role="img"

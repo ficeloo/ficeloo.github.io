@@ -113,6 +113,8 @@ export const en = {
 	'spec.play': '▷ Play in browser',
 	'spec.source': '</> Source code',
 	'spec.gdd': '🗎 Game design doc',
+	'spec.replay': '▷ Watch the replay',
+	'spec.site': '↗ Website',
 	'landing.label': 'Landing zone',
 	'landing.title': 'Take the controls',
 	'landing.browser': '{title} runs right in your browser.',

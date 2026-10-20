@@ -14,6 +14,9 @@ import ftWin from '../assets/ft-transcendence/win.png'
 import egCover from '../assets/endgame/cover.png'
 import scopCover from '../assets/scop/cover.png'
 import pfCover from '../assets/portfolio/cover.png'
+// TODO (Théophile) : photos de La Balise et de GetNextLan à venir (cover.png provisoires)
+import lbCover from '../assets/la-balise/cover.png'
+import gnlCover from '../assets/getnextlan/cover.png'
 
 import type { ImageMetadata } from 'astro';
 import { pick, type Lang, type Localized } from '../i18n';
@@ -22,10 +25,11 @@ import { pick, type Lang, type Localized } from '../i18n';
 // la couleur vient de tokens.css (--planet-<slug>), le reste est l'« ADN » du projet.
 interface Planet {
 	seed: number; // place les cratères, plaques ou facettes : deux projets d'un même système ne se ressemblent pas
-	signature: 'ship' | 'teapot' | 'station' | 'beacon' | 'moon'; // objet emblématique du projet, en orbite
+	signature: 'ship' | 'teapot' | 'station' | 'beacon' | 'moon' | 'mic' | 'joystick'; // objet emblématique du projet, en orbite
 	retrograde?: boolean; // la signature tourne à contre-sens
 	belt?: boolean; // ceinture d'astéroïdes
 	rings?: number; // Web : 1 anneau par couche du projet (front, back, BDD…), 3 max
+	signs?: string[]; // IRL : enseignes au néon propres au projet (formes dans src/scripts/planet/neon-signs.ts)
 }
 
 interface Highlight<T = Localized> {
@@ -54,13 +58,13 @@ interface ProjectData<T = Localized> {
 	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
 	alt: T;
 	screenshots?: ImageMetadata[]; // Tableau de screenshots
-	links: { itch?: string; github?: string; gdd?: string };
+	links: { itch?: string; github?: string; gdd?: string; replay?: string; site?: string }; // replay : vidéo d'un événement ; site : site du projet
 	embedUrl?: string; // Pour les projets jouables sur navigateur (WASM)
 }
 type Project = ProjectData<string>;
 
 // Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
-// (Game → Graphics → Web). Les numéros 01, 02… suivent cet ordre de parcours.
+// (Game → Graphics → Web → IRL). Les numéros 01, 02… suivent cet ordre de parcours.
 const projects: ProjectData[] = [
 	{
 		slug: "stellar-drift",
@@ -217,6 +221,56 @@ const projects: ProjectData[] = [
 		image: pfCover,
 		alt: "The star map of the portfolio",
 		links: { github: "https://github.com/ficeloo/ficeloo.github.io" },
+	},
+	{
+		slug: "la-balise",
+		title: "La poursuite du son perdu",
+		// TODO (Théophile) : textes à écrire à ta voix (brouillons tirés de tes infos), photos à venir.
+		description: "[PLACEHOLDER] A live radio show at the Philharmonie de Paris (La Balise Live #8), where I was one of the seven interviewers.",
+		longDescription: `
+			<p>
+				[PLACEHOLDER] <em>La poursuite du son perdu</em> is the 8th La Balise Live: a 62-minute radio show recorded in front of an audience at the Philharmonie de Paris.<br>
+				<br>
+				I was one of the <span class="accent">seven interviewers</span>, trained for three months by Elodie Maillot, and we co-wrote the narration and the questions with the professionals around us.<br>
+				<br>
+				On stage: a jazz quartet, Eric-Maria Couturier, Lorien Testard and Orane Donnadieu. Off stage: a recorded interview with 2080 (Walid Dalhoumi, chiptune musician), played during the show.<br>
+			</p>`,
+		category: "IRL",
+		tag: "IRL  ·  Radio  ·  Live show",
+		year: "June 2026",
+		pitch: "[PLACEHOLDER] A 62-minute live radio show, in front of an audience at the Philharmonie de Paris.",
+		context: "La Balise · Philharmonie de Paris · 7 interviewers",
+		duration: "3 months of training · 62-minute show",
+		stack: ["Interview", "Narration", "Live radio"],
+		planet: { seed: 17, signature: "mic", signs: ["mic", "radio", "onair", "phones", "sine", "clock"] },
+		image: lbCover,
+		alt: "[PLACEHOLDER] La Balise Live #8 at the Philharmonie de Paris",
+		links: { replay: "https://www.youtube.com/watch?v=936bTZvjJEE" },
+	},
+	{
+		slug: "getnextlan",
+		title: "GetNextLan",
+		// TODO (Théophile) : textes à écrire à ta voix (brouillons tirés de getnextlan.fr et de tes infos), photos à venir.
+		description: "[PLACEHOLDER] The student association of 42 Paris that runs LAN parties and game jams.",
+		longDescription: `
+			<p>
+				[PLACEHOLDER] GetNextLan is a small student association at 42 Paris: we organise <span class="accent">LAN parties and game jams</span>, and everyone does a bit of everything.<br>
+				<br>
+				Our last event was the biggest multigaming LAN of 42 Paris: three days, 24 duos, 8 games from Trackmania to a C debugging challenge, and a grand final played live in front of the audience in the Amphi Xavier Niel, streamed on Twitch.<br>
+				<br>
+				I'm the association's <strong class="accent">partnerships manager</strong>. During the LAN I ran the stage control and was the main caster, and I built a large part of the website's front-end.<br>
+			</p>`,
+		category: "IRL",
+		tag: "IRL  ·  Association  ·  Events",
+		year: "October 2026",
+		pitch: "[PLACEHOLDER] The biggest multigaming LAN of 42 Paris: 48 players, 8 games, a grand final streamed live.",
+		context: "Student association · 42 Paris",
+		duration: "3-day LAN",
+		stack: ["Partnerships", "Casting", "Stage control", "Front-end"],
+		planet: { seed: 41, signature: "joystick", signs: ["joystick", "rj45", "gg", "trophy", "chrono", "pad"] },
+		image: gnlCover,
+		alt: "[PLACEHOLDER] The GetNextLan LAN party at 42 Paris",
+		links: { site: "https://getnextlan.fr" },
 	},
 ]
 

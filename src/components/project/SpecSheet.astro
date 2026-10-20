@@ -31,5 +31,7 @@ const play = project.embedUrl ? '#play' : links.itch;
 		{play && <a href={play}><span>{t('spec.play')}</span><span>itch.io</span></a>}
 		{links.github && <a href={links.github}><span>{t('spec.source')}</span><span>GitHub</span></a>}
 		{links.gdd && <a href={links.gdd}><span>{t('spec.gdd')}</span><span>GDD</span></a>}
+		{links.replay && <a href={links.replay}><span>{t('spec.replay')}</span><span>YouTube</span></a>}
+		{links.site && <a href={links.site}><span>{t('spec.site')}</span><span>{new URL(links.site).hostname}</span></a>}
 	</div>
 </aside>
