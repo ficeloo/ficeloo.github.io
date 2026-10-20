@@ -40,6 +40,6 @@ export function drawSignature(s: Scene, time: number, front: boolean) {
 	c.globalAlpha = front ? 1 : 0.5;
 	c.translate(x, y);
 	if (s.signature === 'ship') c.rotate(Math.atan2(ny - y, nx - x)); // seul le vaisseau suit sa trajectoire
-	draw(c, Math.max(6, s.R * 0.13) * (front ? 1 : 0.8), time);
+	draw(c, Math.max(6, s.R * 0.13) * (front ? 1 : 0.8), time, s.color);
 	c.restore();
 }
