@@ -81,3 +81,12 @@ h2 {
 html {
 	scroll-behavior: smooth;
 }
+
+/* Fenêtre inactive (html[data-idle], posé par src/scripts/frame-pace.ts) : animations CSS en pause
+   (scintillement, reflet du nom, points qui respirent, barre du carrousel qui sert aussi de minuteur…).
+   !important : les modules relancent leur animation avec des sélecteurs plus précis. */
+html[data-idle] *,
+html[data-idle] *::before,
+html[data-idle] *::after {
+	animation-play-state: paused !important;
+}
