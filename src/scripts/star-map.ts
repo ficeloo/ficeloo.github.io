@@ -238,6 +238,19 @@ export function initStarMap(styles: Record<string, string>) {
 		return { dot, label };
 	});
 
+	// Largeur réelle de chaque étiquette, pour 1 px de police (mesurée au canvas, sans relire la mise
+	// en page) : l'étiquette se place du côté où elle tient, ou passe sur deux lignes.
+	const ruler = document.createElement('canvas').getContext('2d')!;
+	let labelEm: number[] = [];
+	function measureLabels() {
+		ruler.font = `100px ${getComputedStyle(nodeEls[0].label).fontFamily}`;
+		labelEm = nodeEls.map(({ label }) => {
+			const t = (label.textContent ?? '').replace(/\s+/g, ' ').toUpperCase();
+			return (ruler.measureText(t).width + t.length * 14) / 100; // + letter-spacing 0.14em
+		});
+	}
+	measureLabels();
+
 	// Poussière (16 grains par système).
 	// Taille/opacité fixes ; position monde (wx, wy) recalculée au relayout.
 	const dustEls: { el: HTMLElement; g: number; d: number; o: number; sz: number; wx: number; wy: number }[] = [];
@@ -884,9 +897,17 @@ export function initStarMap(styles: Record<string, string>) {
 			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(var(--rgb-accent), 0.18), 0 0 24px rgba(var(--rgb-accent), 0.5)' : 'none');
 			css(dot, 'opacity', op.toFixed(3));
 			css(dot, 'z-index', hi ? '5' : '2');
-			const flip = W[q].x < W[q].gx - 1 || s.x + 200 > vw - navW - 16;
-			const lx = flip ? s.x - 16 - 6 * act : s.x + 16 + 6 * act;
+			// Côté de l'étiquette : celui du nœud dans son système, sauf si elle n'y tient pas ;
+			// si elle ne tient d'aucun côté (titre long sur téléphone), deux lignes du côté le plus large.
+			const lw = labelEm[q] * (hi ? 15 : 12), gap = 16 + 6 * act;
+			const roomR = vw - navW - 16 - (s.x + gap), roomL = s.x - gap - 16;
+			const wrap = lw > roomR && lw > roomL;
+			const flip = wrap ? roomL > roomR : W[q].x < W[q].gx - 1 ? lw <= roomL || lw > roomR : lw > roomR;
+			const lx = flip ? s.x - gap : s.x + gap;
 			css(label, 'transform', at(lx, s.y - 9) + (flip ? ' translateX(-100%)' : ''));
+			css(label, 'white-space', wrap ? 'normal' : 'nowrap');
+			css(label, 'max-width', wrap ? `${Math.floor(Math.max(roomL, roomR))}px` : 'none');
+			css(label, 'text-align', flip ? 'right' : 'left');
 			css(label, 'opacity', op.toFixed(3));
 			css(label, 'z-index', hi ? '5' : '2');
 			css(label, 'font-size', (hi ? 15 : 12) + 'px');
@@ -1058,6 +1079,7 @@ export function initStarMap(styles: Record<string, string>) {
 	window.addEventListener('resize', onResize);
 	// Polices/images chargées : ce qui précède la carte a pu bouger → on remesure.
 	window.addEventListener('load', () => {
+		measureLabels();
 		relayout();
 		if (hashIdx >= 0) goTo(hashIdx, true); // recale sur le projet du hash avec la mesure finale
 		render();
