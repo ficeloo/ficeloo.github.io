@@ -2,9 +2,10 @@
 // Utilisée par les pages projet (PlanetScene.astro) et la vue rapprochée de la star map (map-zoom.ts).
 //
 // - Le système (catégorie) donne la technique de rendu, un fichier par système :
-//   Game = rocky.ts (cratères), Graphics = facets.ts (low-poly), Web = plated.ts (plaques + anneaux).
+//   Game = rocky.ts (cratères), Graphics = facets.ts (low-poly), Web = plated.ts (plaques + anneaux),
+//   IRL = neon.ts (ville de nuit couverte d'enseignes au néon).
 // - Le projet donne son « ADN » (data-* posés par PlanetScene.astro) : couleur (token
-//   --planet-<slug>), graine, signature (signatures.ts), ceinture, nombre d'anneaux.
+//   --planet-<slug>), graine, signature (signatures.ts), ceinture, nombre d'anneaux, enseignes.
 // - Un projet In progress a un drone de chantier au travail (drone.ts), avec un geste propre au système.
 //
 // Ce fichier monte la scène et dessine chaque image dans l'ordre : derrière la planète, la planète, devant.
@@ -17,9 +18,10 @@ import { drawBuilder, drawFreeDrone, droneUpdate, newDrone } from './drone';
 import { rocky } from './rocky';
 import { facets } from './facets';
 import { plated, drawRings } from './plated';
+import { neon } from './neon';
 
 /** Système de la star map (category de projects.ts) → rendu de sa planète. */
-const SYSTEMS: Record<string, PlanetSystem> = { Game: rocky, Graphics: facets, Web: plated };
+const SYSTEMS: Record<string, PlanetSystem> = { Game: rocky, Graphics: facets, Web: plated, IRL: neon };
 
 function setup(box: HTMLElement): Scene {
 	const ds = box.dataset;

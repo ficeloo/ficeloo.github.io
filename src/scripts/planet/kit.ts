@@ -74,7 +74,16 @@ export interface PlanetSystem {
 export interface Panel { a: number; b: number; l0: number; l1: number; v: number; rust: boolean; hole: boolean }
 export interface Ring { roll: number; flat: number; k: number; dir: number; speed: number }
 export interface Crack { t: number; pts: LatLon[] }
-export interface Drone { clock: number; last: number | null; phase: 'fly' | 'aim' | 'fire'; until: number; fire: number; dur: number; target: LatLon; path: LatLon[] | null; panel: Panel | null }
+// item : ce que vise le drone (plaque, enseigne…), propre au système
+export interface Drone { clock: number; last: number | null; phase: 'fly' | 'aim' | 'fire'; until: number; fire: number; dur: number; target: LatLon; path: LatLon[] | null; item: object | null }
+export interface NeonSign { c: Vec3; paths: Vec3[][]; col: RGB; size: number; ph: number; on: boolean; ignite: number }
+export interface NeonCity {
+	signs: NeonSign[];
+	maria: { lat: number; lon: number; size: number }[];
+	lights: { p: Vec3; ph: number }[]; // lumières isolées
+	streets: { pts: Vec3[]; sign: number }[]; // petites rues autour de chaque enseigne (sign = son index)
+	cars: { street: number; ph: number; v: number; dir: number }[];
+}
 export interface Builder { pos: Vec3; target: Vec3; firing: boolean; alpha: (k: number) => number }
 
 export interface Scene {
@@ -106,6 +115,7 @@ export interface Scene {
 	rings?: Ring[];
 	drone?: Drone;
 	builder?: Builder;
+	neon?: NeonCity;
 }
 
 export const ORBIT_SCALE = 2.1;
@@ -133,10 +143,10 @@ export function shade(c: CanvasRenderingContext2D, cx: number, cy: number, R: nu
 	g.addColorStop(0, rgba(C.text, 0.12)); g.addColorStop(0.55, rgba(C.deep, 0)); g.addColorStop(1, rgba(C.deep, 0.88));
 	c.fillStyle = g; c.fillRect(cx - R, cy - R, 2 * R, 2 * R);
 }
-export function baseFill(s: Scene, c: CanvasRenderingContext2D) {
+export function baseFill(s: Scene, c: CanvasRenderingContext2D, color = s.color) {
 	const { cx, cy, R } = s;
 	const g = c.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.05, cx, cy, R);
-	g.addColorStop(0, rgba(s.color)); g.addColorStop(0.55, rgba(mix(s.color, C.bg, 0.5))); g.addColorStop(1, rgba(mix(s.color, C.deep, 0.8)));
+	g.addColorStop(0, rgba(color)); g.addColorStop(0.55, rgba(mix(color, C.bg, 0.5))); g.addColorStop(1, rgba(mix(color, C.deep, 0.8)));
 	c.fillStyle = g; c.fillRect(cx - R, cy - R, 2 * R, 2 * R);
 }
 export function poly(s: Scene, pts: Vec3[]) {

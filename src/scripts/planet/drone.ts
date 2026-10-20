@@ -51,7 +51,7 @@ function drawLaser(s: Scene, x: number, y: number, tx: number, ty: number, front
 }
 const droneSize = (s: Scene) => Math.max(14, s.R * 0.2);
 
-export const newDrone = (): Drone => ({ clock: 0, last: null, phase: 'fly', until: 2, fire: 0, dur: 0.5, target: [0, 0], path: null, panel: null });
+export const newDrone = (): Drone => ({ clock: 0, last: null, phase: 'fly', until: 2, fire: 0, dur: 0.5, target: [0, 0], path: null, item: null });
 
 // ---------- Drone libre ----------
 
@@ -67,7 +67,7 @@ export function droneUpdate(s: Scene, time: number) {
 	if (d.phase === 'fly') {
 		d.clock += dt; d.until -= dt;
 		if (d.until <= 0 && dronePos(d)[2] > 0.2) {
-			d.path = null; d.panel = null;
+			d.path = null; d.item = null;
 			s.sys.aim?.(s, time);
 			d.phase = 'aim'; d.fire = 0.25;
 		}
@@ -78,7 +78,7 @@ export function droneUpdate(s: Scene, time: number) {
 		d.fire -= dt;
 		if (d.fire <= 0) {
 			s.sys.weld?.(s, time);
-			d.path = null; d.panel = null;
+			d.path = null; d.item = null;
 			d.phase = 'fly'; d.until = 1.6 + s.rnd() * 1.6;
 		}
 	}

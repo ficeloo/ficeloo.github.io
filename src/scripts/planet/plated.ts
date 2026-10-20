@@ -110,14 +110,15 @@ export const plated: PlanetSystem = {
 	aim(s, time) {
 		const d = s.drone!, spin = spinOf(s, time);
 		const holes = s.panels!.filter((p) => p.hole && fromLatLon(...panelCenter(p), spin)[2] > 0.3);
-		d.panel = holes.length ? holes[Math.floor(s.rnd() * holes.length)] : null;
-		d.target = d.panel ? panelCenter(d.panel) : pickFront(s, time);
+		const panel = holes.length ? holes[Math.floor(s.rnd() * holes.length)] : null;
+		d.item = panel;
+		d.target = panel ? panelCenter(panel) : pickFront(s, time);
 	},
 	// … la soude ; une plaque cachée se détache pour que le chantier reste ouvert
 	weld(s, time) {
-		const d = s.drone!, spin = spinOf(s, time);
-		if (!d.panel) return;
-		d.panel.hole = false;
+		const panel = s.drone!.item as Panel | null, spin = spinOf(s, time);
+		if (!panel) return;
+		panel.hole = false;
 		const hidden = s.panels!.filter((p) => !p.hole && fromLatLon(...panelCenter(p), spin)[2] < -0.2);
 		if (hidden.length) hidden[Math.floor(s.rnd() * hidden.length)].hole = true;
 	},
