@@ -1,0 +1,24 @@
+---
+import SectionHead from '../project/SectionHead.astro';
+import PhotoFrame from './PhotoFrame.astro';
+import type { ProjectEvent } from '../../data/events';
+import styles from '../../styles/components/event/crew.module.css';
+import { getLang, useTranslations } from '../../i18n';
+
+interface Props {
+	photo?: ProjectEvent['crew'];
+	thanks?: string; // HTML
+}
+
+// L'équipe : photo de groupe et remerciements, côte à côte.
+const { photo, thanks } = Astro.props;
+const t = useTranslations(getLang(Astro.currentLocale));
+---
+
+<section class={styles.section}>
+	<SectionHead title={t('event.crew')} />
+	<div class={styles.crew}>
+		{photo && <PhotoFrame image={photo.image} alt={photo.alt} ratio="4 / 3" />}
+		{thanks && <div class={styles.thanks} set:html={thanks} />}
+	</div>
+</section>

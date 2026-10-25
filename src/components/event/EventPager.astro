@@ -1,0 +1,37 @@
+---
+import { getProjectEvents, type ProjectEvent } from '../../data/events';
+import type { Project } from '../../data/projects';
+import { getLang, localizePath, useTranslations } from '../../i18n';
+import styles from '../../styles/components/project/project-pager.module.css';
+
+interface Props {
+	event: ProjectEvent;
+	project: Project; // l'association de l'événement
+}
+
+// Bas de page : retour à l'association, et l'événement suivant s'il existe (sinon « à venir »).
+const { event, project } = Astro.props;
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const list = getProjectEvents(project.slug, lang);
+const next = list[list.findIndex((e) => e.slug === event.slug) + 1];
+const planet = `--c: var(--planet-${project.slug})`;
+---
+
+<nav class={styles.pager} aria-label={t('event.list')}>
+	<a class={styles.prev} href={localizePath(`/projects/${project.slug}`, lang)} style={planet}>
+		<span class={styles.planet}></span>
+		<span><span class={styles.label}>← {t('event.back')}</span><br /><span class={styles.title}>{project.title}</span></span>
+	</a>
+	{next ? (
+		<a class={styles.next} href={localizePath(`/projects/${project.slug}/${next.slug}`, lang)} style={planet}>
+			<span class={styles.planet}></span>
+			<span><span class={styles.label}>{t('event.next')} →</span><br /><span class={styles.title}>{next.title}</span></span>
+		</a>
+	) : (
+		<span class:list={[styles.next, styles.soon]} style={planet}>
+			<span class={styles.planet}></span>
+			<span><span class={styles.label}>{t('event.next')}</span><br /><span class={styles.title}>{t('event.soon')}</span></span>
+		</span>
+	)}
+</nav>

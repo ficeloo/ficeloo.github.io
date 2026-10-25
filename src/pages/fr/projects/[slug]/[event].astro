@@ -1,0 +1,10 @@
+---
+import EventFile from '../../../../views/EventFile.astro';
+import { eventPaths } from '../../../../data/events';
+
+export function getStaticPaths() {
+	return eventPaths.map((params) => ({ params }));
+}
+---
+
+<EventFile project={Astro.params.slug} event={Astro.params.event} />

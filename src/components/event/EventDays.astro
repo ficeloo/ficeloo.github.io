@@ -1,0 +1,29 @@
+---
+import SectionHead from '../project/SectionHead.astro';
+import type { ProjectEvent } from '../../data/events';
+import styles from '../../styles/components/event/event-days.module.css';
+import { getLang, useTranslations } from '../../i18n';
+
+interface Props {
+	days: ProjectEvent['days'];
+}
+
+// Le déroulé de l'événement, une carte datée par jour.
+const { days } = Astro.props;
+const t = useTranslations(getLang(Astro.currentLocale));
+---
+
+<section class={styles.section}>
+	<SectionHead title={t('event.days', { n: days.length })} />
+	<ol class={styles.days}>
+		{days.map((d, i) => (
+			<li class={styles.day}>
+				<span class={styles.date}>{t('event.day', { n: i + 1 })}<br />{d.date}</span>
+				<div>
+					<h3 class={styles.title}>{d.title}</h3>
+					<p class={styles.text}>{d.text}</p>
+				</div>
+			</li>
+		))}
+	</ol>
+</section>

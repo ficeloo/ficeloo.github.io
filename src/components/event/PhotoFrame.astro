@@ -1,0 +1,25 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import styles from '../../styles/components/event/photo-frame.module.css';
+
+interface Props {
+	image: ImageMetadata;
+	alt: string;
+	ratio?: string; // format du cadre (« 16 / 9 » par défaut), la photo est recadrée dedans
+	badge?: string; // étiquette en haut à gauche, comme le « REC » des pages projet
+	eager?: boolean; // photo visible dès l'arrivée sur la page
+}
+
+// Photo dans le cadre HUD à coins orange des pages projet.
+const { image, alt, ratio = '16 / 9', badge, eager } = Astro.props;
+---
+
+<div class={styles.frame}>
+	<span class={styles.corner}></span><span class={styles.corner}></span>
+	<span class={styles.corner}></span><span class={styles.corner}></span>
+	<div class={styles.screen} style={`aspect-ratio: ${ratio}`}>
+		<Image src={image} alt={alt} widths={[640, 1280]} sizes="(max-width: 960px) 100vw, 50rem" format="webp" loading={eager ? 'eager' : 'lazy'} />
+		{badge && <span class={styles.badge}>{badge}</span>}
+	</div>
+</div>

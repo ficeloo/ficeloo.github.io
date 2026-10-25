@@ -1,0 +1,52 @@
+.section {
+	padding-top: 4rem;
+}
+
+.days {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+	gap: 1rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Carte du même style que les Highlights, la date à gauche */
+.day {
+	display: grid;
+	grid-template-columns: 6.5rem minmax(0, 1fr);
+	gap: 1rem;
+	padding: 1.1rem 1.2rem 1.2rem;
+	background: rgba(var(--rgb-panel), 0.55);
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+}
+
+/* Date dans la teinte du système (--sys, posée sur la page) */
+.date {
+	font-family: var(--font-display);
+	font-size: 0.8rem;
+	letter-spacing: 0.12em;
+	line-height: 1.6;
+	text-transform: uppercase;
+	color: var(--sys, var(--color-secondary));
+}
+
+.title {
+	margin: 0 0 0.3rem;
+	font-family: var(--font-body);
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.text {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--color-text-dim);
+}
+
+@media (max-width: 640px) {
+	.day {
+		grid-template-columns: 1fr;
+		gap: 0.3rem;
+	}
+}

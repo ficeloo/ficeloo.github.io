@@ -1,0 +1,46 @@
+---
+import { Image, getImage } from 'astro:assets';
+import SectionHead from '../project/SectionHead.astro';
+import type { ProjectEvent } from '../../data/events';
+import styles from '../../styles/components/event/backstage.module.css';
+import { getLang, useTranslations } from '../../i18n';
+
+interface Props {
+	photos: NonNullable<ProjectEvent['backstage']>;
+}
+
+// Mosaïque de photos : une photo très large prend 2 colonnes, une photo en hauteur 2 rangées.
+// Un clic l'agrandit dans un <dialog> (src/scripts/event-lightbox.ts), ← → pour passer à la suivante.
+const { photos } = Astro.props;
+const t = useTranslations(getLang(Astro.currentLocale));
+const tiles = await Promise.all(photos.map(async (p) => {
+	const ratio = p.image.width / p.image.height;
+	return {
+		...p,
+		shape: ratio > 1.9 ? styles.wide : ratio < 0.9 ? styles.tall : undefined,
+		full: (await getImage({ src: p.image, width: 1920, format: 'webp' })).src,
+	};
+}));
+---
+
+<section class={styles.section} data-lightbox>
+	<SectionHead title={t('event.backstage')} />
+	<p class={styles.hint}>{t('event.backstageHint')}</p>
+	<div class={styles.mosaic}>
+		{tiles.map((p) => (
+			<button type="button" class:list={[styles.tile, p.shape]} data-full={p.full} data-alt={p.alt} aria-label={t('event.enlarge', { alt: p.alt })}>
+				<Image src={p.image} alt="" widths={[480, 960]} sizes="(max-width: 960px) 50vw, 25rem" format="webp" loading="lazy" />
+			</button>
+		))}
+	</div>
+	<dialog class={styles.dialog}>
+		<img data-view alt="" />
+		<button type="button" class:list={[styles.nav, styles.prev]} data-prev aria-label={t('media.prev')}>‹</button>
+		<button type="button" class:list={[styles.nav, styles.next]} data-next aria-label={t('media.next')}>›</button>
+		<button type="button" class={styles.close} data-close aria-label={t('event.close')}>✕</button>
+	</dialog>
+</section>
+
+<script>
+	import '../../scripts/event-lightbox';
+</script>

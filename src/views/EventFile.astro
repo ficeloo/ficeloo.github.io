@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getProjects } from '../data/projects';
+import { getEvents } from '../data/events';
+import { getLang, localizePath, useTranslations } from '../i18n';
+import PlanetScene from '../components/project/PlanetScene.astro';
+import Highlights from '../components/project/Highlights.astro';
+import PhotoFrame from '../components/event/PhotoFrame.astro';
+import EventSpec from '../components/event/EventSpec.astro';
+import EventDays from '../components/event/EventDays.astro';
+import OnAir from '../components/event/OnAir.astro';
+import Backstage from '../components/event/Backstage.astro';
+import Crew from '../components/event/Crew.astro';
+import EventPager from '../components/event/EventPager.astro';
+import page from '../styles/pages/project.module.css';
+import styles from '../styles/pages/event.module.css';
+
+interface Props {
+	project: string; // slug de l'association
+	event: string;
+}
+
+// Page d'un événement (« event file ») : même charpente que la page projet, avec la planète
+// de l'association en en-tête et l'événement en lune autour d'elle.
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const project = getProjects(lang).find((p) => p.slug === Astro.props.project)!;
+const event = getEvents(lang).find((e) => e.project === project.slug && e.slug === Astro.props.event)!;
+const projectPath = localizePath(`/projects/${project.slug}`, lang);
+const sys = project.category.toLowerCase();
+const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb: var(--rgb-system-${sys}, var(--rgb-secondary))`;
+---
+
+<Layout title={t('meta.event.title', { title: event.title, project: project.title })} description={event.description} crumb={t('crumb.event', { project: project.title, title: event.title })} back={projectPath}>
+	<main class={page.page} style={sysStyle}>
+		<div class={page.topline}>
+			<span>{t('event.file')} · <span class={page.system}>{t('map.system', { name: project.category })}</span></span>
+			<span>{t('project.logged')} · {event.date}</span>
+		</div>
+
+		<header class={page.head}>
+			<div class={page.intro}>
+				<div>
+					<span class={page.tag}>{event.tag}</span>
+					<h1 class={page.title}>{event.title}</h1>
+					<p class={page.pitch}>{event.pitch}</p>
+					<a class={styles.parent} href={projectPath} style={`--c: var(--planet-${project.slug})`}>
+						<span class={styles.dot}></span>{t('event.partOf', { project: project.title })}
+					</a>
+				</div>
+			</div>
+			<PlanetScene project={project} sats={[event.title]} focus={event.title} caption={`${project.title} · ${t('event.inOrbit')}`} />
+		</header>
+
+		<div class={page.grid}>
+			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={`${t('event.live')} · ${event.date}`} eager />
+			<EventSpec event={event} />
+		</div>
+
+		<EventDays days={event.days} />
+		{event.onAir && event.onAir.length > 0 && <OnAir photos={event.onAir} />}
+		{event.difficulties && event.difficulties.length > 0 && <Highlights highlights={event.difficulties} title={t('event.behind')} />}
+		{event.backstage && event.backstage.length > 0 && <Backstage photos={event.backstage} />}
+		{(event.crew || event.thanks) && <Crew photo={event.crew} thanks={event.thanks} />}
+
+		<EventPager event={event} project={project} />
+	</main>
+</Layout>

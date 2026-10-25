@@ -1,0 +1,64 @@
+/* Cadre HUD à coins orange, le même que le média des pages projet. */
+.frame {
+	position: relative;
+	padding: 10px;
+}
+
+.corner {
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	border: 0 solid var(--color-accent);
+	pointer-events: none;
+}
+.corner:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.corner:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.corner:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.corner:nth-child(4) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+.screen {
+	position: relative;
+	background: var(--color-panel);
+	overflow: hidden;
+}
+
+.screen img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Pastille « en direct » : point orange qui clignote, comme le REC des pages projet */
+.badge {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.2rem 0.5rem;
+	border-radius: 3px;
+	background: rgba(var(--rgb-bg-deep), 0.7);
+	font-family: var(--font-display);
+	font-size: 0.7rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.badge::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--color-accent);
+	animation: blink 1.4s steps(2) infinite;
+}
+
+@keyframes blink {
+	50% { opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.badge::before { animation: none; }
+}
