@@ -28,3 +28,6 @@ CLAUDE.md
 
 # Claude artifact
 design_handoff_star_map
+
+# Réglages Claude Code personnels (plugins désactivés sur ce projet)
+.claude/settings.local.json
