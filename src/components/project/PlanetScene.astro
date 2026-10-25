@@ -6,16 +6,12 @@ import { getLang, useTranslations } from '../../i18n';
 interface Props {
 	project: Project;
 	manual?: boolean; // animée par un autre script (zoom de la star map) au lieu de démarrer seule
-	sats?: string[]; // satellites à la place de la stack (page événement : l'événement en lune)
-	focus?: string; // satellite mis en avant, en orange (« vous êtes ici »)
-	caption?: string; // légende sous la scène, à la place de « Stack in orbit · n satellites »
 }
 
 // Planète du projet + sa stack (ou ses compétences pour un événement) en satellites. Le canvas est animé par src/scripts/planet/ ;
 // sans JS, la stack reste affichée en pastilles sous un emplacement vide.
-const { project, manual, sats, focus, caption } = Astro.props;
-const { planet } = project;
-const stack = sats ?? project.stack;
+const { project, manual } = Astro.props;
+const { planet, stack } = project;
 const t = useTranslations(getLang(Astro.currentLocale));
 ---
 
@@ -33,13 +29,13 @@ const t = useTranslations(getLang(Astro.currentLocale));
 	data-wip={project.inProgress ? '' : undefined}
 	data-planet-manual={manual ? '' : undefined}
 	role="img"
-	aria-label={sats ? `${project.title} · ${stack.join(', ')}` : t(project.event ? 'project.skillsAria' : 'project.stackAria', { list: stack.join(', ') })}
+	aria-label={t(project.event ? 'project.skillsAria' : 'project.stackAria', { list: stack.join(', ') })}
 >
 	<canvas class={styles.canvas} aria-hidden="true"></canvas>
 	<ul class={styles.sats} aria-hidden="true">
-		{stack.map((tech) => <li class:list={[styles.sat, tech === focus && styles.focus]} data-sat>{tech}</li>)}
+		{stack.map((tech) => <li class={styles.sat} data-sat>{tech}</li>)}
 	</ul>
-	<span class={styles.caption}>{caption ?? <>{t(project.event ? 'project.skillsOrbit' : 'project.stackOrbit')} · <span class={styles.count}>{t('project.satellites', { n: stack.length })}</span></>}</span>
+	<span class={styles.caption}>{t(project.event ? 'project.skillsOrbit' : 'project.stackOrbit')} · <span class={styles.count}>{t('project.satellites', { n: stack.length })}</span></span>
 </div>
 
 <script>

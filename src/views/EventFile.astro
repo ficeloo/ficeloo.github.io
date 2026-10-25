@@ -3,7 +3,6 @@ import Layout from '../layouts/Layout.astro';
 import { getProjects } from '../data/projects';
 import { getEvents } from '../data/events';
 import { getLang, localizePath, useTranslations } from '../i18n';
-import PlanetScene from '../components/project/PlanetScene.astro';
 import Highlights from '../components/project/Highlights.astro';
 import PhotoFrame from '../components/event/PhotoFrame.astro';
 import EventSpec from '../components/event/EventSpec.astro';
@@ -20,8 +19,8 @@ interface Props {
 	event: string;
 }
 
-// Page d'un événement (« event file ») : même charpente que la page projet, avec la planète
-// de l'association en en-tête et l'événement en lune autour d'elle.
+// Page d'un événement (« event file ») : même charpente que la page projet. Pas de planète ici,
+// elle est sur la page de l'association : l'en-tête montre la photo de l'événement.
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
 const project = getProjects(lang).find((p) => p.slug === Astro.props.project)!;
@@ -49,15 +48,14 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 					</a>
 				</div>
 			</div>
-			<PlanetScene project={project} sats={[event.title]} focus={event.title} caption={`${project.title} · ${t('event.inOrbit')}`} />
+			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={`${t('event.live')} · ${event.date}`} eager />
 		</header>
 
-		<div class={page.grid}>
-			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={`${t('event.live')} · ${event.date}`} eager />
+		<div class:list={[page.grid, styles.grid]}>
+			<EventDays days={event.days} />
 			<EventSpec event={event} />
 		</div>
 
-		<EventDays days={event.days} />
 		{event.onAir && event.onAir.length > 0 && <OnAir photos={event.onAir} />}
 		{event.difficulties && event.difficulties.length > 0 && <Highlights highlights={event.difficulties} title={t('event.behind')} />}
 		{event.backstage && event.backstage.length > 0 && <Backstage photos={event.backstage} />}

@@ -133,7 +133,6 @@ export const en = {
 	'event.file': 'Event file',
 	'event.live': 'Live',
 	'event.partOf': 'Part of {project}',
-	'event.inOrbit': 'Event in orbit',
 	'event.days': '{n} days on air',
 	'event.day': 'Day {n}',
 	'event.onAir': 'On air',
