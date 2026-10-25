@@ -59,12 +59,14 @@
 	max-height: none;
 	margin: 0;
 	padding: clamp(16px, 4vw, 3rem);
+	box-sizing: border-box; /* la marge reste dans l'écran */
 	border: 0;
 	background: rgba(var(--rgb-bg-deep), 0.94);
 }
 
 .dialog[open] {
 	display: grid;
+	grid-template: minmax(0, 1fr) / minmax(0, 1fr); /* une seule case, de la taille de l'écran */
 	place-items: center;
 }
 
@@ -72,10 +74,20 @@
 	background: transparent;
 }
 
+/* Bornée par la case de la grille (l'écran moins la marge), et par la place des flèches */
 .dialog img {
-	max-width: 100%;
+	width: auto;
+	height: auto;
+	max-width: min(100%, calc(100vw - 9rem)); /* place pour les flèches */
 	max-height: 100%;
-	object-fit: contain;
+	box-sizing: border-box;
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+}
+
+@media (max-width: 640px) {
+	.dialog img {
+		max-width: 100%;
+	}
 }
 
 .nav,
