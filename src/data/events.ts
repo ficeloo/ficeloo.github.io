@@ -60,14 +60,15 @@ const events: EventData[] = [
 		slug: "xlan-2026",
 		project: "getnextlan",
 		title: "XLAN 2026",
-		// TODO (Théophile) : textes à écrire à ta voix ; lieu, nombre de joueurs et jeux à compléter.
+		// TODO (Théophile) : textes à écrire à ta voix ; nombre de joueurs à compléter.
+		// (Buvette au « Dernier café avant la fin du monde » : à placer dans un texte si tu veux.)
 		description: "[PLACEHOLDER] XLAN 2026, the multigaming LAN of GetNextLan at 42 Paris, streamed live on two days.",
 		tag: "IRL  ·  Event  ·  Multigaming LAN",
 		date: "18–19 Oct 2026",
 		pitch: "[PLACEHOLDER] One sentence that sums up the event.",
-		place: "[PLACEHOLDER] Place",
+		place: "42 Paris · final in the Xavier Niel amphitheater",
 		players: "[PLACEHOLDER] Number",
-		games: "[PLACEHOLDER] Games / tournaments",
+		games: "MicroWorks · Brawlhalla · Spot The Bug · StarCraft II · Trackmania · Minecraft Bingo · Totally Accurate Battlegrounds · a mystery game (a dictation, at the start of the final)",
 		role: "Main caster · Host · Scene switching",
 		prep: "Partnerships · Website front-end · Twitch scenes",
 		cover: { image: xlanCover, alt: "The XAVLAN end screen on the control rack monitor" },
