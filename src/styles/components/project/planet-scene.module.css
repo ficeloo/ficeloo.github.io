@@ -77,3 +77,10 @@
 		font-size: 0.75rem;
 	}
 }
+
+/* Satellite mis en avant (page événement : l'événement autour de la planète de son association) */
+.focus {
+	border-color: var(--color-accent);
+	color: var(--color-accent);
+	box-shadow: 0 0 12px rgba(var(--rgb-accent), 0.45);
+}
