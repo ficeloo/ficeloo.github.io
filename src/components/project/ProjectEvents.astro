@@ -1,0 +1,36 @@
+---
+import { Image } from 'astro:assets';
+import SectionHead from './SectionHead.astro';
+import type { ProjectEvent } from '../../data/events';
+import styles from '../../styles/components/project/project-events.module.css';
+import { getLang, localizePath, useTranslations } from '../../i18n';
+
+interface Props {
+	project: string; // slug de l'association
+	events: ProjectEvent[];
+}
+
+// Page d'une association : ses événements, une carte (photo, date, titre) vers la page de chacun.
+const { project, events } = Astro.props;
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+---
+
+<section class={styles.section}>
+	<SectionHead title={t('event.list')} />
+	<ul class={styles.list}>
+		{events.map((e) => (
+			<li>
+				<a class={styles.card} href={localizePath(`/projects/${project}/${e.slug}`, lang)}>
+					<Image class={styles.photo} src={e.cover.image} alt="" widths={[480, 800]} sizes="(max-width: 640px) 100vw, 24rem" format="webp" loading="lazy" />
+					<span class={styles.body}>
+						<span class={styles.date}>{e.date}</span>
+						<span class={styles.title}>{e.title}</span>
+						<span class={styles.tag}>{e.tag}</span>
+						<span class={styles.open}>{t('event.open')} →</span>
+					</span>
+				</a>
+			</li>
+		))}
+	</ul>
+</section>

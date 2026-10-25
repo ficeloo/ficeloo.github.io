@@ -147,6 +147,7 @@ export const en = {
 	'event.next': 'Next event',
 	'event.soon': 'Coming soon',
 	'event.list': 'Events',
+	'event.open': 'Open the event file',
 	'landing.label': 'Landing zone',
 	'landing.title': 'Take the controls',
 	'landing.browser': '{title} runs right in your browser.',

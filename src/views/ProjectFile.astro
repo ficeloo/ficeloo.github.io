@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getMapOrder } from '../data/projects';
+import { getProjectEvents } from '../data/events';
 import { getLang, localizePath, useTranslations } from '../i18n';
 import InProgressBadge from '../components/InProgressBadge.astro';
 import SystemMap from '../components/project/SystemMap.astro';
@@ -10,6 +11,7 @@ import SpecSheet from '../components/project/SpecSheet.astro';
 import SectionHead from '../components/project/SectionHead.astro';
 import Highlights from '../components/project/Highlights.astro';
 import LandingZone from '../components/project/LandingZone.astro';
+import ProjectEvents from '../components/project/ProjectEvents.astro';
 import ProjectPager from '../components/project/ProjectPager.astro';
 import styles from '../styles/pages/project.module.css';
 
@@ -21,6 +23,8 @@ interface Props {
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
 const project = getMapOrder(lang).find((p) => p.slug === Astro.props.slug)!;
+// Événements du projet (une association et ses LAN…), chacun avec sa page
+const events = getProjectEvents(project.slug, lang);
 // Teinte du système (tokens.css), héritée par la mini-carte : lueur de fond et nom du système.
 const sys = project.category.toLowerCase();
 const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb: var(--rgb-system-${sys}, var(--rgb-secondary))`;
@@ -58,6 +62,7 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 		)}
 
 		{project.highlights && project.highlights.length > 0 && <Highlights highlights={project.highlights} />}
+		{events.length > 0 && <ProjectEvents project={project.slug} events={events} />}
 
 		<LandingZone project={project} />
 		<ProjectPager project={project} />

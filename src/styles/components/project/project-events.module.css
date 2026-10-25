@@ -1,0 +1,77 @@
+.section {
+	padding-top: 4rem;
+}
+
+.list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+	gap: 1rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Carte d'un événement : photo en haut, texte en dessous, même panneau que les Highlights */
+.card {
+	display: grid;
+	height: 100%;
+	background: rgba(var(--rgb-panel), 0.55);
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+	color: var(--color-text);
+	text-decoration: none;
+	transition: border-color 0.25s;
+}
+
+.card:hover {
+	border-color: var(--color-accent);
+}
+
+.card:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
+.photo {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	height: auto;
+	object-fit: cover;
+}
+
+.body {
+	display: grid;
+	gap: 0.35rem;
+	padding: 1rem 1.2rem 1.2rem;
+}
+
+/* Date dans la teinte du système (--sys, posée sur la page) */
+.date,
+.tag {
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.date {
+	color: var(--sys, var(--color-secondary));
+}
+
+.tag {
+	color: var(--color-secondary);
+	white-space: pre; /* garde les espaces autour des « · » du tag */
+}
+
+.title {
+	font-family: var(--font-display);
+	font-size: 1.5rem;
+	letter-spacing: 0.06em;
+}
+
+.open {
+	margin-top: 0.4rem;
+	font-family: var(--font-display);
+	font-size: 0.85rem;
+	color: var(--color-accent);
+}
