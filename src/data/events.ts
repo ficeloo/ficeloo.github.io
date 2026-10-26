@@ -105,10 +105,10 @@ const events: EventData[] = [
 		days: [
 			{
 				date: "18 Oct",
-				title: "Green-screen studio",
+				title: { en: "Green-screen studio", fr: "Studio fond vert" },
 				text: {
-					en: "First day of the LAN party. I did the casting for the entire LAN party (8 hours and 30 minutes of live streaming!). Each member of our club had chosen a game beforehand to co-cast with me. It was a lot of fun to organize, and having to select the live Twitch feed while filling in the gaps was both challenging and exciting. I really loved it!",
-					fr: "Premier jour de la LAN. J'ai fait du casting pour l'intégralité de la LAN (8 h 30 de live !). Chaque membre de notre association avait choisi au préalable un jeu sur lequel co-caster avec moi. C'était super amusant à organiser, et devoir selectionner la scène Twitch en direct tout en meublant les moments de flottement était un exercice à la fois difficile et excitant. J'ai vraiment kiffé !",
+					en: "First day of the LAN party. I was the caster for the entire LAN party (8 hours and 30 minutes of live streaming!). Each member of our club had chosen a game beforehand to co-cast with me. It was a lot of fun to organize, and having to select the live Twitch feed while filling in the gaps was both challenging and exciting. I really loved it!",
+					fr: "Premier jour de la LAN. J'ai fait du casting pour l'intégralité de la LAN (8 h 30 de live !). Chaque membre de notre association avait choisi au préalable un jeu sur lequel co-caster avec moi. C'était super amusant à organiser, et devoir sélectionner la scène Twitch en direct tout en meublant les moments de flottement était un exercice à la fois difficile et excitant. J'ai vraiment kiffé !",
 				},
 			},
 			{
