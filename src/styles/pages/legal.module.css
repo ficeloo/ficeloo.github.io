@@ -37,7 +37,7 @@
 
 .legal a {
 	text-decoration: none;
-	color: var(--color-secondary);
+	color: var(--color-label);
 	transition: color 0.2s ease;
 }
 

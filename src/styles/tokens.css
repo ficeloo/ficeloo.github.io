@@ -5,6 +5,7 @@
 	--color-text: #F3F6F6;
 	--color-text-muted: #A5A99E;
 	--color-secondary: #537970;
+	--color-label: #6E9088; /* texte des petits libellés : le vert-gris éclairci (contraste ≈ 4,8:1 sur le navy) */
 	--color-text-dim: rgba(243, 246, 246, 0.62); /* texte secondaire (labels, métadonnées) */
 	--color-accent-light: #FFB199; /* reflet du shimmer sur « ficelo » */
 	--color-panel: #131240; /* fond des panneaux de la carte (HUD, popup, overlay) */

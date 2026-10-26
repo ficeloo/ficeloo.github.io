@@ -96,12 +96,12 @@
 }
 
 .external-link span {
-	color: var(--color-secondary);
+	color: var(--color-label);
 	opacity: 0.6;
 }
 
 .foot-line {
-	font-size: clamp(0.5rem, 0.75vw, 1rem);
+	font-size: clamp(0.75rem, 0.75vw, 1rem);
 	letter-spacing: 0.1em;
 	opacity: 0.85;
 }

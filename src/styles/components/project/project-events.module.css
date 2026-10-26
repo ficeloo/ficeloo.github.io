@@ -59,7 +59,7 @@
 }
 
 .tag {
-	color: var(--color-secondary);
+	color: var(--color-label);
 	white-space: pre; /* garde les espaces autour des « · » du tag */
 }
 
