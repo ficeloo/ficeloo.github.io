@@ -74,8 +74,22 @@
 	animation-timing-function: ease-in-out;
 }
 
+/* Sans carte graphique (le JS pose data-soft) : chaque étoile scintille elle-même, au rythme de son
+   groupe (durée et décalage recopiés par le JS). Même rendu, mais 140 petits points à refusionner
+   à chaque image au lieu de 8 calques plein écran. */
+.stage[data-soft] .star-group {
+	animation: none;
+}
+
+.stage[data-soft] .star {
+	animation-name: twinkle;
+	animation-iteration-count: infinite;
+	animation-timing-function: ease-in-out;
+}
+
 /* Carte hors écran : scintillement en pause (le JS pose data-off). */
-.stage[data-off] .star-group {
+.stage[data-off] .star-group,
+.stage[data-off] .star {
 	animation-play-state: paused;
 }
 

@@ -3,6 +3,7 @@
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
 import { createZoom } from './map-zoom';
+import { softwareRendering } from './render-mode';
 
 type Raw = {
 	slug: string;
@@ -162,6 +163,17 @@ export function initStarMap(styles: Record<string, string>) {
 		starGroups[idx % TWINKLE_GROUPS].appendChild(d);
 		return d;
 	});
+	// Sans carte graphique, refusionner 8 calques plein écran à chaque image est très coûteux
+	// (21 i/s au lieu de 60 sur la carte) : chaque étoile scintille alors elle-même, au rythme
+	// de son groupe. Même rendu, mais seulement 140 petits points à refusionner (voir data-soft dans le CSS).
+	if (softwareRendering()) {
+		root.setAttribute('data-soft', '');
+		starEls.forEach((d, idx) => {
+			const g = starGroups[idx % TWINKLE_GROUPS];
+			d.style.animationDuration = g.style.animationDuration;
+			d.style.animationDelay = g.style.animationDelay;
+		});
+	}
 
 	const NS = 'http://www.w3.org/2000/svg';
 	const svg = document.createElementNS(NS, 'svg');
