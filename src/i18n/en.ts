@@ -138,7 +138,7 @@ export const en = {
 	'event.gamesHint': '{n} games',
 	'event.onAir': 'On air',
 	'event.onAirHint': 'Captures from the stream',
-	'event.behind': 'Behind the scenes',
+	'event.behind': 'Challenges',
 	'event.backstage': 'Backstage',
 	'event.backstageHint': 'Click a photo to enlarge · ← → to browse',
 	'event.enlarge': 'Enlarge: {alt}',
