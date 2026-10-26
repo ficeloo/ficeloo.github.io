@@ -121,8 +121,8 @@ const events: EventData[] = [
 			},
 		],
 		onAir: [
-			{ image: xlanOnAirStage, alt: "The stage during the final, both teams' games on the XAVLAN wall", caption: "[PLACEHOLDER] Caption" },
-			{ image: xlanOnAirStandings, alt: "Casting on stage in front of the team standings", caption: "[PLACEHOLDER] Caption" },
+			{ image: xlanOnAirStage, alt: "The stage during the final, both teams' games on the XAVLAN wall" },
+			{ image: xlanOnAirStandings, alt: "Casting on stage in front of the team standings" },
 		],
 		difficulties: [
 			{ label: "Last minute", title: "From three days to two", text: "[PLACEHOLDER] The event was cut by one day at the last minute." },
