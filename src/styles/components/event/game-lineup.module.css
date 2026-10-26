@@ -1,0 +1,95 @@
+.section {
+	padding-top: 4rem;
+}
+
+/* Sous-titre de section, collé au filet du titre (comme On air) */
+.hint {
+	margin: -0.8rem 0 1.2rem;
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	color: var(--color-text-dim);
+}
+
+/* 4 par rangée sur grand écran, 2 en dessous */
+.grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 1rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Carte du même style que les jours, le numéro à gauche */
+.card {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem 1.2rem;
+	background: rgba(var(--rgb-panel), 0.55);
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+}
+
+/* Numéro dans la teinte du système (--sys, posée sur la page) */
+.num {
+	flex: none;
+	min-width: 2ch;
+	font-family: var(--font-display);
+	font-size: 1.4rem;
+	line-height: 1;
+	color: var(--sys, var(--color-secondary));
+}
+
+.body {
+	display: grid;
+	gap: 0.2rem;
+	min-width: 0;
+}
+
+.name {
+	font-family: var(--font-body);
+	font-size: 1rem;
+	font-weight: 600;
+	overflow-wrap: break-word;
+}
+
+.note {
+	font-size: 0.85rem;
+	color: var(--color-text-dim);
+}
+
+/* Jeu mystère : bord en pointillés et « ? » lumineux */
+.mystery {
+	border-style: dashed;
+	border-color: rgba(var(--sys-rgb, var(--rgb-secondary)), 0.7);
+	background: rgba(var(--sys-rgb, var(--rgb-secondary)), 0.08);
+}
+
+.mystery .num {
+	text-shadow: 0 0 12px rgba(var(--sys-rgb, var(--rgb-secondary)), 0.8);
+}
+
+@media (max-width: 960px) {
+	.grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+/* Téléphone : numéro au-dessus du nom, pour laisser toute la largeur aux noms longs */
+@media (max-width: 640px) {
+	.card {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.5rem;
+		padding: 0.9rem 1rem;
+	}
+	.num {
+		font-size: 1.1rem;
+	}
+}
+
+@media (max-width: 359px) {
+	.grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

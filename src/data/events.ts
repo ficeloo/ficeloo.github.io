@@ -32,6 +32,12 @@ interface Card<T = Localized> {
 	text: T;
 }
 
+interface Game<T = Localized> {
+	name: T;
+	note?: T; // précision sous le nom
+	mystery?: boolean; // carte « ? » mise en avant
+}
+
 interface EventData<T = Localized> {
 	slug: string; // identifiant URL
 	project: string; // slug du projet parent (projects.ts)
@@ -43,7 +49,7 @@ interface EventData<T = Localized> {
 	overview?: T; // HTML, section Overview sous la fiche
 	place: T;
 	players: T;
-	games: T;
+	games: Game<T>[]; // section des jeux, sous les jours
 	role: T; // pendant l'événement
 	prep: T; // pendant la préparation
 	cover: Photo<T>; // image à côté de la fiche
@@ -79,7 +85,20 @@ const events: EventData[] = [
 		},
 		place: "42 Paris · final in the Xavier Niel amphitheater",
 		players: "16 players · 8 teams",
-		games: "MicroWorks · Brawlhalla · Spot The Bug · StarCraft II · Trackmania · Minecraft Bingo · Totally Accurate Battlegrounds · a mystery game (a dictation, at the start of the final)",
+		games: [
+			{ name: "MicroWorks" },
+			{ name: "Brawlhalla" },
+			{ name: "Spot The Bug" },
+			{ name: "StarCraft II" },
+			{ name: "Trackmania" },
+			{ name: "Minecraft Bingo" },
+			{ name: "Totally Accurate Battlegrounds" },
+			{
+				name: { en: "Mystery game", fr: "Jeu mystère" },
+				note: { en: "A dictation, at the start of the final", fr: "Une dictée, au début de la finale" },
+				mystery: true,
+			},
+		],
 		role: "Main caster · Host · Scene switching",
 		prep: "Partnerships · Website front-end · Twitch scenes",
 		cover: { image: xlanCover, alt: "The XAVLAN end screen on the control rack monitor" },
@@ -130,7 +149,7 @@ export function getEvents(lang: Lang): ProjectEvent[] {
 		overview: pick(e.overview, lang),
 		place: pick(e.place, lang),
 		players: pick(e.players, lang),
-		games: pick(e.games, lang),
+		games: e.games.map((g) => ({ ...g, name: pick(g.name, lang), note: pick(g.note, lang) })),
 		role: pick(e.role, lang),
 		prep: pick(e.prep, lang),
 		cover: photo(e.cover),

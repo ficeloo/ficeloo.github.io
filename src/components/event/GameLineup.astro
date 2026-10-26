@@ -1,0 +1,31 @@
+---
+import SectionHead from '../project/SectionHead.astro';
+import type { ProjectEvent } from '../../data/events';
+import styles from '../../styles/components/event/game-lineup.module.css';
+import { getLang, useTranslations } from '../../i18n';
+
+interface Props {
+	games: ProjectEvent['games'];
+}
+
+// Les jeux de l'événement : une carte numérotée par jeu, le jeu mystère en « ? ».
+const { games } = Astro.props;
+const t = useTranslations(getLang(Astro.currentLocale));
+const num = (i: number) => String(i + 1).padStart(2, '0');
+---
+
+<section class={styles.section}>
+	<SectionHead title={t('event.games')} />
+	<p class={styles.hint}>{t('event.gamesHint', { n: games.length })}</p>
+	<ol class={styles.grid}>
+		{games.map((g, i) => (
+			<li class:list={[styles.card, g.mystery && styles.mystery]}>
+				<span class={styles.num}>{g.mystery ? '?' : num(i)}</span>
+				<span class={styles.body}>
+					<span class={styles.name}>{g.name}</span>
+					{g.note && <span class={styles.note}>{g.note}</span>}
+				</span>
+			</li>
+		))}
+	</ol>
+</section>

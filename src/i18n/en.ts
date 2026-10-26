@@ -123,7 +123,6 @@ export const en = {
 	'spec.site': '↗ Website',
 	'spec.place': 'Place',
 	'spec.players': 'Players',
-	'spec.games': 'Games',
 	'spec.role': 'Role',
 	'spec.prep': 'Prep',
 
@@ -135,6 +134,8 @@ export const en = {
 	'event.partOf': 'Part of {project}',
 	'event.days': '{n} days on air',
 	'event.day': 'Day {n}',
+	'event.games': 'The lineup',
+	'event.gamesHint': '{n} games',
 	'event.onAir': 'On air',
 	'event.onAirHint': 'Captures from the stream',
 	'event.behind': 'Behind the scenes',
