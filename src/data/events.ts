@@ -40,6 +40,7 @@ interface EventData<T = Localized> {
 	tag: T;
 	date: T;
 	pitch: T; // une phrase sous le titre
+	overview?: T; // HTML, section Overview sous la fiche
 	place: T;
 	players: T;
 	games: T;
@@ -62,12 +63,19 @@ const events: EventData[] = [
 		title: "XLAN 2026",
 		// TODO (Théophile) : textes à écrire à ta voix ; reste le lien du replay.
 		// (Buvette au « Dernier café avant la fin du monde » : à placer dans un texte si tu veux.)
-		description: "[PLACEHOLDER] XLAN 2026, the multigaming LAN of GetNextLan at 42 Paris, streamed live on two days.",
+		description: {
+			en: "XLAN, or XavLan, is GetNextLan’s flagship event.",
+			fr: "La XLAN, ou XavLan, est l'événement phare de GetNextLan.",
+		},
 		tag: "IRL  ·  Event  ·  Multigaming LAN",
 		date: "18–19 Oct 2026",
 		pitch: {
 			en: "The biggest multigaming LAN party at École 42 Paris!",
 			fr: "La plus grande LAN multigaming de l'école 42 Paris !",
+		},
+		overview: {
+			en: `<p>XLAN, or XavLan, is GetNextLan’s flagship event. It is a video game competition in which students from 42 Paris compete in various games. This year, it brought together 8 teams of 2 players who faced off in 8 different games selected by us. The entire event was streamed live on Twitch during the two days of competition.</p>`,
+			fr: `<p>La XLAN, ou XavLan, est l'événement phare de GetNextLan. Il s'agit d'une compétition de jeux vidéo qui met en compétition les étudiants de 42 Paris sur divers jeux. Cette année, elle a regroupé 8 équipes de 2 joueurs qui se sont affrontés sur 8 jeux différents choisis par nos soins. Tout l'événement a été retransmis en direct sur Twitch pendant les deux jours de compétition.</p>`,
 		},
 		place: "42 Paris · final in the Xavier Niel amphitheater",
 		players: "16 players · 8 teams",
@@ -119,6 +127,7 @@ export function getEvents(lang: Lang): ProjectEvent[] {
 		tag: pick(e.tag, lang),
 		date: pick(e.date, lang),
 		pitch: pick(e.pitch, lang),
+		overview: pick(e.overview, lang),
 		place: pick(e.place, lang),
 		players: pick(e.players, lang),
 		games: pick(e.games, lang),

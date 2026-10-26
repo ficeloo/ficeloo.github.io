@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import { getProjects } from '../data/projects';
 import { getEvents } from '../data/events';
 import { getLang, localizePath, useTranslations } from '../i18n';
+import SectionHead from '../components/project/SectionHead.astro';
 import Highlights from '../components/project/Highlights.astro';
 import PhotoFrame from '../components/event/PhotoFrame.astro';
 import EventSpec from '../components/event/EventSpec.astro';
@@ -55,6 +56,13 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 			<EventDays days={event.days} />
 			<EventSpec event={event} />
 		</div>
+
+		{event.overview && (
+			<section class={page.section}>
+				<SectionHead title={t('project.overview')} />
+				<div class={page.overview} set:html={event.overview} />
+			</section>
+		)}
 
 		{event.onAir && event.onAir.length > 0 && <OnAir photos={event.onAir} />}
 		{event.difficulties && event.difficulties.length > 0 && <Highlights highlights={event.difficulties} title={t('event.behind')} />}
