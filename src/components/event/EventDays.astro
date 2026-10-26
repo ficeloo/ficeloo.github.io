@@ -1,5 +1,6 @@
 ---
 import SectionHead from '../project/SectionHead.astro';
+import PhotoFrame from './PhotoFrame.astro';
 import type { ProjectEvent } from '../../data/events';
 import styles from '../../styles/components/event/event-days.module.css';
 import { getLang, useTranslations } from '../../i18n';
@@ -9,7 +10,7 @@ interface Props {
 }
 
 // Le déroulé de l'événement en « journal de bord » : une frise verticale, un point par jour,
-// la date et le titre à gauche, le récit en paragraphe libre à droite.
+// la date et le titre à gauche, le récit au milieu, la photo du jour à droite.
 const { days } = Astro.props;
 const t = useTranslations(getLang(Astro.currentLocale));
 ---
@@ -24,6 +25,11 @@ const t = useTranslations(getLang(Astro.currentLocale));
 					<h3 class={styles.title}>{d.title}</h3>
 				</div>
 				<div class={styles.text} set:html={d.text} />
+				{d.photo && (
+					<div class={styles.photo}>
+						<PhotoFrame image={d.photo.image} alt={d.photo.alt} ratio="16 / 10" />
+					</div>
+				)}
 			</li>
 		))}
 	</ol>

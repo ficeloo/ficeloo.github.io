@@ -13,8 +13,8 @@
 .day {
 	position: relative;
 	display: grid;
-	grid-template-columns: 14rem minmax(0, 1fr);
-	gap: 0.6rem 2.5rem;
+	grid-template-columns: 14rem minmax(0, 1fr) minmax(0, 21rem);
+	gap: 1.2rem 2.5rem;
 	padding: 0 0 2.8rem 2.2rem;
 }
 
@@ -104,8 +104,28 @@
 	color: var(--sys, var(--color-text));
 }
 
+/* Photo du jour, dans le cadre HUD (ses coins débordent un peu : on remonte de leur marge) */
+.photo {
+	margin-top: -10px;
+}
+
+/* Écran moyen : la photo passe sous le récit */
+@media (max-width: 1180px) {
+	.day {
+		grid-template-columns: 14rem minmax(0, 1fr);
+	}
+	.photo {
+		grid-column: 2;
+		max-width: 32rem;
+		margin-top: 0;
+	}
+}
+
 /* Tablette et téléphone : la date et le titre au-dessus du texte */
 @media (max-width: 760px) {
+	.photo {
+		grid-column: auto;
+	}
 	.day {
 		grid-template-columns: minmax(0, 1fr);
 		padding-left: 1.8rem;

@@ -8,7 +8,6 @@ import PhotoFrame from '../components/event/PhotoFrame.astro';
 import EventSpec from '../components/event/EventSpec.astro';
 import EventDays from '../components/event/EventDays.astro';
 import GameLineup from '../components/event/GameLineup.astro';
-import OnAir from '../components/event/OnAir.astro';
 import Backstage from '../components/event/Backstage.astro';
 import Crew from '../components/event/Crew.astro';
 import EventPager from '../components/event/EventPager.astro';
@@ -54,13 +53,12 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={t('event.live')} eager />
 		</header>
 
-		<!-- La fiche en bandeau sous l'en-tête, puis les jeux, le déroulé jour par jour et ses captures -->
+		<!-- La fiche en bandeau sous l'en-tête, puis les jeux, le déroulé jour par jour avec ses photos -->
 		<EventSpec event={event} />
 
 		{event.games.length > 0 && <GameLineup games={event.games} />}
 		<EventDays days={event.days} />
 
-		{event.onAir && event.onAir.length > 0 && <OnAir photos={event.onAir} />}
 		{event.difficulties && event.difficulties.length > 0 && <Highlights highlights={event.difficulties} title={t('event.behind')} />}
 		{event.backstage && event.backstage.length > 0 && <Backstage photos={event.backstage} />}
 		{(event.crew || event.thanks) && <Crew photo={event.crew} thanks={event.thanks} />}
