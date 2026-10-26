@@ -90,9 +90,17 @@
 	color: var(--color-text);
 }
 
-/* Infos clés en gras, dans la teinte du système */
+.text :global(p) {
+	margin: 0 0 0.9em;
+}
+
+.text :global(p:last-child) {
+	margin-bottom: 0;
+}
+
+/* Infos clés dans la teinte du système (sans gras : surlignées, pas criardes) */
 .text :global(strong) {
-	font-weight: 600;
+	font-weight: inherit;
 	color: var(--sys, var(--color-text));
 }
 

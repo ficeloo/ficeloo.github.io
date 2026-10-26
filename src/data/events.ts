@@ -23,7 +23,7 @@ interface Photo<T = Localized> {
 interface Day<T = Localized> {
 	date: T; // « 18 Oct »
 	title: T;
-	text: T; // HTML (<strong> pour les infos clés)
+	text: T; // HTML : paragraphes <p>, <strong> pour les infos clés
 }
 
 interface Card<T = Localized> {
@@ -80,8 +80,8 @@ const events: EventData[] = [
 			fr: "La plus grande LAN multigaming de l'école 42 Paris !",
 		},
 		overview: {
-			en: `<p>XLAN, or XavLan, is GetNextLan’s <strong>flagship event</strong>. It is a video game competition in which students from 42 Paris compete in various games. This year, it brought together <strong>8 teams of 2 players</strong> who faced off in <strong>8 different games</strong> selected by us. The entire event was <strong>streamed live on Twitch</strong> during the two days of competition.</p>`,
-			fr: `<p>La XLAN, ou XavLan, est <strong>l'événement phare</strong> de GetNextLan. Il s'agit d'un tournoi de jeux vidéo qui met en compétition les étudiants de 42 Paris sur divers jeux. Cette année, elle a regroupé <strong>8 équipes de 2 joueurs</strong> qui se sont affrontés sur <strong>8 jeux différents</strong> choisis par nos soins. Tout l'événement a été <strong>retransmis en direct sur Twitch</strong> pendant les deux jours de compétition.</p>`,
+			en: `<p>XLAN, or XavLan, is GetNextLan’s <strong>flagship event</strong>. It is a video game competition in which students from 42 Paris compete in various games.</p><p>This year, it brought together <strong>8 teams of 2 players</strong> who faced off in <strong>8 different games</strong> selected by us. The entire event was <strong>streamed live on Twitch</strong> during the two days of competition.</p>`,
+			fr: `<p>La XLAN, ou XavLan, est <strong>l'événement phare</strong> de GetNextLan. Il s'agit d'un tournoi de jeux vidéo qui met en compétition les étudiants de 42 Paris sur divers jeux.</p><p>Cette année, elle a regroupé <strong>8 équipes de 2 joueurs</strong> qui se sont affrontés sur <strong>8 jeux différents</strong> choisis par nos soins. Tout l'événement a été <strong>retransmis en direct sur Twitch</strong> pendant les deux jours de compétition.</p>`,
 		},
 		place: "42 Paris · final in the Xavier Niel amphitheater",
 		players: "16 players · 8 teams",
@@ -107,16 +107,16 @@ const events: EventData[] = [
 				date: "18 Oct",
 				title: { en: "Green-screen studio", fr: "Studio fond vert" },
 				text: {
-					en: "First day: <strong>8h30 of live streaming</strong>, and I cast the whole thing! Every club member had picked a game to <strong>co-cast with me</strong>. A blast to organize! <strong>Switching Twitch scenes live</strong> while filling the dead air was as challenging as it was exciting. I really loved it!",
-					fr: "Premier jour : <strong>8 h 30 de live</strong>, et j'ai casté du début à la fin ! Chaque membre de l'association avait choisi un jeu à <strong>co-caster avec moi</strong>. Super amusant à organiser ! <strong>Changer de scène Twitch en direct</strong> tout en meublant les temps morts, c'était aussi difficile qu'excitant. J'ai vraiment kiffé !",
+					en: `<p>First day: <strong>8h30 of live streaming</strong>, and I cast the whole thing! Every club member had picked a game to <strong>co-cast with me</strong>.</p><p>A blast to organize! <strong>Switching Twitch scenes live</strong> while filling the dead air was as challenging as it was exciting. I really loved it!</p>`,
+					fr: `<p>Premier jour : <strong>8 h 30 de live</strong>, et j'ai casté du début à la fin ! Chaque membre de l'association avait choisi un jeu à <strong>co-caster avec moi</strong>.</p><p>Super amusant à organiser ! <strong>Changer de scène Twitch en direct</strong> tout en meublant les temps morts, c'était aussi difficile qu'excitant. J'ai vraiment kiffé !</p>`,
 				},
 			},
 			{
 				date: "19 Oct",
 				title: { en: "The final, on stage", fr: "La finale, sur scène" },
 				text: {
-					en: "The second day, the day of the final, was much harder to handle than the first! The stream was shorter (4h30), but this time I was <strong>on stage in front of a (small) audience</strong>! We had booked the <strong>school's amphitheater</strong> to host the players and show their games on the big screens. I ran <strong>the staging and what went on screen</strong>, while the control room, staffed by club members, handled the sound and the cameras.",
-					fr: "Le deuxième jour, celui de la finale, était bien plus difficile à tenir que le premier ! Le live était plus court (4 h 30), mais cette fois j'étais <strong>sur scène devant un (petit) public</strong> ! Nous avions réservé <strong>l'amphithéâtre de l'école</strong> pour accueillir les joueurs et projeter leurs parties sur les grands écrans. Je gérais <strong>la mise en scène et ce qui passait à l'écran</strong>, pendant que la régie, tenue par des membres de l'association, s'occupait du son et des caméras.",
+					en: `<p>The second day, the day of the final, was much harder to handle than the first! The stream was shorter (4h30), but this time I was <strong>on stage in front of a (small) audience</strong>!</p><p>We had booked the <strong>school's amphitheater</strong> to host the players and show their games on the big screens. I ran <strong>the staging and what went on screen</strong>, while the control room, staffed by club members, handled the sound and the cameras.</p>`,
+					fr: `<p>Le deuxième jour, celui de la finale, était bien plus difficile à tenir que le premier ! Le live était plus court (4 h 30), mais cette fois j'étais <strong>sur scène devant un (petit) public</strong> !</p><p>Nous avions réservé <strong>l'amphithéâtre de l'école</strong> pour accueillir les joueurs et projeter leurs parties sur les grands écrans. Je gérais <strong>la mise en scène et ce qui passait à l'écran</strong>, pendant que la régie, tenue par des membres de l'association, s'occupait du son et des caméras.</p>`,
 				},
 			},
 		],

@@ -16,9 +16,9 @@
 	margin-bottom: 0;
 }
 
-/* Infos clés en gras, dans la teinte du système */
+/* Infos clés dans la teinte du système (sans gras : surlignées, pas criardes) */
 .brief :global(strong) {
-	font-weight: 600;
+	font-weight: inherit;
 	color: var(--sys, var(--color-text));
 }
 
