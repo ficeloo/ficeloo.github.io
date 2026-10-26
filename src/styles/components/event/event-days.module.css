@@ -92,6 +92,7 @@
 
 .text :global(p) {
 	margin: 0 0 0.9em;
+	text-indent: 1.5em; /* alinéa en début de paragraphe */
 }
 
 .text :global(p:last-child) {
