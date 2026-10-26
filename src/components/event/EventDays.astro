@@ -15,7 +15,7 @@ const t = useTranslations(getLang(Astro.currentLocale));
 ---
 
 <section class={styles.section}>
-	<SectionHead title={t('event.days', { n: days.length })} />
+	<SectionHead title={t('event.days')} />
 	<ol class={styles.days}>
 		{days.map((d, i) => (
 			<li class={styles.day}>

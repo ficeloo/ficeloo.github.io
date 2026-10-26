@@ -2,14 +2,6 @@
 	padding-top: 4rem;
 }
 
-/* Sous-titre de section, collé au filet du titre (comme On air) */
-.hint {
-	margin: -0.8rem 0 1.2rem;
-	font-family: var(--font-display);
-	font-size: 0.75rem;
-	color: var(--color-text-dim);
-}
-
 /* 4 par rangée sur grand écran, 2 en dessous */
 .grid {
 	display: grid;

@@ -51,7 +51,7 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 					</a>
 				</div>
 			</div>
-			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={`${t('event.live')} · ${event.date}`} eager />
+			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={t('event.live')} eager />
 		</header>
 
 		<!-- La fiche en bandeau sous l'en-tête, puis les jeux, le déroulé jour par jour et ses captures -->

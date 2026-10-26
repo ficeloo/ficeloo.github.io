@@ -16,7 +16,6 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
 
 <section class={styles.section}>
 	<SectionHead title={t('event.games')} />
-	<p class={styles.hint}>{t('event.gamesHint', { n: games.length })}</p>
 	<ol class={styles.grid}>
 		{games.map((g, i) => (
 			<li class:list={[styles.card, g.mystery && styles.mystery]}>
