@@ -22,8 +22,19 @@
 	padding-bottom: 0;
 }
 
+/* Fine ligne de séparation entre deux jours, de la colonne de texte au bord droit (la frise passe à côté) */
+.day + .day {
+	padding-top: 2.8rem;
+	background: linear-gradient(rgba(var(--rgb-secondary), 0.3), rgba(var(--rgb-secondary), 0.3)) no-repeat 2.2rem 0 / calc(100% - 2.2rem) 1px;
+}
+
+.day + .day::before {
+	top: calc(2.8rem + 0.25rem);
+}
+
 /* Point du jour, dans la teinte du système (--sys / --sys-rgb, posées sur la page) */
 .day::before {
+	z-index: 1;
 	content: "";
 	position: absolute;
 	top: 0.25rem;
@@ -35,12 +46,12 @@
 	box-shadow: 0 0 10px rgba(var(--sys-rgb, var(--rgb-secondary)), 0.8);
 }
 
-/* Trait de la frise, d'un point au suivant */
+/* Trait de la frise, d'un point au suivant (déborde sur le jour suivant jusqu'à son point) */
 .day::after {
 	content: "";
 	position: absolute;
 	top: 1.3rem;
-	bottom: 0.4rem;
+	bottom: calc(-2.8rem + 0.4rem);
 	left: 5px;
 	border-left: 1px dashed rgba(var(--sys-rgb, var(--rgb-secondary)), 0.5);
 }
@@ -84,6 +95,10 @@
 	.day {
 		grid-template-columns: minmax(0, 1fr);
 		padding-left: 1.8rem;
+	}
+	.day + .day {
+		background-position: 1.8rem 0;
+		background-size: calc(100% - 1.8rem) 1px;
 	}
 	.text {
 		font-size: 1rem;
