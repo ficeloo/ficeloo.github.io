@@ -9,6 +9,16 @@
 	color: var(--color-text-dim);
 }
 
+/* Consigne selon l'appareil : souris et clavier, ou écran tactile */
+.touch {
+	display: none;
+}
+
+@media (hover: none) {
+	.pointer { display: none; }
+	.touch { display: inline; }
+}
+
 /* dense : les petites photos comblent les trous laissés par les grandes */
 .mosaic {
 	display: grid;
@@ -74,19 +84,39 @@
 	background: transparent;
 }
 
-/* Bornée par la case de la grille (l'écran moins la marge), et par la place des flèches */
+/* Photo agrandie dans le cadre HUD à coins orange, comme sur le reste de la page */
+.view {
+	position: relative;
+	padding: 10px;
+}
+
+.corner {
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	border: 0 solid var(--color-accent);
+	pointer-events: none;
+}
+.corner:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.corner:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.corner:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.corner:nth-child(4) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+/* Bornée par l'écran moins la marge du dialog et le cadre, et par la place des flèches */
 .dialog img {
+	display: block;
 	width: auto;
 	height: auto;
-	max-width: min(100%, calc(100vw - 9rem)); /* place pour les flèches */
-	max-height: 100%;
+	--pad: clamp(16px, 4vw, 3rem);
+	max-width: min(calc(100vw - 2 * var(--pad) - 20px), calc(100vw - 9rem)); /* place pour les flèches */
+	max-height: calc(100dvh - 2 * var(--pad) - 20px);
 	box-sizing: border-box;
 	border: 1px solid rgba(var(--rgb-secondary), 0.35);
 }
 
 @media (max-width: 640px) {
 	.dialog img {
-		max-width: 100%;
+		max-width: calc(100vw - 2 * var(--pad) - 20px);
 	}
 }
 

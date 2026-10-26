@@ -9,7 +9,7 @@ interface Props {
 	photos: NonNullable<ProjectEvent['backstage']>;
 }
 
-// Mosaïque de photos : une photo très large prend 2 colonnes, une photo en hauteur 2 rangées.
+// Mosaïque de photos : une photo large (plus de 1,75 fois sa hauteur) prend 2 colonnes, une photo en hauteur 2 rangées.
 // Un clic l'agrandit dans un <dialog> (src/scripts/event-lightbox.ts), ← → pour passer à la suivante.
 const { photos } = Astro.props;
 const t = useTranslations(getLang(Astro.currentLocale));
@@ -17,7 +17,7 @@ const tiles = await Promise.all(photos.map(async (p) => {
 	const ratio = p.image.width / p.image.height;
 	return {
 		...p,
-		shape: ratio > 1.9 ? styles.wide : ratio < 0.9 ? styles.tall : undefined,
+		shape: ratio > 1.75 ? styles.wide : ratio < 0.9 ? styles.tall : undefined,
 		full: (await getImage({ src: p.image, width: 1920, format: 'webp' })).src,
 	};
 }));
@@ -25,7 +25,10 @@ const tiles = await Promise.all(photos.map(async (p) => {
 
 <section class={styles.section} data-lightbox>
 	<SectionHead title={t('event.backstage')} />
-	<p class={styles.hint}>{t('event.backstageHint')}</p>
+	<p class={styles.hint}>
+		<span class={styles.pointer}>{t('event.backstageHint')}</span>
+		<span class={styles.touch}>{t('event.backstageHintTouch')}</span>
+	</p>
 	<div class={styles.mosaic}>
 		{tiles.map((p) => (
 			<button type="button" class:list={[styles.tile, p.shape]} data-full={p.full} data-alt={p.alt} aria-label={t('event.enlarge', { alt: p.alt })}>
@@ -34,7 +37,11 @@ const tiles = await Promise.all(photos.map(async (p) => {
 		))}
 	</div>
 	<dialog class={styles.dialog}>
-		<img data-view alt="" />
+		<div class={styles.view}>
+			<span class={styles.corner}></span><span class={styles.corner}></span>
+			<span class={styles.corner}></span><span class={styles.corner}></span>
+			<img data-view alt="" />
+		</div>
 		<button type="button" class:list={[styles.nav, styles.prev]} data-prev aria-label={t('media.prev')}>‹</button>
 		<button type="button" class:list={[styles.nav, styles.next]} data-next aria-label={t('media.next')}>›</button>
 		<button type="button" class={styles.close} data-close aria-label={t('event.close')}>✕</button>
