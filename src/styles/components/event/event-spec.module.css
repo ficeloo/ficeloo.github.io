@@ -1,0 +1,79 @@
+/* Fiche de l'événement en bandeau sous l'en-tête. Libellés, pastille et liens : spec-sheet.module.css. */
+.band {
+	display: grid;
+	gap: 1rem;
+	margin-top: 0.8rem;
+	padding: 1rem 1.2rem 1.2rem;
+	background: rgba(var(--rgb-panel), 0.75);
+	border: 1px solid rgba(var(--rgb-secondary), 0.35);
+}
+
+/* Titre + pastille à gauche, liens à droite */
+.head {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.8rem 1.5rem;
+	padding-bottom: 0.9rem;
+	border-bottom: 1px dashed rgba(var(--rgb-secondary), 0.35);
+}
+
+.status {
+	display: flex;
+	align-items: center;
+	gap: 0.9rem;
+}
+
+.links {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.links a {
+	gap: 1.2rem;
+}
+
+/* Le filet gauche de chaque case sépare les colonnes ; décalé d'1px et rogné,
+   celui de la première case de chaque rangée disparaît. */
+.clip {
+	overflow: hidden;
+	margin-inline: -1rem; /* rend le retrait des cases : la 1re colonne s'aligne sur le titre */
+}
+
+.rows {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 1rem 0;
+	margin: 0 0 0 -1px;
+}
+
+.cell {
+	display: grid;
+	align-content: start;
+	gap: 0.4rem;
+	padding-inline: 1rem;
+	border-left: 1px dashed rgba(var(--rgb-secondary), 0.35);
+}
+
+.cell dd {
+	margin: 0;
+}
+
+@media (max-width: 960px) {
+	.rows {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.rows {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.clip {
+		margin-inline: -0.8rem;
+	}
+	.cell {
+		padding-inline: 0.8rem;
+	}
+}

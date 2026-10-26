@@ -1,5 +1,26 @@
 /* Page événement : la charpente vient de project.module.css, ici seulement ce qui lui est propre. */
 
+/* Overview dans l'en-tête, sous le pitch : le « briefing » de l'événement */
+.brief {
+	max-width: 62ch;
+	margin-top: 1.2rem;
+	color: var(--color-text-dim);
+	line-height: 1.65;
+}
+
+.brief :global(p) {
+	margin: 0 0 0.8em;
+}
+
+.brief :global(p:last-child) {
+	margin-bottom: 0;
+}
+
+.brief :global(strong) {
+	color: var(--color-text);
+	font-weight: 600;
+}
+
 /* Pastille « Part of GetNextLan » sous le pitch : retour à l'association */
 .parent {
 	display: inline-flex;
@@ -34,9 +55,4 @@
 	border-radius: 50%;
 	background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 85%, white), color-mix(in srgb, var(--c) 30%, var(--color-bg-deep)) 75%);
 	box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
-}
-
-/* L'Overview à gauche de la fiche */
-.grid {
-	padding-top: 2.5rem;
 }

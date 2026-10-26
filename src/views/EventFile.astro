@@ -3,7 +3,6 @@ import Layout from '../layouts/Layout.astro';
 import { getProjects } from '../data/projects';
 import { getEvents } from '../data/events';
 import { getLang, localizePath, useTranslations } from '../i18n';
-import SectionHead from '../components/project/SectionHead.astro';
 import Highlights from '../components/project/Highlights.astro';
 import PhotoFrame from '../components/event/PhotoFrame.astro';
 import EventSpec from '../components/event/EventSpec.astro';
@@ -22,7 +21,8 @@ interface Props {
 }
 
 // Page d'un événement (« event file ») : même charpente que la page projet. Pas de planète ici,
-// elle est sur la page de l'association : l'en-tête montre la photo de l'événement.
+// elle est sur la page de l'association : l'en-tête montre la photo de l'événement, à côté du pitch
+// et de l'Overview (le « briefing »).
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
 const project = getProjects(lang).find((p) => p.slug === Astro.props.project)!;
@@ -45,6 +45,7 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 					<span class={page.tag}>{event.tag}</span>
 					<h1 class={page.title}>{event.title}</h1>
 					<p class={page.pitch}>{event.pitch}</p>
+					{event.overview && <div class={styles.brief} set:html={event.overview} />}
 					<a class={styles.parent} href={projectPath} style={`--c: var(--planet-${project.slug})`}>
 						<span class={styles.dot}></span>{t('event.partOf', { project: project.title })}
 					</a>
@@ -53,14 +54,8 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={`${t('event.live')} · ${event.date}`} eager />
 		</header>
 
-		<!-- Ce qu'est l'événement à côté de la fiche, puis les jeux, puis le déroulé jour par jour et ses captures -->
-		<div class:list={[page.grid, styles.grid]}>
-			<section>
-				<SectionHead title={t('project.overview')} />
-				{event.overview && <div class={page.overview} set:html={event.overview} />}
-			</section>
-			<EventSpec event={event} />
-		</div>
+		<!-- La fiche en bandeau sous l'en-tête, puis les jeux, le déroulé jour par jour et ses captures -->
+		<EventSpec event={event} />
 
 		{event.games.length > 0 && <GameLineup games={event.games} />}
 		<EventDays days={event.days} />

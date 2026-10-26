@@ -1,13 +1,15 @@
 ---
 import type { ProjectEvent } from '../../data/events';
-import styles from '../../styles/components/project/spec-sheet.module.css';
+import sheet from '../../styles/components/project/spec-sheet.module.css';
+import styles from '../../styles/components/event/event-spec.module.css';
 import { getLang, useTranslations } from '../../i18n';
 
 interface Props {
 	event: ProjectEvent;
 }
 
-// Fiche de l'événement : même gabarit que celle des pages projet, avec ses propres lignes.
+// Fiche de l'événement en bandeau pleine largeur sous l'en-tête (façon télémétrie) :
+// libellés, pastille et liens repris de la fiche des pages projet.
 const { event } = Astro.props;
 const { links } = event;
 const t = useTranslations(getLang(Astro.currentLocale));
@@ -21,18 +23,22 @@ const rows = [
 ] as const;
 ---
 
-<aside class={styles.spec} aria-label={t('spec.title')}>
+<aside class={styles.band} aria-label={t('spec.title')}>
 	<div class={styles.head}>
-		<span class={styles.label}>{t('spec.title')}</span>
-		<span class={styles.status}>{t('spec.done')}</span>
-	</div>
-	<dl class={styles.rows}>
-		{rows.map(([key, value]) => <div class={styles.row}><dt>{t(key)}</dt><dd>{value}</dd></div>)}
-	</dl>
-	{(links.replay || links.site) && (
-		<div class={styles.links}>
-			{links.replay && <a href={links.replay} {...ext}><span>{t('spec.replay')}</span><span>YouTube</span></a>}
-			{links.site && <a href={links.site} {...ext}><span>{t('spec.site')}</span><span>{new URL(links.site).hostname}</span></a>}
+		<div class={styles.status}>
+			<span class={sheet.label}>{t('spec.title')}</span>
+			<span class={sheet.status}>{t('spec.done')}</span>
 		</div>
-	)}
+		{(links.replay || links.site) && (
+			<div class:list={[sheet.links, styles.links]}>
+				{links.replay && <a href={links.replay} {...ext}><span>{t('spec.replay')}</span><span>YouTube</span></a>}
+				{links.site && <a href={links.site} {...ext}><span>{t('spec.site')}</span><span>{new URL(links.site).hostname}</span></a>}
+			</div>
+		)}
+	</div>
+	<div class={styles.clip}>
+		<dl class={styles.rows}>
+			{rows.map(([key, value]) => <div class={styles.cell}><dt class={sheet.label}>{t(key)}</dt><dd>{value}</dd></div>)}
+		</dl>
+	</div>
 </aside>
