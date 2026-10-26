@@ -107,14 +107,17 @@ const events: EventData[] = [
 				date: "18 Oct",
 				title: { en: "Green-screen studio", fr: "Studio fond vert" },
 				text: {
-					en: "First day of the LAN party. I was the caster for the entire LAN party (8 hours and 30 minutes of live streaming!). Each member of our club had chosen a game beforehand to co-cast with me. It was a lot of fun to organize, and having to select the live Twitch feed while filling in the gaps was both challenging and exciting. I really loved it!",
-					fr: "Premier jour de la LAN. J'ai fait du casting pour l'intégralité de la LAN (8 h 30 de live !). Chaque membre de notre association avait choisi au préalable un jeu sur lequel co-caster avec moi. C'était super amusant à organiser, et devoir sélectionner la scène Twitch en direct tout en meublant les moments de flottement était un exercice à la fois difficile et excitant. J'ai vraiment kiffé !",
+					en: "First day: 8h30 of live streaming, and I cast the whole thing! Every club member had picked a game to co-cast with me. A blast to organize! Switching Twitch scenes live while filling the dead air was as challenging as it was exciting. I really loved it!",
+					fr: "Premier jour : 8 h 30 de live, et j'ai casté du début à la fin ! Chaque membre de l'association avait choisi un jeu à co-caster avec moi. Super amusant à organiser ! Changer de scène Twitch en direct tout en meublant les temps morts, c'était aussi difficile qu'excitant. J'ai vraiment kiffé !",
 				},
 			},
 			{
 				date: "19 Oct",
-				title: "The final, on stage",
-				text: "[PLACEHOLDER] On stage with a small mic and no sound return, while the crew in the control room ran my mic, the sound and the live cameras.",
+				title: { en: "The final, on stage", fr: "La finale, sur scène" },
+				text: {
+					en: "The second day, the day of the final, was much harder to handle than the first! The stream was shorter (4h30), but this time I was on stage in front of a (small) audience! We had booked the school's amphitheater to host the players and show their games on the big screens. I ran the staging and what went on screen, while the control room, staffed by club members, handled the sound and the cameras.",
+					fr: "Le deuxième jour, celui de la finale, était bien plus difficile à tenir que le premier ! Le live était plus court (4 h 30), mais cette fois j'étais sur scène devant un (petit) public ! Nous avions réservé l'amphithéâtre de l'école pour accueillir les joueurs et projeter leurs parties sur les grands écrans. Je gérais la mise en scène et ce qui passait à l'écran, pendant que la régie, tenue par des membres de l'association, s'occupait du son et des caméras.",
+				},
 			},
 		],
 		onAir: [
