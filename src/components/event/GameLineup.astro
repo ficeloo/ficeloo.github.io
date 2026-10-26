@@ -8,23 +8,23 @@ interface Props {
 	games: ProjectEvent['games'];
 }
 
-// Les jeux de l'événement : une carte numérotée par jeu, le jeu mystère en « ? ».
+// Les jeux de l'événement en « bande segmentée », comme une barre de programme sur un stream :
+// une case par jeu avec un repère dans la teinte du système, le jeu mystère mis en avant avec un « ? ».
 const { games } = Astro.props;
 const t = useTranslations(getLang(Astro.currentLocale));
-const num = (i: number) => String(i + 1).padStart(2, '0');
 ---
 
 <section class={styles.section}>
 	<SectionHead title={t('event.games')} />
-	<ol class={styles.grid}>
-		{games.map((g, i) => (
-			<li class:list={[styles.card, g.mystery && styles.mystery]}>
-				<span class={styles.num}>{g.mystery ? '?' : num(i)}</span>
-				<span class={styles.body}>
-					<span class={styles.name}>{g.name}</span>
-					{g.note && <span class={styles.note}>{g.note}</span>}
+	<ul class={styles.strip}>
+		{games.map((g) => (
+			<li class:list={[styles.game, g.mystery && styles.mystery]}>
+				<span class={styles.name}>
+					{g.mystery && <span class={styles.mark} aria-hidden="true">?</span>}
+					{g.name}
 				</span>
+				{g.note && <span class={styles.note}>{g.note}</span>}
 			</li>
 		))}
-	</ol>
+	</ul>
 </section>
