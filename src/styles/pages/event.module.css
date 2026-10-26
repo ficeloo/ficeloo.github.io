@@ -4,7 +4,7 @@
 .brief {
 	max-width: 62ch;
 	margin-top: 1.2rem;
-	color: var(--color-text-dim);
+	color: var(--color-text);
 	line-height: 1.65;
 }
 
@@ -16,9 +16,10 @@
 	margin-bottom: 0;
 }
 
+/* Infos clés en gras, dans la teinte du système */
 .brief :global(strong) {
-	color: var(--color-text);
 	font-weight: 600;
+	color: var(--sys, var(--color-text));
 }
 
 /* Pastille « Part of GetNextLan » sous le pitch : retour à l'association */

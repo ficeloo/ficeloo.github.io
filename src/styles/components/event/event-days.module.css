@@ -87,7 +87,13 @@
 	max-width: 65ch;
 	font-size: 1.05rem;
 	line-height: 1.75;
-	color: var(--color-text-dim);
+	color: var(--color-text);
+}
+
+/* Infos clés en gras, dans la teinte du système */
+.text :global(strong) {
+	font-weight: 600;
+	color: var(--sys, var(--color-text));
 }
 
 /* Tablette et téléphone : la date et le titre au-dessus du texte */

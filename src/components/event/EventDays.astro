@@ -23,7 +23,7 @@ const t = useTranslations(getLang(Astro.currentLocale));
 					<span class={styles.date}>{t('event.day', { n: i + 1 })} · {d.date}</span>
 					<h3 class={styles.title}>{d.title}</h3>
 				</div>
-				<p class={styles.text}>{d.text}</p>
+				<p class={styles.text} set:html={d.text} />
 			</li>
 		))}
 	</ol>
