@@ -65,7 +65,10 @@ const events: EventData[] = [
 		description: "[PLACEHOLDER] XLAN 2026, the multigaming LAN of GetNextLan at 42 Paris, streamed live on two days.",
 		tag: "IRL  ·  Event  ·  Multigaming LAN",
 		date: "18–19 Oct 2026",
-		pitch: "[PLACEHOLDER] One sentence that sums up the event.",
+		pitch: {
+			en: "The biggest multigaming LAN party at École 42 Paris!",
+			fr: "La plus grande LAN multigaming de l'école 42 Paris !",
+		},
 		place: "42 Paris · final in the Xavier Niel amphitheater",
 		players: "16 players · 8 teams",
 		games: "MicroWorks · Brawlhalla · Spot The Bug · StarCraft II · Trackmania · Minecraft Bingo · Totally Accurate Battlegrounds · a mystery game (a dictation, at the start of the final)",
