@@ -10,7 +10,7 @@ interface Props {
 	thanks?: string; // HTML
 }
 
-// L'équipe : photo de groupe et remerciements, côte à côte.
+// L'équipe : photo de groupe en large (recadrée sur les gens), les remerciements dessous.
 const { photo, thanks } = Astro.props;
 const t = useTranslations(getLang(Astro.currentLocale));
 ---
@@ -18,7 +18,7 @@ const t = useTranslations(getLang(Astro.currentLocale));
 <section class={styles.section}>
 	<SectionHead title={t('event.crew')} />
 	<div class={styles.crew}>
-		{photo && <PhotoFrame image={photo.image} alt={photo.alt} ratio="4 / 3" />}
+		{photo && <PhotoFrame image={photo.image} alt={photo.alt} ratio="2 / 1" focus="50% 75%" />}
 		{thanks && <div class={styles.thanks} set:html={thanks} />}
 	</div>
 </section>

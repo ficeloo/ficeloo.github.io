@@ -4,9 +4,7 @@
 
 .crew {
 	display: grid;
-	grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-	gap: 1.5rem 2.5rem;
-	align-items: center;
+	gap: 1.5rem;
 }
 
 /* Texte des remerciements (HTML de thanks), comme l'Overview des pages projet */
@@ -28,10 +26,4 @@
 .thanks :global(strong) {
 	color: var(--color-text);
 	font-weight: 600;
-}
-
-@media (max-width: 960px) {
-	.crew {
-		grid-template-columns: 1fr;
-	}
 }
