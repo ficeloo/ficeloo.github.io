@@ -18,11 +18,9 @@ const t = useTranslations(getLang(Astro.currentLocale));
 	<ol class={styles.days}>
 		{days.map((d, i) => (
 			<li class={styles.day}>
-				<span class={styles.date}>{t('event.day', { n: i + 1 })}<br />{d.date}</span>
-				<div>
-					<h3 class={styles.title}>{d.title}</h3>
-					<p class={styles.text}>{d.text}</p>
-				</div>
+				<span class={styles.date}>{t('event.day', { n: i + 1 })} · {d.date}</span>
+				<h3 class={styles.title}>{d.title}</h3>
+				<p class={styles.text}>{d.text}</p>
 			</li>
 		))}
 	</ol>

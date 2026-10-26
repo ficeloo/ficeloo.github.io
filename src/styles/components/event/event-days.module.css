@@ -12,42 +12,44 @@
 	list-style: none;
 }
 
-/* Carte du même style que les Highlights, la date à gauche */
+/* Carte du même style que les Highlights : la date en ligne de tête, puis le titre et le texte
+   sur toute la largeur (texte aéré, il peut être long) */
 .day {
 	display: grid;
-	grid-template-columns: 6.5rem minmax(0, 1fr);
-	gap: 1rem;
-	padding: 1.1rem 1.2rem 1.2rem;
+	align-content: start;
+	gap: 0.6rem;
+	padding: 1.2rem 1.5rem 1.4rem;
 	background: rgba(var(--rgb-panel), 0.55);
 	border: 1px solid rgba(var(--rgb-secondary), 0.35);
 }
 
-/* Date dans la teinte du système (--sys, posée sur la page) */
+/* Date dans la teinte du système (--sys, posée sur la page), soulignée en pointillés */
 .date {
+	padding-bottom: 0.7rem;
+	border-bottom: 1px dashed rgba(var(--rgb-secondary), 0.35);
 	font-family: var(--font-display);
 	font-size: 0.8rem;
 	letter-spacing: 0.12em;
-	line-height: 1.6;
 	text-transform: uppercase;
 	color: var(--sys, var(--color-secondary));
 }
 
 .title {
-	margin: 0 0 0.3rem;
+	margin: 0.3rem 0 0;
 	font-family: var(--font-body);
-	font-size: 1.1rem;
+	font-size: 1.15rem;
 	font-weight: 600;
 }
 
 .text {
 	margin: 0;
-	font-size: 0.95rem;
+	max-width: 62ch;
+	line-height: 1.7;
 	color: var(--color-text-dim);
 }
 
 @media (max-width: 640px) {
 	.day {
-		grid-template-columns: 1fr;
-		gap: 0.3rem;
+		padding: 1.1rem 1.2rem 1.2rem;
 	}
 }
