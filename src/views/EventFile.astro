@@ -53,19 +53,18 @@ const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb
 			<PhotoFrame image={event.cover.image} alt={event.cover.alt} badge={`${t('event.live')} · ${event.date}`} eager />
 		</header>
 
+		<!-- Ce qu'est l'événement à côté de la fiche, puis les jeux, puis le déroulé jour par jour et ses captures -->
 		<div class:list={[page.grid, styles.grid]}>
-			<EventDays days={event.days} />
+			<section>
+				<SectionHead title={t('project.overview')} />
+				{event.overview && <div class={page.overview} set:html={event.overview} />}
+			</section>
 			<EventSpec event={event} />
 		</div>
 
-		{event.overview && (
-			<section class={page.section}>
-				<SectionHead title={t('project.overview')} />
-				<div class={page.overview} set:html={event.overview} />
-			</section>
-		)}
-
 		{event.games.length > 0 && <GameLineup games={event.games} />}
+		<EventDays days={event.days} />
+
 		{event.onAir && event.onAir.length > 0 && <OnAir photos={event.onAir} />}
 		{event.difficulties && event.difficulties.length > 0 && <Highlights highlights={event.difficulties} title={t('event.behind')} />}
 		{event.backstage && event.backstage.length > 0 && <Backstage photos={event.backstage} />}

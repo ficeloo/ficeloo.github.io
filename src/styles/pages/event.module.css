@@ -36,7 +36,7 @@
 	box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
 }
 
-/* Les jours à gauche de la fiche */
+/* L'Overview à gauche de la fiche */
 .grid {
 	padding-top: 2.5rem;
 }

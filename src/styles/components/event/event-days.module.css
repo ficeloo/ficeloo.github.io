@@ -1,6 +1,11 @@
+.section {
+	padding-top: 4rem;
+}
+
+/* Les jours côte à côte, l'un sous l'autre quand la place manque */
 .days {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
 	gap: 1rem;
 	margin: 0;
 	padding: 0;
