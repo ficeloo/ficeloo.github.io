@@ -8,7 +8,8 @@ interface Props {
 	days: ProjectEvent['days'];
 }
 
-// Le déroulé de l'événement, une carte datée par jour, côte à côte sur grand écran.
+// Le déroulé de l'événement en « journal de bord » : une frise verticale, un point par jour,
+// la date et le titre à gauche, le récit en paragraphe libre à droite.
 const { days } = Astro.props;
 const t = useTranslations(getLang(Astro.currentLocale));
 ---
@@ -18,8 +19,10 @@ const t = useTranslations(getLang(Astro.currentLocale));
 	<ol class={styles.days}>
 		{days.map((d, i) => (
 			<li class={styles.day}>
-				<span class={styles.date}>{t('event.day', { n: i + 1 })} · {d.date}</span>
-				<h3 class={styles.title}>{d.title}</h3>
+				<div class={styles.meta}>
+					<span class={styles.date}>{t('event.day', { n: i + 1 })} · {d.date}</span>
+					<h3 class={styles.title}>{d.title}</h3>
+				</div>
 				<p class={styles.text}>{d.text}</p>
 			</li>
 		))}
