@@ -60,3 +60,9 @@ export function layoutMap<T extends { i: number; cat: string }>(P: T[], { vw, vh
 	for (let k = 1; k < W.length; k++) U.push(U[k - 1] + (W[k].g === W[k - 1].g ? 1 : LEG));
 	return { P, cats, ord, G, W, U, N: ord.length };
 }
+
+/** Résultat de layoutMap. */
+export type MapLayout<T extends { i: number; cat: string }> = ReturnType<typeof layoutMap<T>>;
+
+/** Point du trajet entre le projet q et le suivant (t de 0 à 1), en coordonnées monde. */
+export const legPoint = (W: Pt[], q: number, t: number): Pt => ({ x: W[q].x + (W[q + 1].x - W[q].x) * t, y: W[q].y + (W[q + 1].y - W[q].y) * t });

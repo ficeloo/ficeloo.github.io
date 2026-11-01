@@ -3,7 +3,9 @@
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import { createZoom } from './zoom';
 import { attr, changed, css, txt } from './dom-writes';
-import { layoutMap, type Pt } from './layout';
+import { layoutMap, legPoint, type Pt } from './layout';
+import { createState, metrics as measure, type Metrics } from './state';
+import type { Proj, Raw, Text } from './types';
 import { createScroller } from './scroller';
 import { createStarfield } from './starfield';
 import { createNebulas } from './nebulas';
@@ -13,21 +15,6 @@ import { clamp, hash, lerp } from '../../../domain/math';
 import { f1, pad } from '../../../domain/format';
 import { nebulaRgb, systemColor, systemKey, systemRgb } from '../../../adapters/system-colors';
 
-type Raw = {
-	slug: string;
-	title: string;
-	description: string;
-	cat: string;
-	tag: string;
-	year: string;
-	wip: boolean; // projet en cours : badge « In progress »
-	img: string;
-	alt: string;
-	link: string; // page projet, dans la langue de la page
-};
-type Proj = Raw & { i: number; num: string };
-// Textes de l'interface, traduits au build (StarMap.astro) : {name} et {n} y sont remplacés.
-type Text = { entering: string; system: string; selected: string; project: string; projects: string; targeting: string; lock: string };
 
 // Rythme du scroll dans la carte (réglages à affiner à l'usage ; un saut entre systèmes : LEG dans layout.ts) :
 const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
@@ -70,17 +57,14 @@ export function initStarMap(styles: Record<string, string>) {
 
 	// Écran tactile : dans la carte, on navigue avec des boutons (voir « Tactile » plus bas).
 	const coarse = window.matchMedia('(pointer: coarse)').matches;
-	let vw = 1280;
-	let vh = 800;
-	let lastH = 0;
+	const st = createState(projects); // état partagé (state.ts)
 	// Écran en portrait : la carte se parcourt de haut en bas (même règle que le CSS).
 	const portraitMq = window.matchMedia('(orientation: portrait)');
-	let vertical = false;
 	const readVp = () => {
-		vw = window.innerWidth || 1280;
-		lastH = window.innerHeight;
-		vh = Math.round(clamp(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
-		vertical = portraitMq.matches;
+		st.vw = window.innerWidth || 1280;
+		st.screenH = window.innerHeight;
+		st.vh = Math.round(clamp(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
+		st.vertical = portraitMq.matches;
 	};
 
 	// --- Construction du DOM (une seule fois) ---
@@ -225,13 +209,12 @@ export function initStarMap(styles: Record<string, string>) {
 	const goNext = root.querySelector<HTMLButtonElement>('[data-go="next"]');
 
 	// Vue rapprochée : la carte lui donne la position des nœuds et déplace son calque pour elle.
-	let zoomOn = false;
 	const nodePos: Pt[] = []; // position écran des nœuds au dernier rendu (ordre de la carte)
 	const zoom = createZoom(zoomEl, {
 		count: projects.length,
 		nodePoint: (i) => {
 			render();
-			return nodePos[L.ord.indexOf(i)] ?? { x: vw / 2, y: vh / 2 };
+			return nodePos[st.L.ord.indexOf(i)] ?? { x: st.vw / 2, y: st.vh / 2 };
 		},
 		label: (i) => `${projects[i].num} ${projects[i].title}`,
 		camera: (map, opacity, nebula, stars) => {
@@ -241,19 +224,19 @@ export function initStarMap(styles: Record<string, string>) {
 			css(nebulas.layer, 'opacity', nebula < 1 ? nebula.toFixed(3) : '');
 			css(starsLayer, 'transform', stars);
 		},
-		interior: (i) => nebulas.interior(L.W[L.ord.indexOf(i)]?.g ?? -1),
+		interior: (i) => nebulas.interior(st.L.W[st.L.ord.indexOf(i)]?.g ?? -1),
 		inSystem: (i) => { // place du projet dans son système (écart au centre, en rayons du système)
-			const w = L.W[L.ord.indexOf(i)], g0 = w && L.G[w.g];
+			const w = st.L.W[st.L.ord.indexOf(i)], g0 = w && st.L.G[w.g];
 			return g0 ? { x: (w.x - w.gx) / g0.Rc, y: (w.y - w.gy) / g0.Rc } : { x: 0, y: 0 };
 		},
 		jumpTo: (i) => goTo(i, true),
 		neighbor: (i, d) => {
-			const q = L.ord.indexOf(i), n = q + d;
-			if (q < 0 || n < 0 || n >= L.N) return null;
-			return { dx: L.W[n].x - L.W[q].x, dy: L.W[n].y - L.W[q].y, label: `${projects[L.ord[n]].num} ${projects[L.ord[n]].title}` };
+			const q = st.L.ord.indexOf(i), n = q + d;
+			if (q < 0 || n < 0 || n >= st.L.N) return null;
+			return { dx: st.L.W[n].x - st.L.W[q].x, dy: st.L.W[n].y - st.L.W[q].y, label: `${projects[st.L.ord[n]].num} ${projects[st.L.ord[n]].title}` };
 		},
 		lock: (on) => {
-			zoomOn = on;
+			st.zoomOn = on;
 			document.body.style.overflow = on ? 'hidden' : '';
 			mapUi.toggleAttribute('data-zoom', on);
 			document.documentElement.toggleAttribute('data-map-zoom', on); // la vue rapprochée couvre la page (About en pause)
@@ -273,97 +256,57 @@ export function initStarMap(styles: Record<string, string>) {
 		},
 	});
 
-	const layout = () => layoutMap(projects, { vw, vh, vertical });
-
-	// --- Cache de disposition ---
-	// Perf : tout ce qui ne dépend que de la taille d'écran est calculé au relayout
-	// (init, resize, load) et plus à chaque frame de scroll.
-	let L: ReturnType<typeof layout>;
-	let stageTop = 0;
-	let stageEnd = 0;
-	let T = 0;
-	let STEP = 0;
-	let Utot = 0;
-	let legPts: (Pt[] | null)[] = []; // points échantillonnés des sauts (monde)
+	// Tracé SVG d'une suite de points ; point du trajet entre le projet q et le suivant.
 	const D = (arr: Pt[]) => (arr.length ? 'M' + arr.map((s) => f1(s.x) + ' ' + f1(s.y)).join(' L') + ' ' : '');
-	const lp = (q: number, t: number): Pt => {
-		const W = L.W;
-		return { x: W[q].x + (W[q + 1].x - W[q].x) * t, y: W[q].y + (W[q + 1].y - W[q].y) * t };
-	};
+	const lp = (q: number, t: number) => legPoint(st.L.W, q, t);
 
 	function relayout() {
-		L = layout();
-		const { W, G, N } = L;
-		stars.place(vertical);
-		T = vh * 0.9;
-		STEP = vh * STEP_K;
-		Utot = L.U[N - 1] || 0;
-		const h = vh + T + Utot * STEP;
+		st.L = layoutMap(projects, st);
+		const { W, G, N } = st.L;
+		stars.place(st.vertical);
+		st.T = st.vh * 0.9;
+		st.STEP = st.vh * STEP_K;
+		st.Utot = st.L.U[N - 1] || 0;
+		const h = st.vh + st.T + st.Utot * st.STEP;
 		root!.style.height = h + 'px';
-		if (workAnchor) workAnchor.style.top = T + 'px';
-		stageTop = root!.getBoundingClientRect().top + window.scrollY;
-		stageEnd = stageTop + h;
+		if (workAnchor) workAnchor.style.top = st.T + 'px';
+		st.stageTop = root!.getBoundingClientRect().top + window.scrollY;
+		st.stageEnd = st.stageTop + h;
 
 		// Chemins de base (statiques en coordonnées monde).
 		let sysD = '';
 		let legD = '';
-		legPts = [];
+		st.legPts = [];
 		for (let q = 0; q < N - 1; q++) {
 			if (W[q + 1].g !== W[q].g) {
-				legPts[q] = Array.from({ length: 49 }, (_, s) => lp(q, s / 48));
-				legD += D(legPts[q]!);
+				st.legPts[q] = Array.from({ length: 49 }, (_, s) => lp(q, s / 48));
+				legD += D(st.legPts[q]!);
 			} else {
-				legPts[q] = null;
+				st.legPts[q] = null;
 				sysD += D([W[q], W[q + 1]]);
 			}
 		}
 		sysPath.setAttribute('d', sysD);
 		legPath.setAttribute('d', legD);
-		attr(svg, 'width', String(vw));
-		attr(svg, 'height', String(vh));
+		attr(svg, 'width', String(st.vw));
+		attr(svg, 'height', String(st.vh));
 
 		// Poussière : position monde autour de son système.
 		dustEls.forEach((du) => {
 			const g0 = G[du.g];
 			const a = hash(g0.g * 97 + du.d * 3.1) * Math.PI * 2;
 			const rr = Math.sqrt(hash(g0.g * 53 + du.d * 5.7)) * g0.Rc * 1.15;
-			du.wx = g0.gx + Math.cos(a) * rr * (vertical ? 0.8 : 1.1);
-			du.wy = g0.gy + Math.sin(a) * rr * (vertical ? 1.1 : 0.8);
+			du.wx = g0.gx + Math.cos(a) * rr * (st.vertical ? 0.8 : 1.1);
+			du.wy = g0.gy + Math.sin(a) * rr * (st.vertical ? 1.1 : 0.8);
 		});
 
 		G.forEach((g0, gi) => txt(groupEls[gi].label, pad(g0.g + 1) + ' · ' + sysName(g0.c)));
 	}
 
-	type Metrics = ReturnType<typeof layout> & {
-		stageTop: number; T: number; STEP: number; Utot: number; local: number; u: number; p: number; kN: number;
-	};
-	function metrics(): Metrics {
-		const local = window.scrollY - stageTop;
-		const u = clamp((local - T) / STEP, 0, Utot);
-		const p = clamp(local / T, 0, 1);
-		let kN = 0;
-		L.U.forEach((v, k) => {
-			if (Math.abs(v - u) < Math.abs(L.U[kN] - u)) kN = k;
-		});
-		return { ...L, stageTop, T, STEP, Utot, local, u, p, kN };
-	}
-
-	// --- État navigation ---
-	let moved = false; // le geste en cours est un drag (pas un clic)
-	let dragging = false;
-	let navK: number | null = null; // projet visé par les flèches pendant l'animation
-	let scrollDir = 1; // sens du dernier scroll (1 = vers le bas)
-	let touching = false; // doigt posé : pas de snap avant qu'il soit levé
-	// Retour depuis une page projet (« ← Back ») : /#project-<slug> → carte calée sur ce projet.
-	const hashSlug = /^#project-(.+)$/.exec(decodeURIComponent(location.hash))?.[1];
-	let hashIdx = hashSlug ? projects.findIndex((p) => p.slug === hashSlug) : -1;
-
-	// Direction du scroll (pour l'affichage inter-systèmes).
-	let lastU = 0;
-	let dir = 1;
+	const metrics = () => measure(st);
 
 	// --- Scroll animé (snap, flèches, boutons) ---
-	const scroller = createScroller(() => STEP);
+	const scroller = createScroller(() => st.STEP);
 
 	// Haut de About, borné au bas de page (About + footer peuvent être plus courts que l'écran).
 	const aboutTop = () =>
@@ -372,7 +315,7 @@ export function initStarMap(styles: Record<string, string>) {
 	// Snap directionnel : on termine le mouvement dans le sens du scroll plutôt que de
 	// revenir au plus proche (sinon 1-2 crans de molette sont annulés).
 	function snap() {
-		if (scroller.animating || dragging || touching) return;
+		if (scroller.animating || st.dragging || st.touching) return;
 		const m = metrics();
 		const y = window.scrollY;
 		const mapStart = m.stageTop + m.T;
@@ -381,7 +324,7 @@ export function initStarMap(styles: Record<string, string>) {
 		if (y < mapStart - 2) {
 			if (y <= 0) return;
 			// Un petit mouvement suffit (intention claire).
-			const toMap = scrollDir > 0 ? y > EDGE_PX : y > mapStart - EDGE_PX;
+			const toMap = st.scrollDir > 0 ? y > EDGE_PX : y > mapStart - EDGE_PX;
 			scroller.to(toMap ? mapStart : 0);
 			return;
 		}
@@ -391,13 +334,13 @@ export function initStarMap(styles: Record<string, string>) {
 			if (!aboutEl) return;
 			const aboutY = aboutTop();
 			if (y >= aboutY - 2) return;
-			const toAbout = scrollDir > 0 ? y > mapEnd + EDGE_PX : y > aboutY - EDGE_PX;
+			const toAbout = st.scrollDir > 0 ? y > mapEnd + EDGE_PX : y > aboutY - EDGE_PX;
 			scroller.to(toAbout ? aboutY : mapEnd);
 			return;
 		}
 		const { U, u } = m;
 		let k = 0;
-		if (scrollDir > 0) {
+		if (st.scrollDir > 0) {
 			k = U.findIndex((v) => v >= u - SNAP_BIAS);
 		} else {
 			for (let q = 0; q < U.length; q++) if (U[q] <= u + SNAP_BIAS) k = q;
@@ -415,7 +358,7 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function clickItem(i: number) {
-		if (moved) return;
+		if (st.moved) return;
 		const m = metrics();
 		const k = m.ord.indexOf(i);
 		if (Math.abs(m.u - m.U[k]) < 0.08) zoom.open(i);
@@ -425,10 +368,10 @@ export function initStarMap(styles: Record<string, string>) {
 	// Projet précédent (-1) ou suivant (+1) : flèches du clavier et boutons tactiles.
 	function navigate(d: number, fast = false) {
 		const m = metrics();
-		const base = scroller.animating && navK != null ? navK : m.kN;
+		const base = scroller.animating && st.navK != null ? st.navK : m.kN;
 		const nk = clamp(base + d, 0, m.N - 1);
 		if (nk === base) return;
-		navK = nk;
+		st.navK = nk;
 		scroller.to(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
 	}
 
@@ -469,24 +412,24 @@ export function initStarMap(styles: Record<string, string>) {
 	}
 
 	function onDown(e: PointerEvent) {
-		if (e.button !== 0 || vertical || coarse) return; // vertical : scroll natif ; tactile : boutons
+		if (e.button !== 0 || st.vertical || coarse) return; // vertical : scroll natif ; tactile : boutons
 		const startX = e.clientX;
 		const startS = window.scrollY;
-		const px = STEP / 150; // 150px de drag = un projet
-		moved = false;
-		dragging = true;
+		const px = st.STEP / 150; // 150px de drag = un projet
+		st.moved = false;
+		st.dragging = true;
 		const mv = (ev: PointerEvent) => {
 			const dx = ev.clientX - startX;
-			if (Math.abs(dx) > 6) moved = true;
-			if (moved) window.scrollTo({ top: startS - dx * px, behavior: 'instant' });
+			if (Math.abs(dx) > 6) st.moved = true;
+			if (st.moved) window.scrollTo({ top: startS - dx * px, behavior: 'instant' });
 		};
 		const up = () => {
 			window.removeEventListener('pointermove', mv);
 			window.removeEventListener('pointerup', up);
-			dragging = false;
+			st.dragging = false;
 			snap();
 			setTimeout(() => {
-				moved = false;
+				st.moved = false;
 			}, 0);
 		};
 		window.addEventListener('pointermove', mv);
@@ -524,7 +467,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const fr = frame();
 		renderHeroTransition(fr);
 		renderPaths(fr);
-		stars.render({ vw, vh, vertical }, fr.cam, fr.wave, fr.rot);
+		stars.render(st, fr.cam, fr.wave, fr.rot);
 		renderWarp(fr);
 		renderSystems(fr);
 		renderNodes(fr);
@@ -538,9 +481,9 @@ export function initStarMap(styles: Record<string, string>) {
 		const { W, U, N } = m;
 		const u = m.u;
 		const p = m.p;
-		if (u > lastU) dir = 1;
-		else if (u < lastU) dir = -1;
-		lastU = u;
+		if (u > st.lastU) st.dir = 1;
+		else if (u < st.lastU) st.dir = -1;
+		st.lastU = u;
 		const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
 
 		let j = 0;
@@ -550,7 +493,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const leg = !last && W[j + 1].g !== W[j].g;
 		// Caméra : suit le nœud dans le sens du parcours, le centre du système en travers.
 		const camF = (q: number): Pt =>
-			vertical
+			st.vertical
 				? { x: W[q].x * 0.45 + W[q].gx * 0.55, y: W[q].y * 0.7 + W[q].gy * 0.3 }
 				: { x: W[q].x * 0.7 + W[q].gx * 0.3, y: W[q].y * 0.45 + W[q].gy * 0.55 };
 		let cam: Pt;
@@ -567,17 +510,17 @@ export function initStarMap(styles: Record<string, string>) {
 		}
 		const wave = leg ? Math.sin(Math.PI * f) : 0;
 		const z = 1 - wave * 0.5;
-		const hudW = Math.min(300, vw * 0.3);
+		const hudW = Math.min(300, st.vw * 0.3);
 		// Vertical : carte un peu à gauche (labels à droite des nœuds), un peu plus haut
 		// (bandeau HUD en bas), pas de nav systèmes.
-		const ox = vertical ? vw * 0.36 : vw >= 1200 ? vw / 2 + hudW * 0.3 - 60 : vw / 2;
-		const navW = vertical ? 0 : vw >= 1200 ? 280 : 120;
-		const oy = vh * (vertical ? 0.42 : 0.45) + (1 - ease) * vh * 0.9;
+		const ox = st.vertical ? st.vw * 0.36 : st.vw >= 1200 ? st.vw / 2 + hudW * 0.3 - 60 : st.vw / 2;
+		const navW = st.vertical ? 0 : st.vw >= 1200 ? 280 : 120;
+		const oy = st.vh * (st.vertical ? 0.42 : 0.45) + (1 - ease) * st.vh * 0.9;
 		const S = (q: Pt): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + (q.y - cam.y) * z });
 
 		const curG = W[m.kN].g;
 		const rot = leg ? (Math.atan2(W[j + 1].y - W[j].y, W[j + 1].x - W[j].x) * 180) / Math.PI : 0;
-		const fArr = dir >= 0 ? f : 1 - f;
+		const fArr = st.dir >= 0 ? f : 1 - f;
 		// Carte système en plateau : apparaît tôt (dès 5% du saut), pleine opacité
 		// de 20% à 78%, puis fond — laisse le temps de lire le nom du système.
 		const arrOp = leg ? Math.min(clamp((fArr - 0.05) / 0.15, 0, 1), clamp((0.88 - fArr) / 0.1, 0, 1)) : 0;
@@ -588,7 +531,7 @@ export function initStarMap(styles: Record<string, string>) {
 	/** Transition Hero → carte, et apparition de la carte et de la barre de touches. */
 	function renderHeroTransition({ p, ease }: Frame) {
 		if (heroWrap) {
-			css(heroWrap, 'transform', `translateY(${f1(-ease * vh * 0.35)}px) scale(${(1 - ease * 0.12).toFixed(3)})`);
+			css(heroWrap, 'transform', `translateY(${f1(-ease * st.vh * 0.35)}px) scale(${(1 - ease * 0.12).toFixed(3)})`);
 			const heroOp = clamp(1 - p * 1.6, 0, 1);
 			css(heroWrap, 'opacity', heroOp.toFixed(3));
 			// Hero invisible : ses animations (canvas, shimmer) se mettent en pause.
@@ -600,7 +543,7 @@ export function initStarMap(styles: Record<string, string>) {
 		css(mapUi!, 'pointer-events', p > 0.8 ? 'auto' : 'none');
 		if (keysEl) {
 			css(keysEl, 'opacity', wheelOp.toFixed(3));
-			if (changed(keysEl, '#zoom', String(zoomOn))) keysEl.toggleAttribute('data-zoom', zoomOn);
+			if (changed(keysEl, '#zoom', String(st.zoomOn))) keysEl.toggleAttribute('data-zoom', st.zoomOn);
 		}
 	}
 
@@ -614,7 +557,7 @@ export function initStarMap(styles: Record<string, string>) {
 		let legT = '';
 		for (let q = 0; q < N - 1 && u > U[q]; q++) {
 			const ff = clamp((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
-			const pts = legPts[q];
+			const pts = st.legPts[q];
 			if (pts) legT += D(pts.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
 			else sysT += D([W[q], lp(q, ff)]);
 		}
@@ -629,8 +572,8 @@ export function initStarMap(styles: Record<string, string>) {
 		const { G, W } = m;
 		let warp = '';
 		if (leg) {
-			const from = G[dir >= 0 ? W[j].g : W[j + 1].g];
-			const to = G[dir >= 0 ? W[j + 1].g : W[j].g];
+			const from = G[st.dir >= 0 ? W[j].g : W[j + 1].g];
+			const to = G[st.dir >= 0 ? W[j + 1].g : W[j].g];
 			const kFrom = Math.min(clamp(fArr / 0.1, 0, 1), clamp((0.4 - fArr) / 0.3, 0, 1));
 			const kTo = Math.min(clamp((fArr - 0.6) / 0.3, 0, 1), clamp((1 - fArr) / 0.1, 0, 1));
 			const k = Math.round(Math.max(kFrom, kTo) * 20) / 20;
@@ -649,11 +592,11 @@ export function initStarMap(styles: Record<string, string>) {
 			css(ring, 'width', f1(R * 2) + 'px');
 			css(ring, 'height', f1(R * 2) + 'px');
 			css(ring, 'transform', at(s.x - R, s.y - R));
-			nebulas.render(gi, s, R, zoomOn, { vw, vh, vertical });
+			nebulas.render(gi, s, R, st.zoomOn, st);
 			// Vertical : toujours au-dessus de l'anneau (dessous = chemin vers le suivant).
 			// En vertical, seul le système courant reste calé sous la barre du haut
 			// (sinon les labels de deux systèmes se superposent).
-			const ly = vertical
+			const ly = st.vertical
 				? g0.g === curG ? Math.max(110, s.y - R - 28) : s.y - R - 28
 				: g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
 			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
@@ -669,14 +612,14 @@ export function initStarMap(styles: Record<string, string>) {
 			const s = S(W[q]);
 			nodePos[q] = s;
 			const { dot, label } = nodeEls[q];
-			const on = s.x > -240 && s.x < vw + 240 && s.y > -120 && s.y < vh + 120;
+			const on = s.x > -240 && s.x < st.vw + 240 && s.y > -120 && s.y < st.vh + 120;
 			css(dot, 'display', on ? 'block' : 'none');
 			css(label, 'display', on ? 'block' : 'none');
 			if (!on) return;
 			const act = Math.max(0, 1 - Math.abs(u - U[q]) * 1.4);
 			const hi = act > 0.5;
 			const w = 8 + 8 * act; // diamètre : 16px de base (CSS) mis à l'échelle
-			const op = clamp(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1) * dim;
+			const op = clamp(1.25 - Math.hypot(s.x - st.vw / 2, s.y - st.vh / 2) / (Math.max(st.vw, st.vh) * 0.6), 0.15, 1) * dim;
 			css(dot, 'transform', `${at(s.x, s.y)} translate(-50%,-50%) scale(${(w / 16).toFixed(3)})`);
 			css(dot, 'background', hi ? ACCENT : TEXT);
 			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(var(--rgb-accent), 0.18), 0 0 24px rgba(var(--rgb-accent), 0.5)' : 'none');
@@ -685,7 +628,7 @@ export function initStarMap(styles: Record<string, string>) {
 			// Côté de l'étiquette : celui du nœud dans son système, sauf si elle n'y tient pas ;
 			// si elle ne tient d'aucun côté (titre long sur téléphone), deux lignes du côté le plus large.
 			const lw = labelEm[q] * (hi ? 15 : 12), gap = 16 + 6 * act;
-			const roomR = vw - navW - 16 - (s.x + gap), roomL = s.x - gap - 16;
+			const roomR = st.vw - navW - 16 - (s.x + gap), roomL = s.x - gap - 16;
 			const wrap = lw > roomR && lw > roomL;
 			const flip = wrap ? roomL > roomR : W[q].x < W[q].gx - 1 ? lw <= roomL || lw > roomR : lw > roomR;
 			const lx = flip ? s.x - gap : s.x + gap;
@@ -704,7 +647,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function renderDust({ S, dim }: Frame) {
 		dustEls.forEach(({ el, o, sz, wx, wy }) => {
 			const s = S({ x: wx, y: wy });
-			const on = s.x > -20 && s.x < vw + 20 && s.y > -20 && s.y < vh + 20;
+			const on = s.x > -20 && s.x < st.vw + 20 && s.y > -20 && s.y < st.vh + 20;
 			css(el, 'display', on ? 'block' : 'none');
 			if (!on) return;
 			css(el, 'transform', `translate(${Math.round(s.x - sz / 2)}px,${Math.round(s.y - sz / 2)}px)`); // pixel entier
@@ -719,7 +662,7 @@ export function initStarMap(styles: Record<string, string>) {
 		css(probeEl, 'transform', `${at(pq.x, pq.y)} translate(-50%,-50%)`);
 		css(probeEl, 'opacity', (leg ? clamp(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
 		if (leg) {
-			const dg = G[dir >= 0 ? W[j + 1].g : W[j].g];
+			const dg = G[st.dir >= 0 ? W[j + 1].g : W[j].g];
 			const ds = S({ x: dg.gx, y: dg.gy });
 			const qp = clamp((fArr - 0.72) / 0.28, 0, 1);
 			const pr = (dg.Rc + 20 + qp * 160) * z;
@@ -747,7 +690,7 @@ export function initStarMap(styles: Record<string, string>) {
 		// Barre de touches : ← ou → grisée au premier / dernier projet (carte et vue rapprochée)
 		keyEnds.forEach((b) => { const off = b.dataset.key === 'ArrowLeft' ? kN === 0 : kN === N - 1; if (changed(b, '#disabled', String(off))) b.disabled = off; });
 		const inWheel = p > 0.96;
-		const hudOp = inWheel && !zoomOn ? clamp(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
+		const hudOp = inWheel && !st.zoomOn ? clamp(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ord[kN]];
 		txt(hud.cat, text.selected + ' · ' + cur.num + ' · ' + cur.cat);
@@ -770,7 +713,7 @@ export function initStarMap(styles: Record<string, string>) {
 	// Nav : clic → voyage vers le premier projet du système.
 	navRows.forEach((rowEl, gi) => {
 		rowEl.addEventListener('click', () => {
-			const g0 = L.G[gi];
+			const g0 = st.L.G[gi];
 			if (g0) goTo(g0.mem[0]);
 		});
 	});
@@ -782,12 +725,12 @@ export function initStarMap(styles: Record<string, string>) {
 	let lastY = window.scrollY;
 	let touchEndAt = -Infinity; // aucun geste encore (sinon le chargement de la page compterait)
 	let swipeY: number | null = null; // début d'un geste commencé dans la carte (tactile)
-	const mapRange = () => [stageTop + T, stageTop + T + Utot * STEP];
+	const mapRange = () => [st.stageTop + st.T, st.stageTop + st.T + st.Utot * st.STEP];
 	const onScroll = () => {
 		const y = window.scrollY;
 		// Tactile : un swipe lancé hors de la carte s'arrête à son bord,
 		// on y entre toujours par le premier ou le dernier projet.
-		if (coarse && !scroller.animating && (touching || performance.now() - touchEndAt < 1500)) {
+		if (coarse && !scroller.animating && (st.touching || performance.now() - touchEndAt < 1500)) {
 			const [a, b] = mapRange();
 			const edge = lastY <= a && y > a ? a : lastY >= b && y < b ? b : null;
 			if (edge !== null) {
@@ -796,13 +739,13 @@ export function initStarMap(styles: Record<string, string>) {
 				return;
 			}
 		}
-		if (y !== lastY) scrollDir = y > lastY ? 1 : -1;
+		if (y !== lastY) st.scrollDir = y > lastY ? 1 : -1;
 		lastY = y;
 		if (!raf) raf = requestAnimationFrame(() => {
 			raf = 0;
 			// Carte sortie de l'écran (About, footer…) : un dernier rendu puis plus rien,
 			// et on met le scintillement en pause.
-			const out = window.scrollY > stageEnd;
+			const out = window.scrollY > st.stageEnd;
 			if (out !== wasOut) root.toggleAttribute('data-off', out);
 			if (out && wasOut) return;
 			wasOut = out;
@@ -812,14 +755,14 @@ export function initStarMap(styles: Record<string, string>) {
 		snapT = window.setTimeout(snap, 170);
 	};
 	const onWheel = () => {
-		navK = null;
-		hashIdx = -1; // l'utilisateur a pris la main : plus de recalage sur le hash
+		st.navK = null;
+		st.hashIdx = -1; // l'utilisateur a pris la main : plus de recalage sur le hash
 		if (scroller.animating) scroller.stop();
 	};
 	// Mobile : la barre d'adresse qui apparaît/disparaît au scroll déclenche un resize
 	// (hauteur seule, ~60-120px). On l'ignore, sinon la carte se recalcule et saute.
 	const onResize = () => {
-		if (coarse && window.innerWidth === vw && Math.abs(window.innerHeight - lastH) < 160) return;
+		if (coarse && window.innerWidth === st.vw && Math.abs(window.innerHeight - st.screenH) < 160) return;
 		readVp();
 		relayout();
 		render();
@@ -838,7 +781,7 @@ export function initStarMap(styles: Record<string, string>) {
 		else if (d < 0 && m.kN === 0) scroller.to(0);
 	}
 	window.addEventListener('touchstart', (e) => {
-		touching = true;
+		st.touching = true;
 		onWheel();
 		const [a, b] = mapRange();
 		const y = window.scrollY;
@@ -852,7 +795,7 @@ export function initStarMap(styles: Record<string, string>) {
 		} else if (swipeY !== null) e.preventDefault();
 	}, { passive: false });
 	const onTouchEnd = (e: TouchEvent) => {
-		touching = false;
+		st.touching = false;
 		touchEndAt = performance.now();
 		if (swipeY !== null) {
 			const dy = swipeY - (e.changedTouches[0]?.clientY ?? swipeY);
@@ -869,7 +812,7 @@ export function initStarMap(styles: Record<string, string>) {
 	window.addEventListener('load', () => {
 		measureLabels();
 		relayout();
-		if (hashIdx >= 0) goTo(hashIdx, true); // recale sur le projet du hash avec la mesure finale
+		if (st.hashIdx >= 0) goTo(st.hashIdx, true); // recale sur le projet du hash avec la mesure finale
 		render();
 	});
 	window.addEventListener('keydown', onKey);
@@ -880,7 +823,7 @@ export function initStarMap(styles: Record<string, string>) {
 	});
 	mapUi.addEventListener('pointerdown', onDown);
 	hudEl?.addEventListener('click', () => {
-		if (moved) return;
+		if (st.moved) return;
 		const m = metrics();
 		zoom.open(m.ord[m.kN]);
 	});
@@ -896,7 +839,7 @@ export function initStarMap(styles: Record<string, string>) {
 
 	readVp();
 	relayout();
-	if (hashIdx >= 0) goTo(hashIdx, true);
+	if (st.hashIdx >= 0) goTo(st.hashIdx, true);
 	render();
 	root.setAttribute('data-ready', '');
 }
