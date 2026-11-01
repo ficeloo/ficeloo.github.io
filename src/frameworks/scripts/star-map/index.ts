@@ -3,23 +3,20 @@
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import { createZoom } from './zoom';
 import { css } from './dom-writes';
-import { createState, layoutStage, metrics as measure } from './state';
+import { createState, layoutStage, metrics as measure, readViewport } from './state';
 import { createStarfield } from './starfield';
 import { createNebulas } from './nebulas';
 import { buildMap } from './dom';
 import { createHud } from './hud';
 import { createRenderer } from './render';
 import { createScroller } from './scroller';
+import { createNavigation } from './navigation';
 import { createProjectList } from './project-list';
 import { rgbOf, tokenRgb } from './colors';
 import type { Proj, Raw, Text } from './types';
-import { clamp } from '../../../domain/math';
 import { pad } from '../../../domain/format';
 import { systemKey } from '../../../adapters/system-colors';
 
-// Rythme du scroll dans la carte (réglages à affiner à l'usage ; un pas : STEP_K dans state.ts, un saut entre systèmes : LEG dans layout.ts) :
-const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
-const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
 
 export function initStarMap(styles: Record<string, string>) {
 	const root = document.querySelector<HTMLElement>('[data-starmap]');
@@ -52,14 +49,6 @@ export function initStarMap(styles: Record<string, string>) {
 	// Écran tactile : dans la carte, on navigue avec des boutons (voir « Tactile » plus bas).
 	const coarse = window.matchMedia('(pointer: coarse)').matches;
 	const st = createState(projects); // état partagé (state.ts)
-	// Écran en portrait : la carte se parcourt de haut en bas (même règle que le CSS).
-	const portraitMq = window.matchMedia('(orientation: portrait)');
-	const readVp = () => {
-		st.vw = window.innerWidth || 1280;
-		st.screenH = window.innerHeight;
-		st.vh = Math.round(clamp(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
-		st.vertical = portraitMq.matches;
-	};
 
 	// --- Construction du DOM (une seule fois) ---
 	// Étoiles de fond (scintillement, parallaxe, traînées des sauts).
@@ -140,55 +129,8 @@ export function initStarMap(styles: Record<string, string>) {
 
 	// --- Scroll animé (snap, flèches, boutons) ---
 	const scroller = createScroller(() => st.STEP);
-
-	// Haut de About, borné au bas de page (About + footer peuvent être plus courts que l'écran).
-	const aboutTop = () =>
-		Math.min(aboutEl!.getBoundingClientRect().top + window.scrollY, document.documentElement.scrollHeight - window.innerHeight);
-
-	// Snap directionnel : on termine le mouvement dans le sens du scroll plutôt que de
-	// revenir au plus proche (sinon 1-2 crans de molette sont annulés).
-	function snap() {
-		if (scroller.animating || st.dragging || st.touching) return;
-		const m = metrics();
-		const y = window.scrollY;
-		const mapStart = m.stageTop + m.T;
-		// Avant la carte : tout en haut, rien à faire ; entre le Hero et le 1er système,
-		// jamais d'entre-deux.
-		if (y < mapStart - 2) {
-			if (y <= 0) return;
-			// Un petit mouvement suffit (intention claire).
-			const toMap = st.scrollDir > 0 ? y > EDGE_PX : y > mapStart - EDGE_PX;
-			scroller.to(toMap ? mapStart : 0);
-			return;
-		}
-		// Après le dernier projet : entre la carte et la section About, jamais d'entre-deux.
-		const mapEnd = mapStart + m.Utot * m.STEP;
-		if (y > mapEnd + 2) {
-			if (!aboutEl) return;
-			const aboutY = aboutTop();
-			if (y >= aboutY - 2) return;
-			const toAbout = st.scrollDir > 0 ? y > mapEnd + EDGE_PX : y > aboutY - EDGE_PX;
-			scroller.to(toAbout ? aboutY : mapEnd);
-			return;
-		}
-		const { U, u } = m;
-		let k = 0;
-		if (st.scrollDir > 0) {
-			k = U.findIndex((v) => v >= u - SNAP_BIAS);
-		} else {
-			for (let q = 0; q < U.length; q++) if (U[q] <= u + SNAP_BIAS) k = q;
-		}
-		const target = mapStart + U[k] * m.STEP;
-		if (Math.abs(target - y) > 2) scroller.to(target);
-	}
-
-	function goTo(i: number, instant = false) {
-		const m = metrics();
-		const k = Math.max(0, m.ord.indexOf(i));
-		const target = m.stageTop + m.T + m.U[k] * m.STEP;
-		if (instant) window.scrollTo({ top: target, behavior: 'instant' });
-		else scroller.to(target);
-	}
+	// Snap, aller à un projet, précédent / suivant (navigation.ts).
+	const { snap, goTo, navigate, exitMap } = createNavigation(st, scroller, aboutEl);
 
 	function clickItem(i: number) {
 		if (st.moved) return;
@@ -198,15 +140,6 @@ export function initStarMap(styles: Record<string, string>) {
 		else goTo(i);
 	}
 
-	// Projet précédent (-1) ou suivant (+1) : flèches du clavier et boutons tactiles.
-	function navigate(d: number, fast = false) {
-		const m = metrics();
-		const base = scroller.animating && st.navK != null ? st.navK : m.kN;
-		const nk = clamp(base + d, 0, m.N - 1);
-		if (nk === base) return;
-		st.navK = nk;
-		scroller.to(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
-	}
 
 	function onKey(e: KeyboardEvent) {
 		// Entrée sur un bouton ou un lien focalisé : on laisse le navigateur faire.
@@ -323,7 +256,7 @@ export function initStarMap(styles: Record<string, string>) {
 	// (hauteur seule, ~60-120px). On l'ignore, sinon la carte se recalcule et saute.
 	const onResize = () => {
 		if (coarse && window.innerWidth === st.vw && Math.abs(window.innerHeight - st.screenH) < 160) return;
-		readVp();
+		readViewport(st);
 		relayout();
 		render();
 		zoom.relayout();
@@ -335,11 +268,6 @@ export function initStarMap(styles: Record<string, string>) {
 	// --- Tactile : dans la carte, navigation par boutons uniquement ---
 	// Le swipe ne fait pas défiler les projets ; il sert seulement à sortir de la carte
 	// (vers le Hero depuis le premier projet, vers About depuis le dernier).
-	function exitMap(d: number) {
-		const m = metrics();
-		if (d > 0 && m.kN === m.N - 1 && aboutEl) scroller.to(aboutTop());
-		else if (d < 0 && m.kN === 0) scroller.to(0);
-	}
 	window.addEventListener('touchstart', (e) => {
 		st.touching = true;
 		onWheel();
@@ -397,7 +325,7 @@ export function initStarMap(styles: Record<string, string>) {
 		});
 	});
 
-	readVp();
+	readViewport(st);
 	relayout();
 	if (st.hashIdx >= 0) goTo(st.hashIdx, true);
 	render();

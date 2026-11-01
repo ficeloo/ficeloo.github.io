@@ -86,3 +86,12 @@ export function layoutStage(st: MapState, projects: Proj[], root: HTMLElement, w
 	st.stageTop = root.getBoundingClientRect().top + window.scrollY;
 	st.stageEnd = st.stageTop + h;
 }
+
+/** Lit la taille de l'écran. vh : hauteur bornée, et jamais plus que l'écran physique. Écran en
+ *  portrait : la carte se parcourt de haut en bas (même règle que le CSS). */
+export function readViewport(st: MapState) {
+	st.vw = window.innerWidth || 1280;
+	st.screenH = window.innerHeight;
+	st.vh = Math.round(clamp(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
+	st.vertical = matchMedia('(orientation: portrait)').matches;
+}
