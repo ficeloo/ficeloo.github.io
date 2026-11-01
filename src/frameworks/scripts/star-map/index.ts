@@ -3,6 +3,7 @@
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
 import { createZoom } from './zoom';
+import { attr, changed, css, txt } from './dom-writes';
 import { softwareRendering } from '../render-mode';
 import { trapTab } from '../focus-trap';
 import { clamp, easeInOutCubic, hash, lerp } from '../../../domain/math';
@@ -44,25 +45,6 @@ const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
 const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
 const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
 
-// Perf : on mémorise la dernière valeur écrite par élément et on ne touche au DOM
-// que si elle change — chaque écriture peut relancer un recalcul côté navigateur.
-const written = new WeakMap<object, Map<string, string>>();
-const changed = (el: object, key: string, v: string) => {
-	let m = written.get(el);
-	if (!m) written.set(el, (m = new Map()));
-	if (m.get(key) === v) return false;
-	m.set(key, v);
-	return true;
-};
-const css = (el: HTMLElement | SVGElement, prop: string, v: string) => {
-	if (changed(el, prop, v)) el.style.setProperty(prop, v);
-};
-const attr = (el: Element, name: string, v: string) => {
-	if (changed(el, '@' + name, v)) el.setAttribute(name, v);
-};
-const txt = (el: { textContent: string | null } | null, v: string) => {
-	if (el && changed(el, '#text', v)) el.textContent = v;
-};
 // Couleurs du thème (tokens.css) pour les styles écrits par le moteur.
 const ACCENT = 'var(--color-accent)';
 const TEXT = 'var(--color-text)';
