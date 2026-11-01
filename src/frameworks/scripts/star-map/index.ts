@@ -8,7 +8,7 @@ import { createScroller } from './scroller';
 import { createStarfield } from './starfield';
 import { createNebulas } from './nebulas';
 import { mixRgb, rgbOf, tokenRgb } from './colors';
-import { trapTab } from '../focus-trap';
+import { createProjectList } from './project-list';
 import { clamp, hash, lerp } from '../../../domain/math';
 import { f1, pad } from '../../../domain/format';
 import { nebulaRgb, systemColor, systemKey, systemRgb } from '../../../adapters/system-colors';
@@ -224,14 +224,6 @@ export function initStarMap(styles: Record<string, string>) {
 	const goPrev = root.querySelector<HTMLButtonElement>('[data-go="prev"]');
 	const goNext = root.querySelector<HTMLButtonElement>('[data-go="next"]');
 
-	// Overlay "Tout voir"
-	const overlayEl = root.querySelector<HTMLElement>('[data-overlay]');
-	const seeAllBtn = root.querySelector<HTMLElement>('[data-see-all]');
-	const listClose = root.querySelector<HTMLElement>('[data-list-close]');
-	const chips = Array.from(root.querySelectorAll<HTMLElement>('[data-filter]'));
-	const rows = Array.from(root.querySelectorAll<HTMLElement>('[data-row-idx]'));
-	const previewImg = root.querySelector<HTMLImageElement>('[data-preview-img]');
-	const previewDesc = root.querySelector<HTMLElement>('[data-preview-desc]');
 
 	// Vue rapprochée : la carte lui donne la position des nœuds et déplace son calque pour elle.
 	let zoomOn = false;
@@ -269,6 +261,18 @@ export function initStarMap(styles: Record<string, string>) {
 			render();
 		},
 	}, text);
+
+	// Liste « View all » : un projet choisi → la carte se cale dessus et zoome sur sa planète.
+	const list = createProjectList(root, projects, {
+		current: () => {
+			const m = metrics();
+			return m.ord[m.kN];
+		},
+		choose: (i) => {
+			goTo(i, true);
+			zoom.open(i);
+		},
+	});
 
 	const layout = () => layoutMap(projects, { vw, vh, vertical });
 
@@ -349,11 +353,6 @@ export function initStarMap(styles: Record<string, string>) {
 	let moved = false;
 	let dragging = false;
 	let navK: number | null = null;
-
-	// --- État overlay "Tout voir" ---
-	let listOpen = false;
-	let filter = 'All';
-	let hovIdx = 0;
 
 	// Direction du scroll (pour l'affichage inter-systèmes).
 	let lastU = 0;
@@ -438,7 +437,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function press(key: string, repeat = false, byKey = false): boolean {
 		if (key === 'Escape') {
 			zoom.close();
-			closeList();
+			list.close();
 			return true;
 		}
 		// Vue rapprochée : ← → de planète en planète, Entrée ouvre la page du projet
@@ -450,7 +449,7 @@ export function initStarMap(styles: Record<string, string>) {
 			if (key === 'Enter') location.href = zoom.link();
 			return key === 'Enter';
 		}
-		if (listOpen) return false;
+		if (list.isOpen) return false;
 		const m = metrics();
 		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return false;
 		if (key === 'ArrowRight' || key === 'ArrowLeft') {
@@ -490,48 +489,6 @@ export function initStarMap(styles: Record<string, string>) {
 		window.addEventListener('pointerup', up);
 	}
 
-	function applyFilter() {
-		chips.forEach((ch) => ch.toggleAttribute('data-active', ch.dataset.filter === filter));
-		rows.forEach((r) => (r.hidden = filter !== 'All' && r.dataset.cat !== filter));
-	}
-	function applyHover() {
-		rows.forEach((r) => r.toggleAttribute('data-hover', Number(r.dataset.rowIdx) === hovIdx));
-		const pr = projects[hovIdx] || projects[0];
-		if (previewImg && previewImg.getAttribute('src') !== pr.img) {
-			previewImg.src = pr.img;
-			previewImg.alt = pr.alt;
-		}
-		if (previewDesc) previewDesc.textContent = pr.description;
-	}
-	function openList() {
-		const m = metrics();
-		hovIdx = m.ord[m.kN];
-		filter = 'All';
-		listOpen = true;
-		document.body.style.overflow = 'hidden';
-		if (overlayEl) {
-			overlayEl.style.opacity = '1';
-			overlayEl.style.pointerEvents = 'auto';
-			overlayEl.inert = false;
-		}
-		applyFilter();
-		applyHover();
-		// Focus sur le projet courant de la liste.
-		rows.find((r) => Number(r.dataset.rowIdx) === hovIdx)?.focus({ preventScroll: true });
-	}
-	// restoreFocus : rendre le focus au bouton « View all » (sauf si on part vers un projet).
-	function closeList(restoreFocus = true) {
-		if (!listOpen) return;
-		listOpen = false;
-		document.body.style.overflow = '';
-		if (overlayEl) {
-			overlayEl.style.opacity = '0';
-			overlayEl.style.pointerEvents = 'none';
-			overlayEl.inert = true;
-		}
-		if (restoreFocus) seeAllBtn?.focus({ preventScroll: true });
-		else (document.activeElement as HTMLElement | null)?.blur();
-	}
 
 	function render() {
 		const m = metrics();
@@ -829,7 +786,7 @@ export function initStarMap(styles: Record<string, string>) {
 		onWheel();
 		const [a, b] = mapRange();
 		const y = window.scrollY;
-		swipeY = coarse && !listOpen && !zoom.isOpen && y > a - 2 && y < b + 2 ? e.touches[0].clientY : null;
+		swipeY = coarse && !list.isOpen && !zoom.isOpen && y > a - 2 && y < b + 2 ? e.touches[0].clientY : null;
 	}, { passive: true });
 	window.addEventListener('touchmove', (e) => {
 		if (!e.cancelable) return;
@@ -878,31 +835,6 @@ export function initStarMap(styles: Record<string, string>) {
 			const go = btn.dataset.go;
 			if (go === 'prev' || go === 'next') navigate(go === 'next' ? 1 : -1);
 			else scroller.to(go === 'top' ? 0 : document.documentElement.scrollHeight - window.innerHeight, true);
-		});
-	});
-
-	seeAllBtn?.addEventListener('click', openList);
-	listClose?.addEventListener('click', () => closeList());
-	// Overlay ouvert : Tab boucle sur ses boutons au lieu de partir dans la page derrière.
-	if (overlayEl) trapTab(overlayEl, () => [...overlayEl.querySelectorAll<HTMLElement>('button')].filter((b) => !b.hidden));
-	chips.forEach((ch) => {
-		ch.addEventListener('click', () => {
-			filter = ch.dataset.filter || 'All';
-			applyFilter();
-		});
-	});
-	rows.forEach((r) => {
-		const i = Number(r.dataset.rowIdx);
-		const hover = () => {
-			hovIdx = i;
-			applyHover();
-		};
-		r.addEventListener('mouseenter', hover);
-		r.addEventListener('focus', hover); // au clavier, l'aperçu suit le focus
-		r.addEventListener('click', () => {
-			closeList(false);
-			goTo(i, true);
-			zoom.open(i);
 		});
 	});
 
