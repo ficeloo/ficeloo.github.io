@@ -28,7 +28,7 @@ const data = await Promise.all(projects.map(async (p) => ({
 	link: localizePath(`/projects/${p.slug}`, lang),
 })));
 
-// Textes écrits par le moteur de la carte (src/frameworks/scripts/star-map.ts) : {name} et {n} y sont remplacés.
+// Textes écrits par le moteur de la carte (src/frameworks/scripts/star-map/) : {name} et {n} y sont remplacés.
 const text = {
 	entering: t('map.entering'),
 	system: t('map.system'),

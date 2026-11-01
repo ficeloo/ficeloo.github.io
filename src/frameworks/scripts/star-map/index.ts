@@ -2,12 +2,12 @@
 // parcourue au scroll (systèmes par catégorie, sauts hyperspace entre systèmes,
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
-import { createZoom } from './map-zoom';
-import { softwareRendering } from './render-mode';
-import { trapTab } from './focus-trap';
-import { clamp, easeInOutCubic, hash, lerp } from '../../domain/math';
-import { f1, pad } from '../../domain/format';
-import { nebulaRgb, systemColor, systemKey, systemRgb } from '../../adapters/system-colors';
+import { createZoom } from './zoom';
+import { softwareRendering } from '../render-mode';
+import { trapTab } from '../focus-trap';
+import { clamp, easeInOutCubic, hash, lerp } from '../../../domain/math';
+import { f1, pad } from '../../../domain/format';
+import { nebulaRgb, systemColor, systemKey, systemRgb } from '../../../adapters/system-colors';
 
 type Raw = {
 	slug: string;

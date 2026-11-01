@@ -9,11 +9,11 @@
 //
 // La carte n'est pas recalculée pendant le zoom : ses calques sont déplacés et agrandis par un
 // seul transform (le moteur de la carte l'applique via ZoomHost.camera), puis s'effacent.
-import { createPlanet, type Planet } from './planet';
-import { frameGap } from './frame-pace';
-import { trapTab } from './focus-trap';
-import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../../domain/math';
-import { f1 } from '../../domain/format';
+import { createPlanet, type Planet } from '../planet';
+import { frameGap } from '../frame-pace';
+import { trapTab } from '../focus-trap';
+import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../../../domain/math';
+import { f1 } from '../../../domain/format';
 
 /** Ce que la carte fournit au zoom. Coordonnées en px, dans le repère de l'écran de la carte. */
 export interface ZoomHost {

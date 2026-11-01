@@ -1,5 +1,5 @@
 // Planète d'un projet : un astre par projet, sa stack en satellites, sa signature en orbite.
-// Utilisée par les pages projet (PlanetScene.astro) et la vue rapprochée de la star map (map-zoom.ts).
+// Utilisée par les pages projet (PlanetScene.astro) et la vue rapprochée de la star map (star-map/zoom.ts).
 //
 // - Le système (catégorie) donne la technique de rendu, un fichier par système :
 //   Game = rocky.ts (cratères), Graphics = facets.ts (low-poly), Web = plated.ts (plaques + anneaux),
