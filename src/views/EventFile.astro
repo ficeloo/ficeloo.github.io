@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { systemStyle } from '../utils/system-colors';
 import { getProjects } from '../data/projects';
 import { getEvents } from '../data/events';
 import { getLang, localizePath, useTranslations } from '../i18n';
@@ -27,8 +28,7 @@ const t = useTranslations(lang);
 const project = getProjects(lang).find((p) => p.slug === Astro.props.project)!;
 const event = getEvents(lang).find((e) => e.project === project.slug && e.slug === Astro.props.event)!;
 const projectPath = localizePath(`/projects/${project.slug}`, lang);
-const sys = project.category.toLowerCase();
-const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb: var(--rgb-system-${sys}, var(--rgb-secondary))`;
+const sysStyle = systemStyle(project.category);
 ---
 
 <Layout title={t('meta.event.title', { title: event.title, project: project.title })} description={event.description} crumb={t('crumb.event', { project: project.title, title: event.title })} back={projectPath}>

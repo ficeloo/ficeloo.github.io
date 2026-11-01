@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { systemStyle } from '../utils/system-colors';
 import { getMapOrder } from '../data/projects';
 import { getProjectEvents } from '../data/events';
 import { getLang, localizePath, useTranslations } from '../i18n';
@@ -26,8 +27,7 @@ const project = getMapOrder(lang).find((p) => p.slug === Astro.props.slug)!;
 // Événements du projet (une association et ses LAN…), chacun avec sa page
 const events = getProjectEvents(project.slug, lang);
 // Teinte du système (tokens.css), héritée par la mini-carte : lueur de fond et nom du système.
-const sys = project.category.toLowerCase();
-const sysStyle = `--sys: var(--system-${sys}, var(--color-secondary)); --sys-rgb: var(--rgb-system-${sys}, var(--rgb-secondary))`;
+const sysStyle = systemStyle(project.category);
 ---
 
 <Layout title={t('meta.project.title', { title: project.title })} description={project.description} crumb={t('crumb.project', { title: project.title })} back={localizePath(`/#project-${project.slug}`, lang)}>

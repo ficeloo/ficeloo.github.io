@@ -6,6 +6,7 @@ import { createZoom } from './map-zoom';
 import { softwareRendering } from './render-mode';
 import { clamp, easeInOutCubic, hash, lerp } from '../utils/math';
 import { f1, pad } from '../utils/format';
+import { nebulaRgb, systemColor, systemKey, systemRgb } from '../utils/system-colors';
 
 type Raw = {
 	slug: string;
@@ -26,12 +27,6 @@ type Pt = { x: number; y: number };
 type Node = Pt & { g: number; gx: number; gy: number };
 type Group = { c: string; g: number; mem: number[]; gx: number; gy: number; Rc: number; pos: Pt[] | null };
 
-// Couleur d'un système (tokens.css : --system-<catégorie en minuscules>, --rgb-system-…, --rgb-nebula-…).
-// Système sans token : couleurs neutres du site.
-const sysKey = (c: string) => c.toLowerCase();
-const sysColor = (c: string) => `var(--system-${sysKey(c)}, var(--color-secondary))`;
-const sysRgb = (c: string) => `var(--rgb-system-${sysKey(c)}, var(--rgb-secondary))`;
-const nebRgb = (c: string) => `var(--rgb-nebula-${sysKey(c)}, var(--rgb-secondary))`;
 const NEB_BOX = 600; // taille réelle (px) de l'élément nébuleuse, mis à l'échelle par transform
 const NEB_K = 2.55; // rayon de la nébuleuse / rayon de l'anneau du système
 const NEB_TEX = 320; // côté des textures (px) : brumeuses, inutile d'aller plus fin
@@ -218,7 +213,7 @@ export function initStarMap(styles: Record<string, string>) {
 		nebLayer.appendChild(nebula);
 		const ring = document.createElement('div');
 		ring.className = styles.ring;
-		ring.style.borderColor = `rgba(${sysRgb(c)}, 0.35)`;
+		ring.style.borderColor = `rgba(${systemRgb(c)}, 0.35)`;
 		const label = document.createElement('div');
 		label.className = styles['sys-label'];
 		mapLayer.appendChild(ring);
@@ -266,7 +261,7 @@ export function initStarMap(styles: Record<string, string>) {
 			const sz = hash(d * 11.3 + g) < 0.8 ? 2 : 3;
 			el.style.width = sz + 'px';
 			el.style.height = sz + 'px';
-			el.style.background = `rgb(${nebRgb(cats0[g])})`;
+			el.style.background = `rgb(${nebulaRgb(cats0[g])})`;
 			mapLayer.appendChild(el);
 			dustEls.push({ el, g, d, o: 0.25 + hash(d * 7.9 + g * 3) * 0.45, sz, wx: 0, wy: 0 });
 		}
@@ -277,14 +272,15 @@ export function initStarMap(styles: Record<string, string>) {
 	// Teintes pastel des systèmes en nombres (pour les mélanger au blanc pendant un saut).
 	const rootCss = getComputedStyle(document.documentElement);
 	const rgbOf = (name: string) => rootCss.getPropertyValue(name).split(',').map(Number);
+	// Token absent (système sans couleur) : couleur neutre du site.
+	const tokenRgb = (name: string) => (rootCss.getPropertyValue(name) ? rgbOf(name) : rgbOf('--rgb-secondary')) as Rgb;
 	const white = rgbOf('--rgb-text');
-	const pastels = new Map(cats0.map((c) => [c, rootCss.getPropertyValue(`--rgb-nebula-${sysKey(c)}`) ? rgbOf(`--rgb-nebula-${sysKey(c)}`) : rgbOf('--rgb-secondary')]));
+	const pastels = new Map(cats0.map((c) => [c, tokenRgb(`--rgb-nebula-${systemKey(c)}`)]));
 	const mixRgb = (a: number[], b: number[], k: number) => a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(', ');
 
 	// Nébuleuses : textures calculées une fois, hors du fil principal (worker), quand le navigateur
 	// est libre ; chaque nébuleuse apparaît en fondu dès que la sienne est prête.
 	// Sans worker : pas de nébuleuse, le système garde son anneau et sa poussière.
-	const tokenRgb = (name: string) => (rootCss.getPropertyValue(name) ? rgbOf(name) : rgbOf('--rgb-secondary')) as Rgb;
 	const loadNebulas = () => {
 		let worker: Worker;
 		try {
@@ -309,8 +305,8 @@ export function initStarMap(styles: Record<string, string>) {
 				g,
 				seed: 11 + 37 * g,
 				size: NEB_TEX,
-				vivid: tokenRgb(`--rgb-system-${sysKey(c)}`),
-				pastel: tokenRgb(`--rgb-nebula-${sysKey(c)}`),
+				vivid: tokenRgb(`--rgb-system-${systemKey(c)}`),
+				pastel: tokenRgb(`--rgb-nebula-${systemKey(c)}`),
 				deep: tokenRgb('--rgb-bg-deep'),
 			};
 			worker.postMessage(job);
@@ -887,7 +883,7 @@ export function initStarMap(styles: Record<string, string>) {
 				? g0.g === curG ? Math.max(110, s.y - R - 28) : s.y - R - 28
 				: g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
 			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
-			css(label, 'color', g0.g === curG ? sysColor(g0.c) : `rgba(${sysRgb(g0.c)}, 0.55)`);
+			css(label, 'color', g0.g === curG ? systemColor(g0.c) : `rgba(${systemRgb(g0.c)}, 0.55)`);
 			css(label, 'opacity', dim.toFixed(3));
 		});
 
@@ -953,7 +949,7 @@ export function initStarMap(styles: Record<string, string>) {
 			css(pulseEl, 'opacity', (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3));
 			txt(arrNum, pad(dg.g + 1));
 			txt(arrName, ' ' + sysName(dg.c));
-			css(arrTitle, 'color', sysColor(dg.c));
+			css(arrTitle, 'color', systemColor(dg.c));
 			txt(arrCount, (dg.mem.length > 1 ? text.projects : text.project).replace('{n}', pad(dg.mem.length)));
 			css(arrivalEl, 'opacity', arrOp.toFixed(3));
 		} else {
