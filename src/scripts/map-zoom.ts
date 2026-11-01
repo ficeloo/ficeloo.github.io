@@ -11,6 +11,7 @@
 // seul transform (le moteur de la carte l'applique via ZoomHost.camera), puis s'effacent.
 import { createPlanet, type Planet } from './planet';
 import { frameGap } from './frame-pace';
+import { trapTab } from './focus-trap';
 import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../utils/math';
 import { f1 } from '../utils/format';
 
@@ -408,13 +409,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	routes.forEach(({ d, label }) => label.addEventListener('click', () => hop(d)));
 	nextBtn?.addEventListener('click', () => hop(1));
 	// Dialog : Tab boucle sur les contrôles visibles de la vue
-	root.addEventListener('keydown', (e) => {
-		if (e.key !== 'Tab') return;
-		const items = [...root.querySelectorAll<HTMLElement>('a, button')].filter((el) => el.offsetParent && !(el as HTMLButtonElement).disabled);
-		const first = items[0], last = items[items.length - 1];
-		if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-	});
+	trapTab(root, () => [...root.querySelectorAll<HTMLElement>('a, button')].filter((el) => el.offsetParent && !(el as HTMLButtonElement).disabled));
 
 	return {
 		get isOpen() { return open; },

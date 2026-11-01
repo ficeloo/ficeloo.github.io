@@ -4,6 +4,7 @@
 import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
 import { createZoom } from './map-zoom';
 import { softwareRendering } from './render-mode';
+import { trapTab } from './focus-trap';
 import { clamp, easeInOutCubic, hash, lerp } from '../utils/math';
 import { f1, pad } from '../utils/format';
 import { nebulaRgb, systemColor, systemKey, systemRgb } from '../utils/system-colors';
@@ -1119,19 +1120,7 @@ export function initStarMap(styles: Record<string, string>) {
 	seeAllBtn?.addEventListener('click', openList);
 	listClose?.addEventListener('click', () => closeList());
 	// Overlay ouvert : Tab boucle sur ses boutons au lieu de partir dans la page derrière.
-	overlayEl?.addEventListener('keydown', (e) => {
-		if (e.key !== 'Tab') return;
-		const items = Array.from(overlayEl.querySelectorAll<HTMLElement>('button')).filter((b) => !b.hidden);
-		const first = items[0];
-		const last = items[items.length - 1];
-		if (e.shiftKey && document.activeElement === first) {
-			e.preventDefault();
-			last.focus();
-		} else if (!e.shiftKey && document.activeElement === last) {
-			e.preventDefault();
-			first.focus();
-		}
-	});
+	if (overlayEl) trapTab(overlayEl, () => [...overlayEl.querySelectorAll<HTMLElement>('button')].filter((b) => !b.hidden));
 	chips.forEach((ch) => {
 		ch.addEventListener('click', () => {
 			filter = ch.dataset.filter || 'All';
