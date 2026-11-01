@@ -147,7 +147,7 @@
 }
 
 /* Nébuleuse d'un système : 3 calques (fond, gaz, poussière) dont les textures sont calculées
-   une fois par le JS (nebula-texture.ts). Taille fixe (= NEB_BOX dans star-map.ts) mise à
+   une fois par le JS (nebula-texture.ts). Taille fixe (= NEB_BOX dans star-map/nebulas.ts) mise à
    l'échelle par transform, sur son propre calque : la carte graphique la déplace sans rien
    repeindre. Apparaît en fondu quand ses textures sont prêtes. */
 .nebula {

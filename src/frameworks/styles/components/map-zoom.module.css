@@ -1,6 +1,6 @@
 /* Vue rapprochée de la star map : la caméra zoome jusqu'à la planète du projet (au centre),
    la fiche s'affiche à gauche (en bas sur écran étroit ou en portrait).
-   La caméra, la position de la planète et le viseur sont gérés par src/frameworks/scripts/map-zoom.ts. */
+   La caméra, la position de la planète et le viseur sont gérés par src/frameworks/scripts/star-map/zoom.ts. */
 .zoom {
 	position: absolute;
 	inset: 0;
