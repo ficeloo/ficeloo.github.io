@@ -11,3 +11,8 @@ export const tokenRgb = (name: string) => (root().getPropertyValue(name) ? rgbOf
 
 /** Mélange de a vers b (k de 0 à 1), en chaîne « r, g, b » pour rgba(). */
 export const mixRgb = (a: number[], b: number[], k: number) => a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(', ');
+
+// Couleurs du thème (tokens.css) pour les styles écrits par le moteur.
+export const ACCENT = 'var(--color-accent)';
+export const TEXT = 'var(--color-text)';
+export const TEXT_DIM = 'var(--color-text-dim)';
