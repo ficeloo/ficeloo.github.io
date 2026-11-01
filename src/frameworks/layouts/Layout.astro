@@ -1,0 +1,52 @@
+---
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import Background from '../components/Background.astro'
+import styles from '../styles/layouts/layout.module.css'
+import { getLang, languages, langs, switchPath } from '../../adapters/i18n'
+import '../styles/tokens.css'
+import '../styles/global.css'
+
+interface Props {
+	title: string;
+	/** Résumé de la page pour Google et les aperçus de partage. */
+	description: string;
+	/** Fil d'Ariane des sous-pages (ex. "Project / Stellar Drift") ; absent sur l'accueil. */
+	crumb?: string;
+	/** Cible du lien « ← Back » des sous-pages (par défaut : début de la carte). */
+	back?: string;
+}
+
+const { title, description, crumb, back } = Astro.props;
+const lang = getLang(Astro.currentLocale);
+// Versions de la page dans les langues publiées (pour Google), et page exclue tant que sa langue ne l'est pas.
+const alternates = langs.filter((l) => languages[l].live).map((l) => ({ lang: l, href: new URL(switchPath(Astro.url.pathname, l), Astro.site) }));
+---
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- ?v= : à incrémenter quand le favicon change (les navigateurs le gardent longtemps en cache). -->
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+		<link rel="icon" href="/favicon.ico?v=2" sizes="32x32" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		{!languages[lang].live && <meta name="robots" content="noindex" />}
+		{alternates.length > 1 && alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
+	</head>
+	<body>
+		<Background />
+		<div class={styles.page}>
+			<Header crumb={crumb} back={back} />
+			<slot />
+			<Footer />
+		</div>
+		<script>
+			// Pose html[data-idle] quand la fenêtre est inactive (animations au ralenti / en pause).
+			import { watchFocus } from '../scripts/frame-pace';
+			watchFocus();
+		</script>
+	</body>
+</html>

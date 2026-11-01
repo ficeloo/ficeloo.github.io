@@ -10,7 +10,7 @@ export interface Planet {
 	retrograde?: boolean; // la signature tourne à contre-sens
 	belt?: boolean; // ceinture d'astéroïdes
 	rings?: number; // Web : 1 anneau par couche du projet (front, back, BDD…), 3 max
-	signs?: string[]; // IRL : enseignes au néon propres au projet (formes dans src/scripts/planet/neon-signs.ts)
+	signs?: string[]; // IRL : enseignes au néon propres au projet (formes dans src/frameworks/scripts/planet/neon-signs.ts)
 }
 
 export interface Highlight<T = Localized> {

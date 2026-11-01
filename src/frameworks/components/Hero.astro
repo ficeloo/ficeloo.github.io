@@ -1,0 +1,146 @@
+---
+import styles from '../styles/components/hero.module.css'
+import { getLang, useTranslations } from '../../adapters/i18n'
+
+const t = useTranslations(getLang(Astro.currentLocale));
+---
+
+<section class={styles.hero} data-hero>
+	<canvas class={styles['hero-stars']} data-hero-stars aria-hidden="true"></canvas>
+
+	<div class={`${styles["status-pill"]} ${styles.reveal}`} style="--i:0">
+		<span class={styles.dot}></span>{t('hero.learning')}
+	</div>
+
+	<h1 class={styles.reveal} style="--i:1">{t('hero.greeting')} <span class={styles.name}>ficelo</span>, <br /> {t('hero.role')}</h1>
+
+	<p class={`${styles.lede} ${styles.reveal}`} style="--i:2">{t('hero.lede')}</p>
+
+	<div class={`${styles["hero-meta"]} ${styles.reveal}`} style="--i:3">
+		<span><span class={styles.label}>{t('hero.based')}</span><strong>{t('hero.basedValue')}</strong></span>
+		<span class={styles.sep}>/</span>
+		<span><span class={styles.label}>{t('hero.school')}</span><strong>{t('hero.schoolValue')}</strong></span>
+		<span class={styles.sep}>/</span>
+		<span><span class={styles.label}>{t('hero.skilled')}</span><strong>C/C++ · Godot</strong></span>
+		<span class={styles.sep}>/</span>
+		<span><span class={styles.label}>{t('hero.lookingFor')}</span><strong>{t('hero.lookingForValue')}</strong></span>
+	</div>
+
+	<div class={`${styles["hero-cta"]} ${styles.reveal}`} style="--i:4">
+		<a href="#work" class={styles.primary}>{t('hero.ctaWork')} <span class={styles.arrow}>→</span></a>
+		<a href="#contact" class={styles.secondary}>{t('hero.ctaHi')} <span class={styles.arrow}>→</span></a>
+	</div>
+</section>
+
+<script>
+	import { frameGap } from '../scripts/frame-pace';
+
+	// Entrée en cascade au chargement. Les étoiles fixes viennent de la star map ;
+	// ici on n'ajoute QUE des étoiles filantes propres au Hero (elles s'estompent
+	// avec le Hero au scroll via l'opacité du slot).
+	const hero = document.querySelector('[data-hero]') as HTMLElement | null;
+	hero?.setAttribute('data-ready', '');
+
+	const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	const canvas = document.querySelector('[data-hero-stars]') as HTMLCanvasElement | null;
+
+	if (hero && canvas && !reduce) {
+		const ctx = canvas.getContext('2d')!;
+		// Le canvas ne lit pas les variables CSS : on récupère la couleur une fois.
+		const accent = getComputedStyle(document.documentElement).getPropertyValue('--rgb-accent').trim();
+		type Shot = { x: number; y: number; vx: number; vy: number; life: number; max: number; len: number };
+		let shooting: Shot[] = [];
+		let W = 0, H = 0, dpr = 1, sinceShoot = 0;
+		let dirty = false; // quelque chose est dessiné sur le canvas
+		// Slot du Hero : la star map y pose data-hidden quand le Hero est invisible.
+		const slot = hero.closest('[data-hero-wrap]');
+
+		function resize() {
+			dpr = Math.min(window.devicePixelRatio || 1, 2);
+			const rect = hero!.getBoundingClientRect();
+			W = canvas!.width = Math.floor(rect.width * dpr);
+			H = canvas!.height = Math.floor(rect.height * dpr);
+			canvas!.style.width = rect.width + 'px';
+			canvas!.style.height = rect.height + 'px';
+		}
+		// ResizeObserver : redimensionne dès que le Hero a une taille réelle
+		// (la couche sticky est display:none tant que la carte n'est pas prête).
+		const ro = new ResizeObserver(() => resize());
+		ro.observe(hero);
+
+		function spawn() {
+			shooting.push({
+				x: Math.random() * W * 0.7,
+				y: Math.random() * H * 0.45,
+				vx: (6 + Math.random() * 4) * dpr,
+				vy: (3 + Math.random() * 2) * dpr,
+				life: 0,
+				max: 60 + Math.random() * 30,
+				len: (120 + Math.random() * 80) * dpr,
+			});
+		}
+
+		// Perf : la boucle s'arrête quand le Hero est invisible et repart quand il revient.
+		let running = false;
+		let last = 0;
+		function start() {
+			if (running) return;
+			running = true;
+			last = performance.now();
+			requestAnimationFrame(loop);
+		}
+
+		function loop(ms: number) {
+			if (slot?.hasAttribute('data-hidden')) {
+				if (dirty) ctx.clearRect(0, 0, W, H);
+				dirty = false;
+				shooting = [];
+				running = false;
+				return;
+			}
+			requestAnimationFrame(loop);
+			if (ms - last <= frameGap()) return;
+			// Vitesses exprimées par image à 60 i/s : k = nombre de ces images écoulées
+			// (même vitesse quel que soit l'écran ou le rythme).
+			const k = Math.min(3, (ms - last) / (1000 / 60));
+			last = ms;
+			// Effacer un canvas plein écran coûte : seulement s'il y a quelque chose dessus.
+			if (dirty) ctx.clearRect(0, 0, W, H);
+			dirty = false;
+			sinceShoot += k;
+			if (sinceShoot > 70 && Math.random() < 0.035 * k) {
+				spawn();
+				sinceShoot = 0;
+			}
+			dirty = shooting.length > 0; // ce qui est dessiné ci-dessous sera à effacer
+			for (let i = shooting.length - 1; i >= 0; i--) {
+				const sh = shooting[i];
+				sh.life += k;
+				sh.x += sh.vx * k;
+				sh.y += sh.vy * k;
+				const t = sh.life / sh.max;
+				const alpha = t < 0.15 ? t / 0.15 : 1 - t;
+				const norm = Math.hypot(sh.vx, sh.vy);
+				const tailX = sh.x - (sh.vx / norm) * sh.len;
+				const tailY = sh.y - (sh.vy / norm) * sh.len;
+				const grad = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
+				grad.addColorStop(0, `rgba(${accent}, ${Math.max(0, alpha)})`);
+				grad.addColorStop(1, `rgba(${accent}, 0)`);
+				ctx.strokeStyle = grad;
+				ctx.lineWidth = 2 * dpr;
+				ctx.beginPath();
+				ctx.moveTo(sh.x, sh.y);
+				ctx.lineTo(tailX, tailY);
+				ctx.stroke();
+				if (sh.life >= sh.max) shooting.splice(i, 1);
+			}
+		}
+		// La star map pose/retire data-hidden sur le slot du Hero.
+		if (slot) {
+			new MutationObserver(() => {
+				if (!slot.hasAttribute('data-hidden')) start();
+			}).observe(slot, { attributes: true, attributeFilter: ['data-hidden'] });
+		}
+		start();
+	}
+</script>

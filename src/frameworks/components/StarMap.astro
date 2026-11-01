@@ -1,0 +1,180 @@
+---
+import { pad } from '../../domain/format';
+import { systemColor } from '../../adapters/system-colors';
+import { getMapOrder, systems as cats } from '../../adapters/catalog';
+import { getLang, localizePath, useTranslations } from '../../adapters/i18n';
+import { webSrc } from '../../adapters/images';
+import InProgressBadge from './InProgressBadge.astro';
+import MapZoom from './MapZoom.astro';
+import styles from '../styles/components/star-map.module.css';
+
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const projects = getMapOrder(lang);
+
+// Projets dans l'ordre de parcours de la carte (système par système, voir projects.ts) :
+// c'est celui des numéros 01, 02…
+
+const data = await Promise.all(projects.map(async (p) => ({
+	slug: p.slug,
+	title: p.title,
+	description: p.description,
+	cat: p.category,
+	tag: p.tag,
+	year: p.year,
+	wip: !!p.inProgress,
+	img: await webSrc(p.image, 720), // vignette (HUD, aperçu « View all ») : jamais affichée à plus de 640px
+	alt: p.alt,
+	link: localizePath(`/projects/${p.slug}`, lang),
+})));
+
+// Textes écrits par le moteur de la carte (src/frameworks/scripts/star-map.ts) : {name} et {n} y sont remplacés.
+const text = {
+	entering: t('map.entering'),
+	system: t('map.system'),
+	selected: t('map.selected'),
+	project: t('map.project'),
+	projects: t('map.projects'),
+	targeting: t('map.targeting'),
+	lock: t('map.lock'),
+};
+
+const systems = cats.map((c, g) => ({
+	num: pad(g + 1),
+	label: c,
+	count: pad(projects.filter((p) => p.category === c).length),
+}));
+const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.length) }, ...systems.map((s) => ({ key: s.label, label: s.label, count: s.count }))];
+---
+
+<section class={styles.stage} data-starmap>
+	<div id="work" class={styles['work-anchor']} data-work-anchor></div>
+	<div class={styles.sticky}>
+		<div class={styles['stars-layer']} data-stars aria-hidden="true"></div>
+
+		<div class={styles['hero-slot']} data-hero-wrap>
+			<slot />
+		</div>
+
+		<div class={styles['map-ui']} data-map-ui>
+			<div class={styles['map-layer']} data-map></div>
+
+			<div class={styles.topbar}>
+				<div class={styles.counter} data-counter>01 / {pad(projects.length)}</div>
+				<h2 class={styles.title} set:html={t('map.title')} />
+				<button class={styles['see-all']} type="button" data-see-all>{t('map.viewAll')} ☰</button>
+			</div>
+
+			<div class={styles.nav}>
+				<div class={styles['nav-heading']}>{t('map.systems')}</div>
+				{systems.map((sys) => (
+					<button class={styles['nav-row']} type="button" data-nav-row>
+						<span class={styles['nav-dot']} style={`--c: ${systemColor(sys.label)}`}></span>
+						<span>{sys.num}<span class={styles['nav-name']}>. {t('map.system', { name: sys.label })}</span></span>
+						<span class={styles['nav-count']}>{sys.count}</span>
+						<span class={styles['nav-bar']} data-nav-bar></span>
+					</button>
+				))}
+			</div>
+
+			<div class={styles.hud} data-hud>
+				<div class={styles['hud-label']} data-hud-cat>{t('map.selected')}</div>
+				<div class={styles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
+				<h3 class={styles['hud-title']}><span class={styles['title-text']} data-hud-title></span><InProgressBadge data-hud-wip hidden /></h3>
+				<div class={styles['hud-meta']}>
+					<span data-hud-tag></span>
+					<span class="sep">-</span>
+					<span data-hud-year></span>
+				</div>
+			</div>
+
+			<a class={styles['about-link']} href="#about">{t('map.aboutLink')} ↓</a>
+
+			<!-- Tactile : remplace le swipe dans la carte (affiché seulement sur écran tactile). -->
+			<nav class={styles['touch-nav']} aria-label={t('map.touchAria')}>
+				<button type="button" data-go="top" aria-label={t('map.top')}>↑</button>
+				<button type="button" data-go="prev">← {t('map.prev')}</button>
+				<button type="button" data-go="next">{t('map.next')} →</button>
+				<button type="button" data-go="bottom" aria-label={t('map.bottom')}>↓</button>
+			</nav>
+		</div>
+
+		<MapZoom projects={projects} />
+
+		<!-- Raccourcis clavier : une ligne pour la carte, une pour la vue rapprochée. Chaque touche est
+		     aussi un bouton (souris) qui fait la même chose ; hors du parcours au clavier, qui a les vraies touches. -->
+		<div class={styles.keys} data-keys aria-hidden="true">
+			<span class={styles['keys-map']}>
+				<button type="button" class={styles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={styles.key} data-key="ArrowRight" tabindex="-1">→</button>
+				{t('map.keyNavigate')}
+				<button type="button" class={styles.key} data-key="Enter" tabindex="-1">↵</button>
+				{t('map.keyOpen')}
+			</span>
+			<span class={styles['keys-zoom']}>
+				<button type="button" class={styles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={styles.key} data-key="ArrowRight" tabindex="-1">→</button>
+				{t('map.keyNavigate')}
+				<button type="button" class={styles.key} data-key="Enter" tabindex="-1">↵</button>
+				{t('map.keyViewProject')}
+				<button type="button" class:list={[styles.key, styles['key-word']]} data-key="Escape" tabindex="-1">esc</button>
+				{t('map.keyClose')}
+			</span>
+		</div>
+	</div>
+
+	<!-- Overlay "Tout voir" -->
+	<div class={styles.overlay} data-overlay role="dialog" aria-modal="true" aria-labelledby="overlay-title" inert>
+		<div class={styles['overlay-inner']}>
+			<div class={styles['overlay-head']}>
+				<h2 class={styles['overlay-title']} id="overlay-title" set:html={t('map.allProjects')} />
+				<button class={styles['overlay-close']} type="button" data-list-close>{t('map.close')} ✕</button>
+			</div>
+			<div class={styles['overlay-filters']}>
+				{filters.map((fl) => (
+					<button class={styles.chip} type="button" data-filter={fl.key}>
+						{fl.label} <span class={styles['chip-count']}>{fl.count}</span>
+					</button>
+				))}
+			</div>
+			<div class={styles['overlay-grid']}>
+				<div class={styles['overlay-rows']}>
+					{projects.map((p, i) => (
+						<button type="button" class={styles.row} data-row-idx={i} data-cat={p.category}>
+							<span class={styles['row-num']}>{pad(i + 1)}</span>
+							<span class={styles['row-main']}>
+								<span class={styles['row-title']}>{p.title}{p.inProgress && <InProgressBadge />}</span>
+								<span class={styles['row-tag']}>{p.tag}</span>
+							</span>
+							<span class={styles['row-year']}>{p.year} →</span>
+						</button>
+					))}
+				</div>
+				<div class={styles['overlay-preview']}>
+					<div class={styles['preview-img']}><img data-preview-img src="" alt="" /></div>
+					<p class={styles['preview-desc']} data-preview-desc></p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Repli sémantique : visible sans JS / reduced-motion, masqué quand la carte est active. -->
+	<ul class={styles.fallback}>
+		{projects.map((p, i) => (
+			<li>
+				<a href={localizePath(`/projects/${p.slug}`, lang)}>
+					<span class={styles['f-num']}>{pad(i + 1)}</span>
+					<span>{p.title} {p.inProgress && <InProgressBadge />}</span>
+					<span class={styles['f-tag']}>{p.tag}</span>
+				</a>
+			</li>
+		))}
+	</ul>
+
+	<script type="application/json" id="starmap-data" set:html={JSON.stringify(data)} />
+	<script type="application/json" id="starmap-text" set:html={JSON.stringify(text)} />
+</section>
+
+<script>
+	import styles from '../styles/components/star-map.module.css';
+	import { initStarMap } from '../scripts/star-map';
+	initStarMap(styles as unknown as Record<string, string>);
+</script>

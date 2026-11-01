@@ -1,0 +1,30 @@
+---
+import { getMapOrder } from '../../adapters/catalog';
+import { getLang, useTranslations } from '../../adapters/i18n';
+import { moonSlots } from '../scripts/home-planet';
+import HomePlanet from './HomePlanet.astro';
+import styles from '../styles/components/about.module.css'
+
+// Un satellite par projet autour de la planète : rangs d'orbite calculés au build.
+const lang = getLang(Astro.currentLocale);
+const t = useTranslations(lang);
+const moons = JSON.stringify(moonSlots(getMapOrder(lang).map((p) => p.category)));
+---
+
+<section id="about" class={styles.about} data-orbits data-moons={moons}>
+	<canvas class={styles['orbits-back']} aria-hidden="true" data-orbits-back></canvas>
+	<canvas class={styles['orbits-front']} aria-hidden="true" data-orbits-front></canvas>
+	<div class={styles.label}>{t('about.label')}</div>
+	<h2 class={styles.title} set:html={t('about.title')} />
+	<div class={styles.planet}>
+		<HomePlanet />
+	</div>
+	<div class={styles.body} set:html={t('about.body')} />
+</section>
+
+<script>
+	import { initOrbits } from '../scripts/home-planet';
+
+	const section = document.querySelector<HTMLElement>('[data-orbits]');
+	if (section) initOrbits(section);
+</script>
