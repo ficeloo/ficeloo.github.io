@@ -5,9 +5,10 @@ import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './neb
 import { createZoom } from './zoom';
 import { attr, changed, css, txt } from './dom-writes';
 import { layoutMap, type Pt } from './layout';
+import { createScroller } from './scroller';
 import { softwareRendering } from '../render-mode';
 import { trapTab } from '../focus-trap';
-import { clamp, easeInOutCubic, hash, lerp } from '../../../domain/math';
+import { clamp, hash, lerp } from '../../../domain/math';
 import { f1, pad } from '../../../domain/format';
 import { nebulaRgb, systemColor, systemKey, systemRgb } from '../../../adapters/system-colors';
 
@@ -462,7 +463,6 @@ export function initStarMap(styles: Record<string, string>) {
 	// --- État navigation ---
 	let moved = false;
 	let dragging = false;
-	let animEnd = 0;
 	let navK: number | null = null;
 
 	// --- État overlay "Tout voir" ---
@@ -474,31 +474,8 @@ export function initStarMap(styles: Record<string, string>) {
 	let lastU = 0;
 	let dir = 1;
 
-	// --- Scroll animé + snap ---
-	let animating = false;
-	let sRaf = 0;
-	function animScroll(target: number, fast = false) {
-		cancelAnimationFrame(sRaf);
-		const from = window.scrollY;
-		const d = target - from;
-		if (Math.abs(d) < 2) {
-			animating = false;
-			return;
-		}
-		const units = Math.abs(d) / STEP; // durée proportionnelle au nombre de pas
-		const dur = fast ? clamp(160 + units * 170, 160, 1400) : clamp(450 + units * 300, 450, 3600);
-		const t0 = performance.now();
-		animating = true;
-		animEnd = t0 + dur;
-		const step = (t: number) => {
-			const q = clamp((t - t0) / dur, 0, 1);
-			const e = fast ? 1 - Math.pow(1 - q, 2) : easeInOutCubic(q);
-			window.scrollTo({ top: from + d * e, behavior: 'instant' });
-			if (q < 1) sRaf = requestAnimationFrame(step);
-			else animating = false;
-		};
-		sRaf = requestAnimationFrame(step);
-	}
+	// --- Scroll animé (snap, flèches, boutons) ---
+	const scroller = createScroller(() => STEP);
 
 	// Haut de About, borné au bas de page (About + footer peuvent être plus courts que l'écran).
 	const aboutTop = () =>
@@ -507,7 +484,7 @@ export function initStarMap(styles: Record<string, string>) {
 	// Snap directionnel : on termine le mouvement dans le sens du scroll plutôt que de
 	// revenir au plus proche (sinon 1-2 crans de molette sont annulés).
 	function snap() {
-		if (animating || dragging || touching) return;
+		if (scroller.animating || dragging || touching) return;
 		const m = metrics();
 		const y = window.scrollY;
 		const mapStart = m.stageTop + m.T;
@@ -517,7 +494,7 @@ export function initStarMap(styles: Record<string, string>) {
 			if (y <= 0) return;
 			// Un petit mouvement suffit (intention claire).
 			const toMap = scrollDir > 0 ? y > EDGE_PX : y > mapStart - EDGE_PX;
-			animScroll(toMap ? mapStart : 0);
+			scroller.to(toMap ? mapStart : 0);
 			return;
 		}
 		// Après le dernier projet : entre la carte et la section About, jamais d'entre-deux.
@@ -527,7 +504,7 @@ export function initStarMap(styles: Record<string, string>) {
 			const aboutY = aboutTop();
 			if (y >= aboutY - 2) return;
 			const toAbout = scrollDir > 0 ? y > mapEnd + EDGE_PX : y > aboutY - EDGE_PX;
-			animScroll(toAbout ? aboutY : mapEnd);
+			scroller.to(toAbout ? aboutY : mapEnd);
 			return;
 		}
 		const { U, u } = m;
@@ -538,7 +515,7 @@ export function initStarMap(styles: Record<string, string>) {
 			for (let q = 0; q < U.length; q++) if (U[q] <= u + SNAP_BIAS) k = q;
 		}
 		const target = mapStart + U[k] * m.STEP;
-		if (Math.abs(target - y) > 2) animScroll(target);
+		if (Math.abs(target - y) > 2) scroller.to(target);
 	}
 
 	function goTo(i: number, instant = false) {
@@ -546,7 +523,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const k = Math.max(0, m.ord.indexOf(i));
 		const target = m.stageTop + m.T + m.U[k] * m.STEP;
 		if (instant) window.scrollTo({ top: target, behavior: 'instant' });
-		else animScroll(target);
+		else scroller.to(target);
 	}
 
 	function clickItem(i: number) {
@@ -560,11 +537,11 @@ export function initStarMap(styles: Record<string, string>) {
 	// Projet précédent (-1) ou suivant (+1) : flèches du clavier et boutons tactiles.
 	function navigate(d: number, fast = false) {
 		const m = metrics();
-		const base = animating && navK != null ? navK : m.kN;
+		const base = scroller.animating && navK != null ? navK : m.kN;
 		const nk = clamp(base + d, 0, m.N - 1);
 		if (nk === base) return;
 		navK = nk;
-		animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
+		scroller.to(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
 	}
 
 	function onKey(e: KeyboardEvent) {
@@ -592,7 +569,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const m = metrics();
 		if (m.local < m.T * 0.9 || m.local > m.T + m.Utot * m.STEP + m.STEP) return false;
 		if (key === 'ArrowRight' || key === 'ArrowLeft') {
-			if (!(repeat && animating && animEnd - performance.now() > 90)) navigate(key === 'ArrowRight' ? 1 : -1, repeat);
+			if (!(repeat && scroller.animating && scroller.end - performance.now() > 90)) navigate(key === 'ArrowRight' ? 1 : -1, repeat);
 			return true;
 		}
 		if (key === 'Enter') {
@@ -942,7 +919,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const y = window.scrollY;
 		// Tactile : un swipe lancé hors de la carte s'arrête à son bord,
 		// on y entre toujours par le premier ou le dernier projet.
-		if (coarse && !animating && (touching || performance.now() - touchEndAt < 1500)) {
+		if (coarse && !scroller.animating && (touching || performance.now() - touchEndAt < 1500)) {
 			const [a, b] = mapRange();
 			const edge = lastY <= a && y > a ? a : lastY >= b && y < b ? b : null;
 			if (edge !== null) {
@@ -969,10 +946,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const onWheel = () => {
 		navK = null;
 		hashIdx = -1; // l'utilisateur a pris la main : plus de recalage sur le hash
-		if (animating) {
-			cancelAnimationFrame(sRaf);
-			animating = false;
-		}
+		if (scroller.animating) scroller.stop();
 	};
 	// Mobile : la barre d'adresse qui apparaît/disparaît au scroll déclenche un resize
 	// (hauteur seule, ~60-120px). On l'ignore, sinon la carte se recalcule et saute.
@@ -992,8 +966,8 @@ export function initStarMap(styles: Record<string, string>) {
 	// (vers le Hero depuis le premier projet, vers About depuis le dernier).
 	function exitMap(d: number) {
 		const m = metrics();
-		if (d > 0 && m.kN === m.N - 1 && aboutEl) animScroll(aboutTop());
-		else if (d < 0 && m.kN === 0) animScroll(0);
+		if (d > 0 && m.kN === m.N - 1 && aboutEl) scroller.to(aboutTop());
+		else if (d < 0 && m.kN === 0) scroller.to(0);
 	}
 	window.addEventListener('touchstart', (e) => {
 		touching = true;
@@ -1048,7 +1022,7 @@ export function initStarMap(styles: Record<string, string>) {
 		btn.addEventListener('click', () => {
 			const go = btn.dataset.go;
 			if (go === 'prev' || go === 'next') navigate(go === 'next' ? 1 : -1);
-			else animScroll(go === 'top' ? 0 : document.documentElement.scrollHeight - window.innerHeight, true);
+			else scroller.to(go === 'top' ? 0 : document.documentElement.scrollHeight - window.innerHeight, true);
 		});
 	});
 
