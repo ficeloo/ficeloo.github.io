@@ -4,6 +4,7 @@
 import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
 import { createZoom } from './zoom';
 import { attr, changed, css, txt } from './dom-writes';
+import { layoutMap, type Pt } from './layout';
 import { softwareRendering } from '../render-mode';
 import { trapTab } from '../focus-trap';
 import { clamp, easeInOutCubic, hash, lerp } from '../../../domain/math';
@@ -25,9 +26,6 @@ type Raw = {
 type Proj = Raw & { i: number; num: string };
 // Textes de l'interface, traduits au build (StarMap.astro) : {name} et {n} y sont remplacés.
 type Text = { entering: string; system: string; selected: string; project: string; projects: string; targeting: string; lock: string };
-type Pt = { x: number; y: number };
-type Node = Pt & { g: number; gx: number; gy: number };
-type Group = { c: string; g: number; mem: number[]; gx: number; gy: number; Rc: number; pos: Pt[] | null };
 
 const NEB_BOX = 600; // taille réelle (px) de l'élément nébuleuse, mis à l'échelle par transform
 const NEB_K = 2.55; // rayon de la nébuleuse / rayon de l'anneau du système
@@ -41,7 +39,6 @@ const NEB_PAR = 47;
 const NEB_RANGE = 0.33;
 // Rythme du scroll dans la carte (réglages à affiner à l'usage) :
 const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
-const LEG = 2.5; // un saut inter-systèmes vaut LEG pas
 const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
 const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
 
@@ -387,51 +384,7 @@ export function initStarMap(styles: Record<string, string>) {
 		},
 	}, text);
 
-	function layout() {
-		const P = projects;
-		const cats = [...new Set(P.map((p) => p.cat))];
-		const ord = cats.flatMap((c) => P.filter((p) => p.cat === c).map((p) => p.i));
-		// Calcul sur un axe principal (sens du parcours) et un axe transverse ;
-		// en vertical on permute les deux à la fin.
-		const main = vertical ? vh : vw;
-		const cross = vertical ? vw : vh;
-		const Dx = clamp(main * 1.15, 1000, 1650);
-		const G: Group[] = cats.map((c, g) => {
-			const mem = ord.filter((q) => P[q].cat === c);
-			return { c, g, mem, gx: g * Dx, gy: (g % 2 ? -1 : 1) * cross * 0.06, Rc: 110 + mem.length * 26, pos: null };
-		});
-		const W: Node[] = ord.map((pi) => {
-			const g0 = G.find((x) => x.c === P[pi].cat)!;
-			const n = g0.mem.length;
-			const j = g0.mem.indexOf(pi);
-			if (!g0.pos) {
-				const amp = Math.min(g0.Rc * 0.8, cross * 0.24);
-				const wts = Array.from({ length: Math.max(0, n - 1) }, (_, q) => 0.4 + hash(g0.g * 41 + q * 9.3) * 1.2);
-				const tot = wts.reduce((a, b) => a + b, 0) || 1;
-				let acc = 0;
-				let prev: number | null = null;
-				g0.pos = Array.from({ length: n }, (_, q) => {
-					if (q > 0) acc += wts[q - 1];
-					let v = n === 1 ? 0 : hash(g0.g * 19 + q * 5.1 + 2) * 2 - 1;
-					if (prev !== null && Math.abs(v - prev) * amp < 64) v = prev > 0 ? prev - 64 / amp - 0.2 : prev + 64 / amp + 0.2;
-					v = clamp(v, -1, 1);
-					prev = v;
-					return { x: g0.gx - g0.Rc * 0.9 + g0.Rc * 1.8 * (n > 1 ? acc / tot : 0.5), y: g0.gy + v * amp };
-				});
-			}
-			return { x: g0.pos[j].x, y: g0.pos[j].y, g: g0.g, gx: g0.gx, gy: g0.gy };
-		});
-		if (vertical) {
-			G.forEach((g0) => ([g0.gx, g0.gy] = [g0.gy, g0.gx]));
-			W.forEach((w) => {
-				[w.x, w.y] = [w.y, w.x];
-				[w.gx, w.gy] = [w.gy, w.gx];
-			});
-		}
-		const U = [0];
-		for (let k = 1; k < W.length; k++) U.push(U[k - 1] + (W[k].g === W[k - 1].g ? 1 : LEG));
-		return { P, cats, ord, G, W, U, N: ord.length };
-	}
+	const layout = () => layoutMap(projects, { vw, vh, vertical });
 
 	// --- Cache de disposition ---
 	// Perf : tout ce qui ne dépend que de la taille d'écran est calculé au relayout
