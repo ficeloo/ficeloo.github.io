@@ -6,6 +6,7 @@ import { getLang, localizePath, useTranslations } from '../../adapters/i18n';
 import InProgressBadge from './InProgressBadge.astro';
 import PlanetScene from './project/PlanetScene.astro';
 import styles from '../styles/components/map-zoom.module.css';
+import cardStyles from '../styles/components/zoom-card.module.css';
 
 interface Props {
 	projects: Project[]; // ordre de la carte
@@ -43,27 +44,27 @@ const cards = await Promise.all(projects.map(async (p) => ({
 	</svg>
 	<button type="button" class={styles.hop} data-zoom-hop="-1" aria-label={t('map.prevPlanet')} hidden></button>
 	<button type="button" class={styles.hop} data-zoom-hop="1" aria-label={t('map.nextPlanet')} hidden></button>
-	<div class={styles.cards} data-zoom-scroll>
+	<div class={cardStyles.cards} data-zoom-scroll>
 		{cards.map(({ p, shots }, i) => (
-			<article class={styles.card} data-zoom-card={i} aria-labelledby={`zoom-title-${i}`} hidden>
-				<div class={styles.media}>
-					<span class={styles.corner}></span><span class={styles.corner}></span>
-					<span class={styles.corner}></span><span class={styles.corner}></span>
-					<div class={styles.screen}>
+			<article class={cardStyles.card} data-zoom-card={i} aria-labelledby={`zoom-title-${i}`} hidden>
+				<div class={cardStyles.media}>
+					<span class={cardStyles.corner}></span><span class={cardStyles.corner}></span>
+					<span class={cardStyles.corner}></span><span class={cardStyles.corner}></span>
+					<div class={cardStyles.screen}>
 						{shots.map((s) => <img data-src={s.src} data-gif={s.gif ? '' : undefined} alt={s.alt} draggable="false" />)}
 					</div>
 				</div>
-				<div class={styles.meta}>{pad(i + 1)} / {pad(projects.length)} · {t('map.system', { name: p.category })}</div>
-				<h3 class={styles.title} id={`zoom-title-${i}`}><span class={styles['title-text']}>{p.title}</span>{p.inProgress && <InProgressBadge />}</h3>
-				<p class={styles.desc}>{p.description}</p>
-				<div class={styles.tagyear}><span>{p.tag}</span><span class={styles.sep}>-</span><span>{p.year}</span></div>
-				<a class={styles.link} href={localizePath(`/projects/${p.slug}`, lang)} data-zoom-link>{t('map.viewProject')} →</a>
+				<div class={cardStyles.meta}>{pad(i + 1)} / {pad(projects.length)} · {t('map.system', { name: p.category })}</div>
+				<h3 class={cardStyles.title} id={`zoom-title-${i}`}><span class={cardStyles['title-text']}>{p.title}</span>{p.inProgress && <InProgressBadge />}</h3>
+				<p class={cardStyles.desc}>{p.description}</p>
+				<div class={cardStyles.tagyear}><span>{p.tag}</span><span class={cardStyles.sep}>-</span><span>{p.year}</span></div>
+				<a class={cardStyles.link} href={localizePath(`/projects/${p.slug}`, lang)} data-zoom-link>{t('map.viewProject')} →</a>
 			</article>
 		))}
-		<div class={styles.controls}>
-			<button type="button" class={styles.btn} data-zoom-go="-1" aria-label={t('map.prevPlanet')}>←</button>
-			<button type="button" class={styles.btn} data-zoom-go="1" aria-label={t('map.nextPlanet')}>→</button>
-			<button type="button" class:list={[styles.btn, styles.back]} data-zoom-close>{t('map.backToMap')}</button>
+		<div class={cardStyles.controls}>
+			<button type="button" class={cardStyles.btn} data-zoom-go="-1" aria-label={t('map.prevPlanet')}>←</button>
+			<button type="button" class={cardStyles.btn} data-zoom-go="1" aria-label={t('map.nextPlanet')}>→</button>
+			<button type="button" class:list={[cardStyles.btn, cardStyles.back]} data-zoom-close>{t('map.backToMap')}</button>
 		</div>
 	</div>
 	<div class={styles.planets} data-zoom-planets>

@@ -1,0 +1,311 @@
+/* Vue rapprochée de la star map : fiche du projet (mini diaporama, textes, « View project », ← →).
+   À gauche de la planète ; en bas sur écran étroit ou en portrait, en haut en grand sur écran haut.
+   [data-zoom][data-ready] = la vue (map-zoom.module.css) une fois la caméra posée par zoom.ts. */
+
+/* ===== Fiche ===== */
+.cards {
+	position: absolute;
+	left: clamp(16px, 4vw, 3rem);
+	top: 50%;
+	box-sizing: border-box;
+	width: min(360px, 30vw);
+	max-height: calc(100% - 2rem);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	display: grid;
+	gap: 1.1rem;
+	opacity: 0;
+	transform: translateY(calc(-50% + 12px));
+	transition: opacity 0.35s ease, transform 0.35s ease;
+	pointer-events: none;
+}
+
+/* La fiche n'arrive qu'une fois la caméra posée (le script pose data-ready). */
+[data-zoom][data-ready] .cards {
+	opacity: 1;
+	transform: translateY(-50%);
+	pointer-events: auto;
+}
+
+.card {
+	display: grid;
+	gap: 0.7rem;
+	min-width: 0;
+}
+
+.card[hidden] {
+	display: none;
+}
+
+/* Changement de planète (← →) : la nouvelle fiche glisse depuis le côté du voyage. */
+.card[data-enter] {
+	animation: card-in 0.4s ease both;
+}
+.card[data-enter='-1'] {
+	--from: -24px;
+}
+
+@keyframes card-in {
+	from {
+		opacity: 0;
+		transform: translateX(var(--from, 24px));
+	}
+}
+
+/* Cadre HUD à coins orange, comme le média de la page projet */
+.media {
+	position: relative;
+	padding: 8px;
+	margin-bottom: 0.3rem;
+}
+
+.corner {
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	border: 0 solid var(--color-accent);
+	pointer-events: none;
+}
+.corner:nth-child(1) { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.corner:nth-child(2) { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.corner:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.corner:nth-child(4) { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+/* Mini diaporama : images empilées, celle qui porte data-on est visible (fondu enchaîné). */
+.screen {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	max-width: 100%;
+	background: var(--color-panel);
+	overflow: hidden;
+}
+
+.screen img {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0;
+	transition: opacity 0.6s ease;
+}
+
+.screen img[data-on] {
+	opacity: 1;
+}
+
+.meta {
+	font-family: var(--font-display);
+	font-size: 0.75rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-text-dim);
+}
+
+.title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.8rem;
+	margin: 0;
+	font-family: var(--font-display);
+	font-weight: 400;
+	font-size: clamp(1.5rem, 2.6vw, 2.3rem);
+	line-height: 1.1;
+	letter-spacing: 0.08em;
+}
+
+.title-text {
+	min-width: 0;
+}
+
+.desc {
+	margin: 0;
+	max-width: 52ch;
+	font-size: 1rem;
+	line-height: 1.5;
+	color: rgba(var(--rgb-text), 0.72);
+}
+
+.tagyear {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 1rem;
+	font-size: 0.9rem;
+	color: var(--color-text-dim);
+}
+
+.sep {
+	color: var(--color-accent);
+}
+
+/* Action principale : ouvrir la page du projet (orange = action) */
+.link {
+	justify-self: start;
+	margin-top: 0.3rem;
+	padding: 0.65rem 1.1rem;
+	border: 1px solid var(--color-accent);
+	border-radius: 4px;
+	font-family: var(--font-display);
+	font-size: 0.9rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+	text-decoration: none;
+	transition: background 0.2s ease, color 0.2s ease;
+}
+.link:hover {
+	background: var(--color-accent);
+	color: var(--color-bg);
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* Grand écran avec clavier : la barre de touches en bas de l'écran (cliquable, star-map.module.css)
+   fait déjà ← → et « fermer » ; condition inverse de celle qui la masque. */
+@media not ((pointer: coarse) or (max-width: 900px) or (orientation: portrait)) {
+	.controls {
+		display: none;
+	}
+}
+
+.btn {
+	min-width: 45px;
+	height: 45px;
+	padding: 0 0.9rem;
+	font-family: system-ui, sans-serif; /* flèches lisibles (celles de Syne Mono sont minuscules) */
+	font-size: 1.15rem;
+	color: var(--color-text);
+	background: rgba(var(--rgb-panel), 0.75);
+	border: 1px solid rgba(var(--rgb-secondary), 0.7);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: color 0.2s ease, border-color 0.2s ease;
+}
+.btn:hover {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+.btn:disabled {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+.back {
+	font-family: var(--font-display);
+	font-size: 0.8rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+
+.btn:focus-visible,
+.link:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
+/* ===== Écran étroit / portrait : fiche en bas, planète au-dessus ===== */
+@media (max-width: 700px), (orientation: portrait) {
+	.cards {
+		left: 16px;
+		right: 16px;
+		top: auto;
+		bottom: 16px;
+		width: auto;
+		max-height: 58%;
+		gap: 0.8rem;
+		transform: translateY(12px);
+	}
+	[data-zoom][data-ready] .cards {
+		transform: none;
+	}
+	.card {
+		gap: 0.5rem;
+	}
+	/* Vignette et texte plafonnés : la fiche tient sous la planète */
+	.media {
+		width: min(100%, 26rem, 30svh);
+	}
+	.desc {
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		font-size: 0.92rem;
+	}
+}
+
+/* ===== Écran haut mais pas étroit (fenêtre en moitié d'écran, tablette) : fiche en haut, en grand,
+   vignette à gauche et texte à droite ; la planète dessous ===== */
+@media (orientation: portrait) and (min-width: 701px) {
+	.cards {
+		top: clamp(16px, 4vh, 48px);
+		bottom: auto;
+		left: 50%;
+		right: auto;
+		width: min(760px, calc(100% - 64px));
+		max-height: 55%;
+		gap: 1rem;
+		transform: translate(-50%, 12px);
+	}
+	[data-zoom][data-ready] .cards {
+		transform: translateX(-50%);
+	}
+	.card {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		column-gap: 1.5rem;
+		row-gap: 0.6rem;
+		align-content: start;
+	}
+	.media {
+		grid-row: 1 / span 6;
+		align-self: start;
+		width: 100%;
+	}
+	.title {
+		font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+	}
+	.desc {
+		display: block;
+		overflow: visible;
+		font-size: 1rem;
+	}
+}
+
+/* Petites hauteurs (téléphone en paysage) : fiche resserrée pour tenir sans défiler */
+@media (max-height: 520px) and (orientation: landscape) {
+	.cards,
+	.card {
+		gap: 0.45rem;
+	}
+	.media {
+		width: 42%;
+		margin-bottom: 0;
+	}
+	.title {
+		font-size: 1.3rem;
+	}
+	.tagyear {
+		font-size: 0.8rem;
+	}
+	.link {
+		margin-top: 0;
+		padding: 0.45rem 0.8rem;
+		font-size: 0.75rem;
+	}
+	.btn {
+		min-width: 38px;
+		height: 38px;
+	}
+	.desc {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+}
