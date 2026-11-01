@@ -11,7 +11,8 @@
 // Ce fichier monte la scène et dessine chaque image dans l'ordre : derrière la planète, la planète, devant.
 
 import { frameGap } from '../frame-pace';
-import { C, TAU, proj, reduce, rgba, rootStyle, seeded, token, type PlanetSystem, type Scene, type Vec3 } from './kit';
+import { C, TAU, proj, reduce, rgba, seeded, tokenOr, type PlanetSystem, type Scene, type Vec3 } from './kit';
+import { systemKey } from '../../utils/system-colors';
 import { HALO, atmoEdge, buildHalo, rim } from './atmosphere';
 import { drawBelt, drawSignature, orbitEllipse } from './orbit';
 import { drawBuilder, drawFreeDrone, droneUpdate, newDrone } from './drone';
@@ -26,14 +27,13 @@ const SYSTEMS: Record<string, PlanetSystem> = { Game: rocky, Graphics: facets, W
 function setup(box: HTMLElement): Scene {
 	const ds = box.dataset;
 	const cv = box.querySelector('canvas')!;
-	const sysKey = (ds.system ?? '').toLowerCase();
 	const s: Scene = {
 		box, cv, ctx: cv.getContext('2d')!,
 		sys: SYSTEMS[ds.system ?? ''] ?? rocky,
-		color: rootStyle.getPropertyValue(`--planet-${ds.slug}`) ? token(`--planet-${ds.slug}`) : C.secondary, // projet sans token : vert-gris du site
-		ringColor: rootStyle.getPropertyValue(`--planet-${ds.slug}-ring`) ? token(`--planet-${ds.slug}-ring`) : C.accent, // anneaux Web : orange par défaut
+		color: tokenOr(`--planet-${ds.slug}`, C.secondary), // projet sans token : vert-gris du site
+		ringColor: tokenOr(`--planet-${ds.slug}-ring`, C.accent), // anneaux Web : orange par défaut
 		// Pas d'atmosphère sur un projet en construction ; système sans token : vert-gris du site
-		atmo: !('wip' in ds) && rootStyle.getPropertyValue(`--system-${sysKey}`) ? token(`--system-${sysKey}`) : C.secondary,
+		atmo: 'wip' in ds ? C.secondary : tokenOr(`--system-${systemKey(ds.system ?? '')}`, C.secondary),
 		wip: 'wip' in ds,
 		rnd: seeded(Number(ds.seed) || 11),
 		W: 0, H: 0, R: 0, cx: 0, cy: 0,

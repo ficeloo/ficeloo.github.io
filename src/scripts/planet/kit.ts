@@ -26,6 +26,8 @@ function hex(value: string): RGB {
 }
 export const rootStyle = getComputedStyle(document.documentElement);
 export const token = (name: string) => hex(rootStyle.getPropertyValue(name) || rootStyle.getPropertyValue('--color-text'));
+/** Couleur d'un token facultatif (projet ou système sans couleur) : fallback s'il n'existe pas. */
+export const tokenOr = (name: string, fallback: RGB) => (rootStyle.getPropertyValue(name) ? token(name) : fallback);
 export const C = {
 	accent: token('--color-accent'),
 	accentLight: token('--color-accent-light'),
