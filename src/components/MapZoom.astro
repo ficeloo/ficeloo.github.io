@@ -1,7 +1,6 @@
 ---
 import { pad } from '../utils/format';
-import { getImage } from 'astro:assets';
-import type { ImageMetadata } from 'astro';
+import { webSrc } from '../utils/images';
 import type { Project } from '../data/projects';
 import { getLang, localizePath, useTranslations } from '../i18n';
 import InProgressBadge from './InProgressBadge.astro';
@@ -22,12 +21,10 @@ const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
 
 // Mini diaporama : image principale (un GIF reste animé) puis captures, jamais affichées à plus de 640px.
-const thumb = async (img: ImageMetadata) =>
-	img.format === 'gif' ? img.src : (await getImage({ src: img, width: 720, format: 'webp' })).src;
 const cards = await Promise.all(projects.map(async (p) => ({
 	p,
 	shots: await Promise.all([p.image, ...(p.screenshots ?? [])].map(async (img, k) => ({
-		src: await thumb(img),
+		src: await webSrc(img, 720),
 		alt: k === 0 ? p.alt : t('media.screenshot', { title: p.title, n: k }),
 		gif: img.format === 'gif',
 	}))),

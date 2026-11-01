@@ -1,5 +1,5 @@
 ---
-import { getImage } from 'astro:assets';
+import { webSrc } from '../../utils/images';
 import type { Project } from '../../data/projects';
 import styles from '../../styles/components/project/landing-zone.module.css';
 import { getLang, useTranslations } from '../../i18n';
@@ -15,7 +15,7 @@ const { embedUrl, links } = project;
 const t = useTranslations(getLang(Astro.currentLocale));
 const title = project.title;
 const coverImg = project.screenshots?.[1] ?? project.screenshots?.[0] ?? project.image;
-const cover = coverImg.format === 'gif' ? coverImg.src : (await getImage({ src: coverImg, width: 960, format: 'webp' })).src;
+const cover = await webSrc(coverImg, 960);
 ---
 
 {(embedUrl || links.itch) && (

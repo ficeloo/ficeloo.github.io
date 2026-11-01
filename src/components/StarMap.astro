@@ -3,10 +3,9 @@ import { pad } from '../utils/format';
 import { systemColor } from '../utils/system-colors';
 import { getMapOrder, systems as cats } from '../data/projects';
 import { getLang, localizePath, useTranslations } from '../i18n';
-import { getImage } from 'astro:assets';
+import { webSrc } from '../utils/images';
 import InProgressBadge from './InProgressBadge.astro';
 import MapZoom from './MapZoom.astro';
-import type { ImageMetadata } from 'astro';
 import styles from '../styles/components/star-map.module.css';
 
 const lang = getLang(Astro.currentLocale);
@@ -16,11 +15,6 @@ const projects = getMapOrder(lang);
 // Projets dans l'ordre de parcours de la carte (système par système, voir projects.ts) :
 // c'est celui des numéros 01, 02…
 
-// Vignettes (HUD, aperçu « View all ») : jamais affichées à plus de 640px de large.
-// Un GIF est gardé tel quel, sinon la conversion lui ferait perdre son animation.
-const thumb = async (img: ImageMetadata) =>
-	img.format === 'gif' ? img.src : (await getImage({ src: img, width: 720, format: 'webp' })).src;
-
 const data = await Promise.all(projects.map(async (p) => ({
 	slug: p.slug,
 	title: p.title,
@@ -29,7 +23,7 @@ const data = await Promise.all(projects.map(async (p) => ({
 	tag: p.tag,
 	year: p.year,
 	wip: !!p.inProgress,
-	img: await thumb(p.image),
+	img: await webSrc(p.image, 720), // vignette (HUD, aperçu « View all ») : jamais affichée à plus de 640px
 	alt: p.alt,
 	link: localizePath(`/projects/${p.slug}`, lang),
 })));
