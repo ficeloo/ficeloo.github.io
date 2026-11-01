@@ -2,23 +2,22 @@
 // parcourue au scroll (systèmes par catégorie, sauts hyperspace entre systèmes,
 // zoom sur la planète d'un projet, overlay « View all », clavier et drag).
 import { createZoom } from './zoom';
-import { attr, changed, css, txt } from './dom-writes';
-import { layoutMap, legPoint, type Pt } from './layout';
-import { createState, metrics as measure, type Metrics } from './state';
-import type { Proj, Raw, Text } from './types';
-import { createScroller } from './scroller';
+import { css } from './dom-writes';
+import { createState, layoutStage, metrics as measure } from './state';
 import { createStarfield } from './starfield';
 import { createNebulas } from './nebulas';
-import { ACCENT, TEXT, TEXT_DIM, mixRgb, rgbOf, tokenRgb } from './colors';
 import { buildMap } from './dom';
+import { createHud } from './hud';
+import { createRenderer } from './render';
+import { createScroller } from './scroller';
 import { createProjectList } from './project-list';
-import { clamp, hash, lerp } from '../../../domain/math';
-import { f1, pad } from '../../../domain/format';
-import { nebulaRgb, systemColor, systemKey, systemRgb } from '../../../adapters/system-colors';
+import { rgbOf, tokenRgb } from './colors';
+import type { Proj, Raw, Text } from './types';
+import { clamp } from '../../../domain/math';
+import { pad } from '../../../domain/format';
+import { systemKey } from '../../../adapters/system-colors';
 
-
-// Rythme du scroll dans la carte (réglages à affiner à l'usage ; un saut entre systèmes : LEG dans layout.ts) :
-const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
+// Rythme du scroll dans la carte (réglages à affiner à l'usage ; un pas : STEP_K dans state.ts, un saut entre systèmes : LEG dans layout.ts) :
 const SNAP_BIAS = 0.15; // dès 15 % de pas dans un sens, le snap finit vers le projet suivant
 const EDGE_PX = 40; // idem aux bords de la carte (Hero ↔ carte ↔ About), en pixels
 
@@ -41,7 +40,6 @@ export function initStarMap(styles: Record<string, string>) {
 		num: pad(i + 1),
 	}));
 	const text = JSON.parse(document.getElementById('starmap-text')?.textContent || '{}') as Text;
-	const sysName = (c: string) => text.system.replace('{name}', c);
 	if (!projects.length) return;
 
 	// Reduced-motion : pas de carte animée ni de scroll-jacking.
@@ -72,22 +70,23 @@ export function initStarMap(styles: Record<string, string>) {
 	const nebulas = createNebulas(mapUi, mapLayer, styles, cats0);
 	// Éléments de la carte (dom.ts).
 	const els = buildMap(root, mapLayer, styles, projects, cats0, text, (i) => clickItem(i));
-	const { svg, pathsG, sysPath, legPath, sysTPath, legTPath, groupEls, nodeEls, dustEls, labelEm, measureLabels } = els;
-	const { probeEl, pulseEl, arrivalEl, arrTitle, arrNum, arrName, arrCount } = els;
-	const { counterEl, hudEl, hud, navRows, navBars, keysEl, keyEnds, goPrev, goNext } = els;
+	const { measureLabels, hudEl, navRows, keysEl } = els;
 
 	// Teintes pastel des systèmes en nombres (pour les mélanger au blanc pendant un saut).
 	const white = rgbOf('--rgb-text');
 	const pastels = new Map(cats0.map((c) => [c, tokenRgb(`--rgb-nebula-${systemKey(c)}`)]));
 
+	// Rendu de la carte (render.ts) et de son chrome (hud.ts).
+	const chrome = createHud(st, els, heroWrap, mapUi, text);
+	const renderer = createRenderer({ st, els, stars, nebulas, hud: chrome, starsLayer, text, white, pastels });
+
 
 	// Vue rapprochée : la carte lui donne la position des nœuds et déplace son calque pour elle.
-	const nodePos: Pt[] = []; // position écran des nœuds au dernier rendu (ordre de la carte)
 	const zoom = createZoom(zoomEl, {
 		count: projects.length,
 		nodePoint: (i) => {
 			render();
-			return nodePos[st.L.ord.indexOf(i)] ?? { x: st.vw / 2, y: st.vh / 2 };
+			return renderer.nodePos[st.L.ord.indexOf(i)] ?? { x: st.vw / 2, y: st.vh / 2 };
 		},
 		label: (i) => `${projects[i].num} ${projects[i].title}`,
 		camera: (map, opacity, nebula, stars) => {
@@ -129,52 +128,13 @@ export function initStarMap(styles: Record<string, string>) {
 		},
 	});
 
-	// Tracé SVG d'une suite de points ; point du trajet entre le projet q et le suivant.
-	const D = (arr: Pt[]) => (arr.length ? 'M' + arr.map((s) => f1(s.x) + ' ' + f1(s.y)).join(' L') + ' ' : '');
-	const lp = (q: number, t: number) => legPoint(st.L.W, q, t);
 
+	// Taille d'écran changée : disposition, scène, puis ce qui en dépend à l'écran.
 	function relayout() {
-		st.L = layoutMap(projects, st);
-		const { W, G, N } = st.L;
-		stars.place(st.vertical);
-		st.T = st.vh * 0.9;
-		st.STEP = st.vh * STEP_K;
-		st.Utot = st.L.U[N - 1] || 0;
-		const h = st.vh + st.T + st.Utot * st.STEP;
-		root!.style.height = h + 'px';
-		if (workAnchor) workAnchor.style.top = st.T + 'px';
-		st.stageTop = root!.getBoundingClientRect().top + window.scrollY;
-		st.stageEnd = st.stageTop + h;
-
-		// Chemins de base (statiques en coordonnées monde).
-		let sysD = '';
-		let legD = '';
-		st.legPts = [];
-		for (let q = 0; q < N - 1; q++) {
-			if (W[q + 1].g !== W[q].g) {
-				st.legPts[q] = Array.from({ length: 49 }, (_, s) => lp(q, s / 48));
-				legD += D(st.legPts[q]!);
-			} else {
-				st.legPts[q] = null;
-				sysD += D([W[q], W[q + 1]]);
-			}
-		}
-		sysPath.setAttribute('d', sysD);
-		legPath.setAttribute('d', legD);
-		attr(svg, 'width', String(st.vw));
-		attr(svg, 'height', String(st.vh));
-
-		// Poussière : position monde autour de son système.
-		dustEls.forEach((du) => {
-			const g0 = G[du.g];
-			const a = hash(g0.g * 97 + du.d * 3.1) * Math.PI * 2;
-			const rr = Math.sqrt(hash(g0.g * 53 + du.d * 5.7)) * g0.Rc * 1.15;
-			du.wx = g0.gx + Math.cos(a) * rr * (st.vertical ? 0.8 : 1.1);
-			du.wy = g0.gy + Math.sin(a) * rr * (st.vertical ? 1.1 : 0.8);
-		});
-
-		G.forEach((g0, gi) => txt(groupEls[gi].label, pad(g0.g + 1) + ' · ' + sysName(g0.c)));
+		layoutStage(st, projects, root!, workAnchor);
+		renderer.relayout();
 	}
+	const render = () => renderer.render();
 
 	const metrics = () => measure(st);
 
@@ -309,279 +269,6 @@ export function initStarMap(styles: Record<string, string>) {
 		window.addEventListener('pointerup', up);
 	}
 
-
-	// --- Rendu : une image de la carte pour la position de scroll actuelle ---
-	// frame() calcule l'image (avancement, caméra, saut en cours) ; chaque partie de la carte se
-	// dessine ensuite à partir d'elle.
-	type Frame = {
-		m: Metrics;
-		u: number; // avancement dans la carte, en pas
-		p: number; // passage Hero → carte (0 → 1)
-		ease: number; // p adouci
-		j: number; // dernier projet atteint (ordre de la carte)
-		f: number; // avancement vers le suivant (0 → 1)
-		leg: boolean; // en plein saut hyperspace (le suivant est dans un autre système)
-		cam: Pt; // caméra (coordonnées monde)
-		wave: number; // 0 → 1 → 0 pendant un saut
-		z: number; // zoom de la caméra (elle recule pendant un saut)
-		ox: number; // point de l'écran où se trouve la caméra
-		oy: number;
-		navW: number; // largeur réservée à la nav des systèmes, à droite
-		S: (q: Pt) => Pt; // monde → écran
-		curG: number; // système du projet le plus proche (stable au retour)
-		rot: number; // direction du saut (degrés)
-		fArr: number; // avancement du saut dans le sens du voyage (f en avant, 1-f en arrière)
-		arrOp: number; // opacité de la carte d'arrivée dans un système
-		dim: number; // atténuation de la carte pendant cette arrivée
-	};
-	const at = (x: number, y: number) => `translate(${f1(x)}px,${f1(y)}px)`;
-
-	function render() {
-		const fr = frame();
-		renderHeroTransition(fr);
-		renderPaths(fr);
-		stars.render(st, fr.cam, fr.wave, fr.rot);
-		renderWarp(fr);
-		renderSystems(fr);
-		renderNodes(fr);
-		renderDust(fr);
-		renderHyperspace(fr);
-		renderHud(fr);
-	}
-
-	function frame(): Frame {
-		const m = metrics();
-		const { W, U, N } = m;
-		const u = m.u;
-		const p = m.p;
-		if (u > st.lastU) st.dir = 1;
-		else if (u < st.lastU) st.dir = -1;
-		st.lastU = u;
-		const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-
-		let j = 0;
-		while (j < N - 1 && U[j + 1] <= u) j++;
-		const last = j >= N - 1;
-		const f = last ? 0 : (u - U[j]) / (U[j + 1] - U[j]);
-		const leg = !last && W[j + 1].g !== W[j].g;
-		// Caméra : suit le nœud dans le sens du parcours, le centre du système en travers.
-		const camF = (q: number): Pt =>
-			st.vertical
-				? { x: W[q].x * 0.45 + W[q].gx * 0.55, y: W[q].y * 0.7 + W[q].gy * 0.3 }
-				: { x: W[q].x * 0.7 + W[q].gx * 0.3, y: W[q].y * 0.45 + W[q].gy * 0.55 };
-		let cam: Pt;
-		if (last) cam = camF(N - 1);
-		else if (!leg) {
-			const a = camF(j);
-			const b = camF(j + 1);
-			cam = { x: lerp(a.x, b.x, f), y: lerp(a.y, b.y, f) };
-		} else {
-			const q = lp(j, f);
-			const a = camF(j);
-			const b = camF(j + 1);
-			cam = { x: q.x + (1 - f) * (a.x - W[j].x) + f * (b.x - W[j + 1].x), y: q.y + (1 - f) * (a.y - W[j].y) + f * (b.y - W[j + 1].y) };
-		}
-		const wave = leg ? Math.sin(Math.PI * f) : 0;
-		const z = 1 - wave * 0.5;
-		const hudW = Math.min(300, st.vw * 0.3);
-		// Vertical : carte un peu à gauche (labels à droite des nœuds), un peu plus haut
-		// (bandeau HUD en bas), pas de nav systèmes.
-		const ox = st.vertical ? st.vw * 0.36 : st.vw >= 1200 ? st.vw / 2 + hudW * 0.3 - 60 : st.vw / 2;
-		const navW = st.vertical ? 0 : st.vw >= 1200 ? 280 : 120;
-		const oy = st.vh * (st.vertical ? 0.42 : 0.45) + (1 - ease) * st.vh * 0.9;
-		const S = (q: Pt): Pt => ({ x: ox + (q.x - cam.x) * z, y: oy + (q.y - cam.y) * z });
-
-		const curG = W[m.kN].g;
-		const rot = leg ? (Math.atan2(W[j + 1].y - W[j].y, W[j + 1].x - W[j].x) * 180) / Math.PI : 0;
-		const fArr = st.dir >= 0 ? f : 1 - f;
-		// Carte système en plateau : apparaît tôt (dès 5% du saut), pleine opacité
-		// de 20% à 78%, puis fond — laisse le temps de lire le nom du système.
-		const arrOp = leg ? Math.min(clamp((fArr - 0.05) / 0.15, 0, 1), clamp((0.88 - fArr) / 0.1, 0, 1)) : 0;
-		const dim = 1 - arrOp * 0.9;
-		return { m, u, p, ease, j, f, leg, cam, wave, z, ox, oy, navW, S, curG, rot, fArr, arrOp, dim };
-	}
-
-	/** Transition Hero → carte, et apparition de la carte et de la barre de touches. */
-	function renderHeroTransition({ p, ease }: Frame) {
-		if (heroWrap) {
-			css(heroWrap, 'transform', `translateY(${f1(-ease * st.vh * 0.35)}px) scale(${(1 - ease * 0.12).toFixed(3)})`);
-			const heroOp = clamp(1 - p * 1.6, 0, 1);
-			css(heroWrap, 'opacity', heroOp.toFixed(3));
-			// Hero invisible : ses animations (canvas, shimmer) se mettent en pause.
-			if (changed(heroWrap, '#hidden', String(heroOp === 0))) heroWrap.toggleAttribute('data-hidden', heroOp === 0);
-			css(heroWrap, 'pointer-events', p < 0.3 ? 'auto' : 'none');
-		}
-		const wheelOp = clamp((p - 0.35) / 0.5, 0, 1);
-		css(mapUi!, 'opacity', wheelOp.toFixed(3));
-		css(mapUi!, 'pointer-events', p > 0.8 ? 'auto' : 'none');
-		if (keysEl) {
-			css(keysEl, 'opacity', wheelOp.toFixed(3));
-			if (changed(keysEl, '#zoom', String(st.zoomOn))) keysEl.toggleAttribute('data-zoom', st.zoomOn);
-		}
-	}
-
-	/** Chemins : la base est statique (relayout), seul le <g> suit la caméra ; portions parcourues en orange. */
-	function renderPaths({ m, u, cam, z, ox, oy }: Frame) {
-		const { W, U, N } = m;
-		// S(q) = (ox - cam·z, oy - cam·z) + q·z  →  translate + scale.
-		attr(pathsG, 'transform', `translate(${f1(ox - cam.x * z)} ${f1(oy - cam.y * z)}) scale(${z.toFixed(3)})`);
-		// U croissant : on s'arrête au premier projet non atteint.
-		let sysT = '';
-		let legT = '';
-		for (let q = 0; q < N - 1 && u > U[q]; q++) {
-			const ff = clamp((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
-			const pts = st.legPts[q];
-			if (pts) legT += D(pts.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
-			else sysT += D([W[q], lp(q, ff)]);
-		}
-		attr(sysTPath, 'd', sysT);
-		attr(legTPath, 'd', legT);
-	}
-
-	/** Pendant un saut, les traînées prennent la teinte du système quitté, passent au blanc,
-	 *  puis prennent celle du système d'arrivée (dans le sens du trajet). Une seule variable
-	 *  sur le calque, arrondie au 20e pour ne réécrire que quand la teinte change vraiment. */
-	function renderWarp({ m, j, leg, fArr }: Frame) {
-		const { G, W } = m;
-		let warp = '';
-		if (leg) {
-			const from = G[st.dir >= 0 ? W[j].g : W[j + 1].g];
-			const to = G[st.dir >= 0 ? W[j + 1].g : W[j].g];
-			const kFrom = Math.min(clamp(fArr / 0.1, 0, 1), clamp((0.4 - fArr) / 0.3, 0, 1));
-			const kTo = Math.min(clamp((fArr - 0.6) / 0.3, 0, 1), clamp((1 - fArr) / 0.1, 0, 1));
-			const k = Math.round(Math.max(kFrom, kTo) * 20) / 20;
-			if (k > 0) warp = mixRgb(white, pastels.get(kFrom > kTo ? from.c : to.c)!, k);
-		}
-		css(starsLayer!, '--warp', warp);
-	}
-
-	/** Systèmes : anneau, nébuleuse et nom. */
-	function renderSystems({ m, S, z, curG, dim }: Frame) {
-		m.G.forEach((g0, gi) => {
-			const s = S({ x: g0.gx, y: g0.gy });
-			const R = (g0.Rc + 46) * z;
-			const { ring, label } = groupEls[gi];
-			// Taille : ne change que pendant un saut (z) ; position : transform.
-			css(ring, 'width', f1(R * 2) + 'px');
-			css(ring, 'height', f1(R * 2) + 'px');
-			css(ring, 'transform', at(s.x - R, s.y - R));
-			nebulas.render(gi, s, R, st.zoomOn, st);
-			// Vertical : toujours au-dessus de l'anneau (dessous = chemin vers le suivant).
-			// En vertical, seul le système courant reste calé sous la barre du haut
-			// (sinon les labels de deux systèmes se superposent).
-			const ly = st.vertical
-				? g0.g === curG ? Math.max(110, s.y - R - 28) : s.y - R - 28
-				: g0.g % 2 ? Math.max(110, s.y - R - 28) : s.y + R + 12;
-			css(label, 'transform', at(s.x, ly) + ' translateX(-50%)');
-			css(label, 'color', g0.g === curG ? systemColor(g0.c) : `rgba(${systemRgb(g0.c)}, 0.55)`);
-			css(label, 'opacity', dim.toFixed(3));
-		});
-	}
-
-	/** Nœuds des projets et leurs étiquettes (hors écran : masqués, on n'écrit rien d'autre). */
-	function renderNodes({ m, u, S, navW, dim }: Frame) {
-		const { ord, W, U } = m;
-		ord.forEach((_, q) => {
-			const s = S(W[q]);
-			nodePos[q] = s;
-			const { dot, label } = nodeEls[q];
-			const on = s.x > -240 && s.x < st.vw + 240 && s.y > -120 && s.y < st.vh + 120;
-			css(dot, 'display', on ? 'block' : 'none');
-			css(label, 'display', on ? 'block' : 'none');
-			if (!on) return;
-			const act = Math.max(0, 1 - Math.abs(u - U[q]) * 1.4);
-			const hi = act > 0.5;
-			const w = 8 + 8 * act; // diamètre : 16px de base (CSS) mis à l'échelle
-			const op = clamp(1.25 - Math.hypot(s.x - st.vw / 2, s.y - st.vh / 2) / (Math.max(st.vw, st.vh) * 0.6), 0.15, 1) * dim;
-			css(dot, 'transform', `${at(s.x, s.y)} translate(-50%,-50%) scale(${(w / 16).toFixed(3)})`);
-			css(dot, 'background', hi ? ACCENT : TEXT);
-			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(var(--rgb-accent), 0.18), 0 0 24px rgba(var(--rgb-accent), 0.5)' : 'none');
-			css(dot, 'opacity', op.toFixed(3));
-			css(dot, 'z-index', hi ? '5' : '2');
-			// Côté de l'étiquette : celui du nœud dans son système, sauf si elle n'y tient pas ;
-			// si elle ne tient d'aucun côté (titre long sur téléphone), deux lignes du côté le plus large.
-			const lw = labelEm[q] * (hi ? 15 : 12), gap = 16 + 6 * act;
-			const roomR = st.vw - navW - 16 - (s.x + gap), roomL = s.x - gap - 16;
-			const wrap = lw > roomR && lw > roomL;
-			const flip = wrap ? roomL > roomR : W[q].x < W[q].gx - 1 ? lw <= roomL || lw > roomR : lw > roomR;
-			const lx = flip ? s.x - gap : s.x + gap;
-			css(label, 'transform', at(lx, s.y - 9) + (flip ? ' translateX(-100%)' : ''));
-			css(label, 'white-space', wrap ? 'normal' : 'nowrap');
-			css(label, 'max-width', wrap ? `${Math.floor(Math.max(roomL, roomR))}px` : 'none');
-			css(label, 'text-align', flip ? 'right' : 'left');
-			css(label, 'opacity', op.toFixed(3));
-			css(label, 'z-index', hi ? '5' : '2');
-			css(label, 'font-size', (hi ? 15 : 12) + 'px');
-			css(label, 'color', hi ? ACCENT : TEXT_DIM);
-		});
-	}
-
-	/** Poussière des systèmes, calée au pixel entier. */
-	function renderDust({ S, dim }: Frame) {
-		dustEls.forEach(({ el, o, sz, wx, wy }) => {
-			const s = S({ x: wx, y: wy });
-			const on = s.x > -20 && s.x < st.vw + 20 && s.y > -20 && s.y < st.vh + 20;
-			css(el, 'display', on ? 'block' : 'none');
-			if (!on) return;
-			css(el, 'transform', `translate(${Math.round(s.x - sz / 2)}px,${Math.round(s.y - sz / 2)}px)`); // pixel entier
-			css(el, 'opacity', (o * dim).toFixed(3));
-		});
-	}
-
-	/** Saut hyperspace : sonde sur le trajet, pulse et carte d'arrivée (système de destination selon la direction). */
-	function renderHyperspace({ m, j, f, leg, S, z, fArr, arrOp }: Frame) {
-		const { G, W } = m;
-		const pq = leg ? S(lp(j, f)) : { x: -99, y: -99 };
-		css(probeEl, 'transform', `${at(pq.x, pq.y)} translate(-50%,-50%)`);
-		css(probeEl, 'opacity', (leg ? clamp(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
-		if (leg) {
-			const dg = G[st.dir >= 0 ? W[j + 1].g : W[j].g];
-			const ds = S({ x: dg.gx, y: dg.gy });
-			const qp = clamp((fArr - 0.72) / 0.28, 0, 1);
-			const pr = (dg.Rc + 20 + qp * 160) * z;
-			css(pulseEl, 'width', f1(pr * 2) + 'px');
-			css(pulseEl, 'height', f1(pr * 2) + 'px');
-			css(pulseEl, 'transform', at(ds.x - pr, ds.y - pr));
-			css(pulseEl, 'opacity', (qp > 0 ? (1 - qp) * 0.8 : 0).toFixed(3));
-			txt(arrNum, pad(dg.g + 1));
-			txt(arrName, ' ' + sysName(dg.c));
-			css(arrTitle, 'color', systemColor(dg.c));
-			txt(arrCount, (dg.mem.length > 1 ? text.projects : text.project).replace('{n}', pad(dg.mem.length)));
-			css(arrivalEl, 'opacity', arrOp.toFixed(3));
-		} else {
-			css(pulseEl, 'opacity', '0');
-			css(arrivalEl, 'opacity', '0');
-		}
-	}
-
-	/** Compteur, boutons, HUD du projet courant et nav des systèmes (textes réécrits seulement quand le projet change). */
-	function renderHud({ m, u, p, curG }: Frame) {
-		const { P, ord, U, N, kN } = m;
-		txt(counterEl, pad(kN + 1) + ' / ' + pad(N));
-		if (goPrev && changed(goPrev, '#disabled', String(kN === 0))) goPrev.disabled = kN === 0;
-		if (goNext && changed(goNext, '#disabled', String(kN === N - 1))) goNext.disabled = kN === N - 1;
-		// Barre de touches : ← ou → grisée au premier / dernier projet (carte et vue rapprochée)
-		keyEnds.forEach((b) => { const off = b.dataset.key === 'ArrowLeft' ? kN === 0 : kN === N - 1; if (changed(b, '#disabled', String(off))) b.disabled = off; });
-		const inWheel = p > 0.96;
-		const hudOp = inWheel && !st.zoomOn ? clamp(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
-		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
-		const cur = P[ord[kN]];
-		txt(hud.cat, text.selected + ' · ' + cur.num + ' · ' + cur.cat);
-		if (hud.img && hud.img.getAttribute('src') !== cur.img) hud.img.src = cur.img;
-		txt(hud.title, cur.title);
-		txt(hud.tag, cur.tag);
-		txt(hud.year, cur.year);
-		if (hud.wip && changed(hud.wip, '#hidden', String(!cur.wip))) hud.wip.hidden = !cur.wip;
-		navRows.forEach((rowEl, gi) => {
-			const on = gi === curG;
-			css(rowEl, 'color', on ? TEXT : TEXT_DIM);
-			const bar = navBars[gi];
-			if (bar) {
-				css(bar, 'width', (on ? 28 : 12) + 'px');
-				css(bar, 'background', on ? ACCENT : 'rgba(var(--rgb-secondary), 0.5)');
-			}
-		});
-	}
 
 	// Nav : clic → voyage vers le premier projet du système.
 	navRows.forEach((rowEl, gi) => {

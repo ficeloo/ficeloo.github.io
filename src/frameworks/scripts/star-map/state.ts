@@ -4,6 +4,8 @@ import { clamp } from '../../../domain/math';
 import { layoutMap, type MapLayout, type Pt, type View } from './layout';
 import type { Proj } from './types';
 
+const STEP_K = 0.6; // distance de scroll entre deux projets, en hauteur d'écran
+
 export interface MapState extends View {
 	screenH: number; // window.innerHeight au dernier calcul (barre d'adresse mobile)
 	// Cache de disposition : tout ce qui ne dépend que de la taille d'écran est calculé au
@@ -69,4 +71,18 @@ export function metrics(st: MapState): Metrics {
 		if (Math.abs(v - u) < Math.abs(st.L.U[kN] - u)) kN = k;
 	});
 	return { ...st.L, stageTop: st.stageTop, T: st.T, STEP: st.STEP, Utot: st.Utot, local, u, p, kN };
+}
+
+/** Taille d'écran changée : refait la disposition (layout.ts) et la scène : longueur du passage
+ *  Hero → carte (T), d'un pas (STEP), du parcours, hauteur de la carte dans la page et sa position. */
+export function layoutStage(st: MapState, projects: Proj[], root: HTMLElement, workAnchor: HTMLElement | null | undefined) {
+	st.L = layoutMap(projects, st);
+	st.T = st.vh * 0.9;
+	st.STEP = st.vh * STEP_K;
+	st.Utot = st.L.U[st.L.N - 1] || 0;
+	const h = st.vh + st.T + st.Utot * st.STEP;
+	root.style.height = h + 'px';
+	if (workAnchor) workAnchor.style.top = st.T + 'px';
+	st.stageTop = root.getBoundingClientRect().top + window.scrollY;
+	st.stageEnd = st.stageTop + h;
 }
