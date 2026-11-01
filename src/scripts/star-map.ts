@@ -4,6 +4,8 @@
 import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './nebula-texture';
 import { createZoom } from './map-zoom';
 import { softwareRendering } from './render-mode';
+import { clamp, easeInOutCubic, hash, lerp } from '../utils/math';
+import { f1, pad } from '../utils/format';
 
 type Raw = {
 	slug: string;
@@ -24,13 +26,6 @@ type Pt = { x: number; y: number };
 type Node = Pt & { g: number; gx: number; gy: number };
 type Group = { c: string; g: number; mem: number[]; gx: number; gy: number; Rc: number; pos: Pt[] | null };
 
-const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
-const hash = (n: number) => {
-	const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
-	return s - Math.floor(s);
-};
-const pad = (n: number) => String(n).padStart(2, '0');
 // Couleur d'un système (tokens.css : --system-<catégorie en minuscules>, --rgb-system-…, --rgb-nebula-…).
 // Système sans token : couleurs neutres du site.
 const sysKey = (c: string) => c.toLowerCase();
@@ -72,8 +67,6 @@ const attr = (el: Element, name: string, v: string) => {
 const txt = (el: { textContent: string | null } | null, v: string) => {
 	if (el && changed(el, '#text', v)) el.textContent = v;
 };
-const f1 = (v: number) => v.toFixed(1);
-
 // Couleurs du thème (tokens.css) pour les styles écrits par le moteur.
 const ACCENT = 'var(--color-accent)';
 const TEXT = 'var(--color-text)';
@@ -119,7 +112,7 @@ export function initStarMap(styles: Record<string, string>) {
 	const readVp = () => {
 		vw = window.innerWidth || 1280;
 		lastH = window.innerHeight;
-		vh = Math.round(cl(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
+		vh = Math.round(clamp(Math.min(window.innerHeight || 800, (window.screen && screen.height) || 1200), 320, 1400));
 		vertical = portraitMq.matches;
 	};
 
@@ -423,7 +416,7 @@ export function initStarMap(styles: Record<string, string>) {
 		// en vertical on permute les deux à la fin.
 		const main = vertical ? vh : vw;
 		const cross = vertical ? vw : vh;
-		const Dx = cl(main * 1.15, 1000, 1650);
+		const Dx = clamp(main * 1.15, 1000, 1650);
 		const G: Group[] = cats.map((c, g) => {
 			const mem = ord.filter((q) => P[q].cat === c);
 			return { c, g, mem, gx: g * Dx, gy: (g % 2 ? -1 : 1) * cross * 0.06, Rc: 110 + mem.length * 26, pos: null };
@@ -442,7 +435,7 @@ export function initStarMap(styles: Record<string, string>) {
 					if (q > 0) acc += wts[q - 1];
 					let v = n === 1 ? 0 : hash(g0.g * 19 + q * 5.1 + 2) * 2 - 1;
 					if (prev !== null && Math.abs(v - prev) * amp < 64) v = prev > 0 ? prev - 64 / amp - 0.2 : prev + 64 / amp + 0.2;
-					v = cl(v, -1, 1);
+					v = clamp(v, -1, 1);
 					prev = v;
 					return { x: g0.gx - g0.Rc * 0.9 + g0.Rc * 1.8 * (n > 1 ? acc / tot : 0.5), y: g0.gy + v * amp };
 				});
@@ -525,8 +518,8 @@ export function initStarMap(styles: Record<string, string>) {
 	};
 	function metrics(): Metrics {
 		const local = window.scrollY - stageTop;
-		const u = cl((local - T) / STEP, 0, Utot);
-		const p = cl(local / T, 0, 1);
+		const u = clamp((local - T) / STEP, 0, Utot);
+		const p = clamp(local / T, 0, 1);
 		let kN = 0;
 		L.U.forEach((v, k) => {
 			if (Math.abs(v - u) < Math.abs(L.U[kN] - u)) kN = k;
@@ -561,13 +554,13 @@ export function initStarMap(styles: Record<string, string>) {
 			return;
 		}
 		const units = Math.abs(d) / STEP; // durée proportionnelle au nombre de pas
-		const dur = fast ? cl(160 + units * 170, 160, 1400) : cl(450 + units * 300, 450, 3600);
+		const dur = fast ? clamp(160 + units * 170, 160, 1400) : clamp(450 + units * 300, 450, 3600);
 		const t0 = performance.now();
 		animating = true;
 		animEnd = t0 + dur;
 		const step = (t: number) => {
-			const q = cl((t - t0) / dur, 0, 1);
-			const e = fast ? 1 - Math.pow(1 - q, 2) : q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
+			const q = clamp((t - t0) / dur, 0, 1);
+			const e = fast ? 1 - Math.pow(1 - q, 2) : easeInOutCubic(q);
 			window.scrollTo({ top: from + d * e, behavior: 'instant' as ScrollBehavior });
 			if (q < 1) sRaf = requestAnimationFrame(step);
 			else animating = false;
@@ -636,7 +629,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function navigate(d: number, fast = false) {
 		const m = metrics();
 		const base = animating && navK != null ? navK : m.kN;
-		const nk = cl(base + d, 0, m.N - 1);
+		const nk = clamp(base + d, 0, m.N - 1);
 		if (nk === base) return;
 		navK = nk;
 		animScroll(m.stageTop + m.T + m.U[nk] * m.STEP, fast);
@@ -759,13 +752,13 @@ export function initStarMap(styles: Record<string, string>) {
 		// Transition Hero → carte
 		if (heroWrap) {
 			css(heroWrap, 'transform', `translateY(${f1(-ease * vh * 0.35)}px) scale(${(1 - ease * 0.12).toFixed(3)})`);
-			const heroOp = cl(1 - p * 1.6, 0, 1);
+			const heroOp = clamp(1 - p * 1.6, 0, 1);
 			css(heroWrap, 'opacity', heroOp.toFixed(3));
 			// Hero invisible : ses animations (canvas, shimmer) se mettent en pause.
 			if (changed(heroWrap, '#hidden', String(heroOp === 0))) heroWrap.toggleAttribute('data-hidden', heroOp === 0);
 			css(heroWrap, 'pointer-events', p < 0.3 ? 'auto' : 'none');
 		}
-		const wheelOp = cl((p - 0.35) / 0.5, 0, 1);
+		const wheelOp = clamp((p - 0.35) / 0.5, 0, 1);
 		css(mapUi!, 'opacity', wheelOp.toFixed(3));
 		css(mapUi!, 'pointer-events', p > 0.8 ? 'auto' : 'none');
 		if (keysEl) {
@@ -814,7 +807,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const fArr = dir >= 0 ? f : 1 - f;
 		// Carte système en plateau : apparaît tôt (dès 5% du saut), pleine opacité
 		// de 20% à 78%, puis fond — laisse le temps de lire le nom du système.
-		const arrOp = leg ? Math.min(cl((fArr - 0.05) / 0.15, 0, 1), cl((0.88 - fArr) / 0.1, 0, 1)) : 0;
+		const arrOp = leg ? Math.min(clamp((fArr - 0.05) / 0.15, 0, 1), clamp((0.88 - fArr) / 0.1, 0, 1)) : 0;
 		const dim = 1 - arrOp * 0.9;
 
 		// Chemins : la base est statique (relayout), seul le <g> suit la caméra.
@@ -824,7 +817,7 @@ export function initStarMap(styles: Record<string, string>) {
 		let sysT = '';
 		let legT = '';
 		for (let q = 0; q < N - 1 && u > U[q]; q++) {
-			const ff = cl((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
+			const ff = clamp((u - U[q]) / (U[q + 1] - U[q]), 0, 1);
 			const pts = legPts[q];
 			if (pts) legT += D(pts.slice(0, Math.max(1, Math.round(ff * 48)) + 1));
 			else sysT += D([W[q], lp(q, ff)]);
@@ -858,8 +851,8 @@ export function initStarMap(styles: Record<string, string>) {
 		if (leg) {
 			const from = G[dir >= 0 ? W[j].g : W[j + 1].g];
 			const to = G[dir >= 0 ? W[j + 1].g : W[j].g];
-			const kFrom = Math.min(cl(fArr / 0.1, 0, 1), cl((0.4 - fArr) / 0.3, 0, 1));
-			const kTo = Math.min(cl((fArr - 0.6) / 0.3, 0, 1), cl((1 - fArr) / 0.1, 0, 1));
+			const kFrom = Math.min(clamp(fArr / 0.1, 0, 1), clamp((0.4 - fArr) / 0.3, 0, 1));
+			const kTo = Math.min(clamp((fArr - 0.6) / 0.3, 0, 1), clamp((1 - fArr) / 0.1, 0, 1));
 			const k = Math.round(Math.max(kFrom, kTo) * 20) / 20;
 			if (k > 0) warp = mixRgb(white, pastels.get(kFrom > kTo ? from.c : to.c)!, k);
 		}
@@ -910,7 +903,7 @@ export function initStarMap(styles: Record<string, string>) {
 			const act = Math.max(0, 1 - Math.abs(u - U[q]) * 1.4);
 			const hi = act > 0.5;
 			const w = 8 + 8 * act; // diamètre : 16px de base (CSS) mis à l'échelle
-			const op = cl(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1) * dim;
+			const op = clamp(1.25 - Math.hypot(s.x - vw / 2, s.y - vh / 2) / (Math.max(vw, vh) * 0.6), 0.15, 1) * dim;
 			css(dot, 'transform', `${at(s.x, s.y)} translate(-50%,-50%) scale(${(w / 16).toFixed(3)})`);
 			css(dot, 'background', hi ? ACCENT : TEXT);
 			css(dot, 'box-shadow', hi ? '0 0 0 6px rgba(var(--rgb-accent), 0.18), 0 0 24px rgba(var(--rgb-accent), 0.5)' : 'none');
@@ -946,13 +939,13 @@ export function initStarMap(styles: Record<string, string>) {
 		// Sonde
 		const pq = leg ? S(lp(j, f)) : { x: -99, y: -99 };
 		css(probeEl, 'transform', `${at(pq.x, pq.y)} translate(-50%,-50%)`);
-		css(probeEl, 'opacity', (leg ? cl(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
+		css(probeEl, 'opacity', (leg ? clamp(Math.min(f, 1 - f) * 10, 0, 1) : 0).toFixed(3));
 
 		// Pulse + carte d'arrivée (système de destination selon la direction)
 		if (leg) {
 			const dg = G[dir >= 0 ? W[j + 1].g : W[j].g];
 			const ds = S({ x: dg.gx, y: dg.gy });
-			const qp = cl((fArr - 0.72) / 0.28, 0, 1);
+			const qp = clamp((fArr - 0.72) / 0.28, 0, 1);
 			const pr = (dg.Rc + 20 + qp * 160) * z;
 			css(pulseEl, 'width', f1(pr * 2) + 'px');
 			css(pulseEl, 'height', f1(pr * 2) + 'px');
@@ -975,7 +968,7 @@ export function initStarMap(styles: Record<string, string>) {
 		// Barre de touches : ← ou → grisée au premier / dernier projet (carte et vue rapprochée)
 		keyEnds.forEach((b) => { const off = b.dataset.key === 'ArrowLeft' ? kN === 0 : kN === N - 1; if (changed(b, '#disabled', String(off))) b.disabled = off; });
 		const inWheel = p > 0.96;
-		const hudOp = inWheel && !zoomOn ? cl(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
+		const hudOp = inWheel && !zoomOn ? clamp(1 - Math.abs(u - U[kN]) * 3, 0, 1) : 0;
 		if (hudEl) css(hudEl, 'opacity', hudOp.toFixed(3));
 		const cur = P[ai];
 		txt(hud.cat, text.selected + ' · ' + cur.num + ' · ' + cur.cat);

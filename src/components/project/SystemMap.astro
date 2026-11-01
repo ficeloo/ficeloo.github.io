@@ -1,4 +1,5 @@
 ---
+import { pad } from '../../utils/format';
 import { getMapOrder, systems, type Project } from '../../data/projects';
 import { getLang, localizePath, useTranslations } from '../../i18n';
 import styles from '../../styles/components/project/system-map.module.css';
@@ -20,7 +21,6 @@ const prevSystem = systems[index - 1];
 const nextSystem = systems[index + 1];
 const prevBody = prevSystem && mapOrder.findLast((p) => p.category === prevSystem);
 const nextBody = nextSystem && mapOrder.find((p) => p.category === nextSystem);
-const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
 <nav class={styles.sysmap} aria-label={t('map.system', { name: project.category })}>

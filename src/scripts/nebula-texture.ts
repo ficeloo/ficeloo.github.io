@@ -4,6 +4,7 @@
 // brumeuse (floutée à la génération), avec de légers filaments. Plus une texture « intérieur »
 // sans bord, pour le fond de la vue rapprochée (on est dans la nébuleuse).
 // Pas de DOM ici : uniquement du calcul sur des tableaux de pixels RGBA.
+import { smoothstep } from '../utils/math';
 
 export type Rgb = [number, number, number];
 export type NebulaJob = {
@@ -41,10 +42,6 @@ function fbm(x: number, y: number, s: number, oct: number) {
 	}
 	return sum / norm;
 }
-const smooth = (a: number, b: number, x: number) => {
-	const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
-	return t * t * (3 - 2 * t);
-};
 function seeded(seed: number) {
 	let s = seed * 9301 + 49297;
 	return () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -59,7 +56,7 @@ function envelope(s: number, grow = 1) {
 		const y = ny + (fbm(nx * 2.2 - 17, ny * 2.2 + 5, s + 53, 3) - 0.5) * 0.35;
 		const r = Math.hypot(x, y), th = Math.atan2(y, x);
 		const re = R * (1 + 0.28 * (fbm(Math.cos(th) * 1.4 + 7, Math.sin(th) * 1.4 + 7, s + 3, 4) - 0.5) * 2);
-		return smooth(re, re * 0.1, r) * smooth(1, 0.82, Math.hypot(nx, ny));
+		return smoothstep(re, re * 0.1, r) * smoothstep(1, 0.82, Math.hypot(nx, ny));
 	};
 }
 
@@ -155,7 +152,7 @@ export function paintNebula({ seed: s, size: N, vivid, pastel, deep }: NebulaJob
 		const [x, y] = warp(nx, ny, 1.8);
 		let q = fbm(x, y, s, 4);
 		q = q + (Math.pow(1 - Math.abs(2 * q - 1), 3) - q) * 0.2;
-		const d = smooth(0.02, 0.85, e * (0.45 * e * e + 0.55 * q));
+		const d = smoothstep(0.02, 0.85, e * (0.45 * e * e + 0.55 * q));
 		const lift = Math.pow(d, 1.6);
 		const col = pastel.map((p, ch) => {
 			const base = (vivid[ch] + p) / 2;
@@ -204,8 +201,8 @@ export function paintNebula({ seed: s, size: N, vivid, pastel, deep }: NebulaJob
 		if (e <= 0.05) return null;
 		const [x, y] = warp(nx, ny, 2.2);
 		const v = fbm(x + 40, y + 40, s + 77, 4);
-		const dust = smooth(0.5, 0.78, v) * e * e;
-		const rim = (smooth(0.42, 0.52, v) - smooth(0.52, 0.62, v)) * e;
+		const dust = smoothstep(0.5, 0.78, v) * e * e;
+		const rim = (smoothstep(0.42, 0.52, v) - smoothstep(0.52, 0.62, v)) * e;
 		if (dust > rim) return [deep[0], deep[1], deep[2], dust * 0.3 * 255];
 		if (rim > 0.02) return [pastel[0], pastel[1], pastel[2], rim * 0.12 * 255];
 		return null;
@@ -225,7 +222,7 @@ export function paintInterior({ seed: s, vivid, pastel, deep }: NebulaJob, N = I
 		const [x, y] = warp(nx, ny, 0.8);
 		const big = fbm(x * 0.6 + 3, y * 0.6 + 3, s + 101, 3); // grandes masses
 		const fine = fbm(x * 1.6, y * 1.6, s + 131, 4); // nappes
-		const d = smooth(0.3, 0.75, big * 0.65 + fine * 0.35);
+		const d = smoothstep(0.3, 0.75, big * 0.65 + fine * 0.35);
 		const col = halo.map((h, ch) => {
 			const gas = (vivid[ch] + pastel[ch] * 2) / 3;
 			return h + (gas - h) * d;

@@ -11,6 +11,8 @@
 // seul transform (le moteur de la carte l'applique via ZoomHost.camera), puis s'effacent.
 import { createPlanet, type Planet } from './planet';
 import { frameGap } from './frame-pace';
+import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../utils/math';
+import { f1 } from '../utils/format';
 
 /** Ce que la carte fournit au zoom. Coordonnées en px, dans le repère de l'écran de la carte. */
 export interface ZoomHost {
@@ -39,13 +41,6 @@ const KEYS_H = 110; // bas de l'écran réservé aux raccourcis clavier (écran 
 const GROW = 500; // un chemin se trace en tant de ms
 const BACK_OP = 0.9; // opacité du fond (intérieur de la nébuleuse) une fois arrivé : la fiche reste lisible
 const BACK_PAN = 0.11; // décalage du fond par rayon de système, en part du plus grand côté de l'écran
-
-const cl = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const smooth = (a: number, b: number, x: number) => { const t = cl((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-const inOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const outC = (t: number) => 1 - Math.pow(1 - t, 3);
-const f1 = (v: number) => v.toFixed(1);
 
 type Anim = { finish(): void };
 
@@ -138,8 +133,8 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const R = Math.min(W, H) * 0.3; // rayon de la planète (src/scripts/planet/index.ts)
 		const x = narrow.matches ? o.width / 2 : Math.max((c.right - o.left + o.width) / 2, c.right - o.left + W * 0.4);
 		const below = c.bottom - o.top; // écran haut : la planète dans la place sous la fiche
-		const y = tall.matches ? cl((below + o.height) / 2, below + H * 0.44 + m, o.height - H * 0.56 - m)
-			: narrow.matches ? cl((c.top - o.top) / 2, H * 0.44 + m, c.top - o.top - H * 0.56) : o.height / 2;
+		const y = tall.matches ? clamp((below + o.height) / 2, below + H * 0.44 + m, o.height - H * 0.56 - m)
+			: narrow.matches ? clamp((c.top - o.top) / 2, H * 0.44 + m, c.top - o.top - H * 0.56) : o.height / 2;
 		return { x, y, zEnd: Math.max(1, R / NODE_R) };
 	}
 	function setSpot(q: { x: number; y: number }) {
@@ -153,10 +148,10 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	function setCamera(A: Pt, S: Pt, Z: number, zEnd: number) {
 		const Zs = Math.pow(Z, STARS_ZOOM), sx = A.x + (S.x - A.x) * STARS_PAN, sy = A.y + (S.y - A.y) * STARS_PAN;
 		const near = Math.log(Math.max(1, Z)) / Math.log(Math.max(1.01, zEnd)); // 0 = carte, 1 = arrivé
-		const inside = smooth(0.45, 0.92, near);
+		const inside = smoothstep(0.45, 0.92, near);
 		host.camera(
 			`translate(${f1(S.x - A.x * Z)}px,${f1(S.y - A.y * Z)}px) scale(${Z.toFixed(4)})`,
-			1 - smooth(2.5, 8, Z),
+			1 - smoothstep(2.5, 8, Z),
 			1 - inside,
 			`translate(${f1(sx - A.x * Zs)}px,${f1(sy - A.y * Zs)}px) scale(${Zs.toFixed(4)})`,
 		);
@@ -170,7 +165,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 	let backPos = { x: 0, y: 0 };
 	function moveBackdrop() {
 		const k = viewMax * BACK_PAN;
-		const x = cl(-backPos.x, -1.2, 1.2) * k, y = cl(-backPos.y, -1.2, 1.2) * k;
+		const x = clamp(-backPos.x, -1.2, 1.2) * k, y = clamp(-backPos.y, -1.2, 1.2) * k;
 		backdrop.style.setProperty('--bx', f1(x) + 'px');
 		backdrop.style.setProperty('--by', f1(y) + 'px');
 		backdrop.style.setProperty('--bs', backScale.toFixed(3));
@@ -200,7 +195,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const Z = Math.pow(Q.zEnd, e), S = { x: lerp(P.x, Q.x, e), y: lerp(P.y, Q.y, e) };
 		setCamera(P, S, Z, Q.zEnd);
 		placePlanet(i, P, P, S, Z, Q);
-		boxes[i].style.opacity = smooth(0.08, 0.35, e).toFixed(3);
+		boxes[i].style.opacity = smoothstep(0.08, 0.35, e).toFixed(3);
 		return { cx: S.x, cy: S.y, Z };
 	}
 
@@ -240,14 +235,14 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 			if (tLine < start + 30) { label.hidden = true; return; }
 			path.toggleAttribute('data-done', d < 0);
 			segs.push({ path, x0: Q.x + ux * start, y0: Q.y + uy * start, x1: Q.x + ux * tLine, y1: Q.y + uy * tLine });
-			const lx = !inline || !horiz ? cl(x - lw / 2, box.x0, box.x1 - lw) : ux < 0 ? x : x - lw;
-			const ly = !inline ? cl(y - lh - 6, box.y0, box.y1 - lh) : horiz ? cl(y - lh / 2, box.y0, box.y1 - lh) : uy < 0 ? y : y - lh;
+			const lx = !inline || !horiz ? clamp(x - lw / 2, box.x0, box.x1 - lw) : ux < 0 ? x : x - lw;
+			const ly = !inline ? clamp(y - lh - 6, box.y0, box.y1 - lh) : horiz ? clamp(y - lh / 2, box.y0, box.y1 - lh) : uy < 0 ? y : y - lh;
 			label.style.transform = `translate(${f1(lx)}px,${f1(ly)}px)`;
 		});
 		root.setAttribute('data-routes', '');
 		const t0 = performance.now();
 		const grow = (now: number) => {
-			const k = outC(Math.min(1, (now - t0) / GROW));
+			const k = easeOutCubic(Math.min(1, (now - t0) / GROW));
 			segs.forEach((g) => g.path.setAttribute('d', `M${f1(g.x0)} ${f1(g.y0)}L${f1(lerp(g.x0, g.x1, k))} ${f1(lerp(g.y0, g.y1, k))}`));
 			if (k < 1) growRaf = requestAnimationFrame(grow);
 		};
@@ -322,12 +317,12 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		hideRoutes();
 		chain([
 			[LOCK, (t) => {
-				const e = outC(t);
+				const e = easeOutCubic(t);
 				showReticle(P.x, P.y, lerp(130, 34, e), Math.min(1, t * 3), t > 0.6 ? `${text.lock} · ${name}` : text.targeting);
 			}],
 			[DIVE, (t) => {
-				const { cx, cy, Z } = cameraAt(i, P, Q, inOut(t));
-				showReticle(cx, cy, Math.max(34, NODE_R * Z * 2.9), 1 - smooth(0.7, 1, t), `${text.lock} · ${name}`);
+				const { cx, cy, Z } = cameraAt(i, P, Q, easeInOutCubic(t));
+				showReticle(cx, cy, Math.max(34, NODE_R * Z * 2.9), 1 - smoothstep(0.7, 1, t), `${text.lock} · ${name}`);
 			}],
 		], () => {
 			root.setAttribute('data-ready', '');
@@ -348,7 +343,7 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const P = host.nodePoint(i);
 		const Q = place();
 		setSpot(Q);
-		play(BACK, (t) => cameraAt(i, P, Q, inOut(1 - t)), () => {
+		play(BACK, (t) => cameraAt(i, P, Q, easeInOutCubic(1 - t)), () => {
 			open = false;
 			live.clear();
 			host.camera('', 1, 1, '');
@@ -381,12 +376,12 @@ export function createZoom(root: HTMLElement, host: ZoomHost, text: { targeting:
 		const p0 = backPos, p1 = host.inSystem(to);
 		if (!same) { backPos = p1; moveBackdrop(); } // autre système : nouveau fond, en fondu
 		play(HOP, (t) => {
-			const e = inOut(t);
+			const e = easeInOutCubic(t);
 			if (same) { backPos = { x: lerp(p0.x, p1.x, e), y: lerp(p0.y, p1.y, e) }; moveBackdrop(); } // même système : le fond défile
 			boxes[from].style.transform = `translateX(${f1(-d * 80 * e)}px) scale(${(1 - 0.2 * e).toFixed(3)})`;
-			boxes[from].style.opacity = (1 - smooth(0, 0.6, t)).toFixed(3);
+			boxes[from].style.opacity = (1 - smoothstep(0, 0.6, t)).toFixed(3);
 			boxes[to].style.transform = `translateX(${f1(d * 80 * (1 - e))}px) scale(${(0.8 + 0.2 * e).toFixed(3)})`;
-			boxes[to].style.opacity = smooth(0.3, 1, t).toFixed(3);
+			boxes[to].style.opacity = smoothstep(0.3, 1, t).toFixed(3);
 		}, () => {
 			live.delete(from);
 			boxes[from].hidden = true;

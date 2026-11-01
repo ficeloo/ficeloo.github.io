@@ -4,9 +4,10 @@
 // Clic sur une vignette ou une flèche : saut puis pause de 8 s. Survol du média : pause.
 // Hors écran : pause. Animations réduites : pas de défilement automatique.
 
+import { pad } from '../utils/format';
+
 const HOLD_MS = 8000;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const pad = (n: number) => String(n).padStart(2, '0');
 
 document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((gallery) => {
 	const main = gallery.querySelector<HTMLImageElement>('[data-main]');
@@ -60,4 +61,3 @@ document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((gallery) => {
 	thumbs[0].style.setProperty('--slide', isGif(thumbs[0].dataset.slide ?? '') ? '10s' : '6s');
 });
 
-export {}; // module : ses déclarations restent locales au fichier

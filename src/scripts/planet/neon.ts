@@ -8,18 +8,16 @@
 
 import { C, TAU, WHITE, baseFill, fromLatLon, mix, pickFront, reduce, rgba, shade, sphere, spinOf, surfLine, token, view, type LatLon, type NeonSign, type PlanetSystem, type RGB, type Vec3 } from './kit';
 import { SIGNS, TEXT_SIGNS } from './neon-signs';
+import { clamp, hash } from '../../utils/math'; // hash : bruit stable (bégaiement des néons)
 
 const IRL = token('--system-irl');
 const TUBES = [token('--neon-cyan'), token('--neon-pink')];
 
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const norm = (v: Vec3): Vec3 => { const l = Math.hypot(...v); return v.map((x) => x / l) as Vec3; };
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 /** Repère tangent en un point de la sphère (pour poser une forme plane sur la surface). */
 function tangent(c: Vec3): [Vec3, Vec3] { const u = norm(cross(Math.abs(c[1]) > 0.98 ? [1, 0, 0] : [0, 1, 0], c)); return [u, cross(c, u)]; }
 const onSurface = (c: Vec3, U: Vec3, V: Vec3, x: number, y: number) => norm([0, 1, 2].map((k) => c[k] + x * U[k] + y * V[k]) as Vec3);
-/** Bruit stable (bégaiement des néons). */
-const hash = (a: number, b: number) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
 /** Position le long d'une polyligne de la sphère, u de 0 à 1. */
 function along(path: Vec3[], u: number): Vec3 {
 	const n = path.length - 1, x = clamp(u, 0, 1) * n, i = Math.min(n - 1, Math.floor(x)), f = x - i;
