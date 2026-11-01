@@ -1,0 +1,80 @@
+/* Star map : barre des raccourcis clavier (bas de la carte, chaque touche est un bouton). */
+
+/* ===== Raccourcis clavier (bas de la carte) ===== */
+.keys {
+	position: absolute;
+	left: 50%;
+	bottom: 3rem;
+	z-index: 43; /* au-dessus de la vue rapprochée */
+	transform: translateX(-50%);
+	font-family: var(--font-display);
+	font-size: 0.8rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.keys .key {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	height: 45px;
+	min-width: 45px;
+	margin: 0 0.25em;
+	padding: 0 0.6em;
+	vertical-align: middle;
+	border: 1px solid rgba(var(--rgb-secondary), 0.7);
+	border-radius: 4px;
+	/* Police système : les flèches de Syne Mono sont minuscules. */
+	font-family: system-ui, sans-serif;
+	font-size: 1.15rem;
+	letter-spacing: 0;
+	text-align: center;
+	color: var(--color-text);
+	text-transform: uppercase; /* un bouton n'hérite pas de la casse de la barre */
+	background: none;
+	cursor: pointer;
+	pointer-events: auto; /* la barre laisse passer les clics, pas ses touches */
+	transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.keys .key:hover {
+	color: var(--color-accent);
+	border-color: var(--color-accent);
+}
+
+/* Pas de projet de ce côté (premier / dernier) */
+.keys .key:disabled {
+	opacity: 0.35;
+	pointer-events: none;
+}
+
+/* Touche avec un mot (« esc ») : plus petite que les symboles. */
+.keys .key-word {
+	font-size: 0.75rem;
+	letter-spacing: 0.08em;
+}
+
+.keys .key:first-child {
+	margin-left: 0;
+}
+
+/* Vue rapprochée ouverte : ses raccourcis remplacent ceux de la carte. */
+.keys-zoom,
+.keys[data-zoom] .keys-map {
+	display: none;
+}
+
+.keys[data-zoom] .keys-zoom {
+	display: inline;
+}
+
+/* Pas de clavier (tactile) ou écran étroit : pas d'indication. */
+@media (pointer: coarse), (max-width: 900px), (orientation: portrait) {
+	.keys {
+		display: none;
+	}
+}

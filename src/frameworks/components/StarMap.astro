@@ -7,6 +7,9 @@ import { webSrc } from '../../adapters/images';
 import InProgressBadge from './InProgressBadge.astro';
 import MapZoom from './MapZoom.astro';
 import styles from '../styles/components/star-map.module.css';
+import chromeStyles from '../styles/components/star-map-chrome.module.css';
+import keyStyles from '../styles/components/star-map-keys.module.css';
+import listStyles from '../styles/components/project-list.module.css';
 
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
@@ -59,39 +62,39 @@ const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.le
 		<div class={styles['map-ui']} data-map-ui>
 			<div class={styles['map-layer']} data-map></div>
 
-			<div class={styles.topbar}>
-				<div class={styles.counter} data-counter>01 / {pad(projects.length)}</div>
-				<h2 class={styles.title} set:html={t('map.title')} />
-				<button class={styles['see-all']} type="button" data-see-all>{t('map.viewAll')} ☰</button>
+			<div class={chromeStyles.topbar}>
+				<div class={chromeStyles.counter} data-counter>01 / {pad(projects.length)}</div>
+				<h2 class={chromeStyles.title} set:html={t('map.title')} />
+				<button class={chromeStyles['see-all']} type="button" data-see-all>{t('map.viewAll')} ☰</button>
 			</div>
 
-			<div class={styles.nav}>
-				<div class={styles['nav-heading']}>{t('map.systems')}</div>
+			<div class={chromeStyles.nav}>
+				<div class={chromeStyles['nav-heading']}>{t('map.systems')}</div>
 				{systems.map((sys) => (
-					<button class={styles['nav-row']} type="button" data-nav-row>
-						<span class={styles['nav-dot']} style={`--c: ${systemColor(sys.label)}`}></span>
-						<span>{sys.num}<span class={styles['nav-name']}>. {t('map.system', { name: sys.label })}</span></span>
-						<span class={styles['nav-count']}>{sys.count}</span>
-						<span class={styles['nav-bar']} data-nav-bar></span>
+					<button class={chromeStyles['nav-row']} type="button" data-nav-row>
+						<span class={chromeStyles['nav-dot']} style={`--c: ${systemColor(sys.label)}`}></span>
+						<span>{sys.num}<span class={chromeStyles['nav-name']}>. {t('map.system', { name: sys.label })}</span></span>
+						<span class={chromeStyles['nav-count']}>{sys.count}</span>
+						<span class={chromeStyles['nav-bar']} data-nav-bar></span>
 					</button>
 				))}
 			</div>
 
-			<div class={styles.hud} data-hud>
-				<div class={styles['hud-label']} data-hud-cat>{t('map.selected')}</div>
-				<div class={styles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
-				<h3 class={styles['hud-title']}><span class={styles['title-text']} data-hud-title></span><InProgressBadge data-hud-wip hidden /></h3>
-				<div class={styles['hud-meta']}>
+			<div class={chromeStyles.hud} data-hud>
+				<div class={chromeStyles['hud-label']} data-hud-cat>{t('map.selected')}</div>
+				<div class={chromeStyles['hud-img']}><img data-hud-img src="" alt="" draggable="false" /></div>
+				<h3 class={chromeStyles['hud-title']}><span class={chromeStyles['title-text']} data-hud-title></span><InProgressBadge data-hud-wip hidden /></h3>
+				<div class={chromeStyles['hud-meta']}>
 					<span data-hud-tag></span>
 					<span class="sep">-</span>
 					<span data-hud-year></span>
 				</div>
 			</div>
 
-			<a class={styles['about-link']} href="#about">{t('map.aboutLink')} ↓</a>
+			<a class={chromeStyles['about-link']} href="#about">{t('map.aboutLink')} ↓</a>
 
 			<!-- Tactile : remplace le swipe dans la carte (affiché seulement sur écran tactile). -->
-			<nav class={styles['touch-nav']} aria-label={t('map.touchAria')}>
+			<nav class={chromeStyles['touch-nav']} aria-label={t('map.touchAria')}>
 				<button type="button" data-go="top" aria-label={t('map.top')}>↑</button>
 				<button type="button" data-go="prev">← {t('map.prev')}</button>
 				<button type="button" data-go="next">{t('map.next')} →</button>
@@ -103,54 +106,54 @@ const filters = [{ key: 'All', label: t('map.filterAll'), count: pad(projects.le
 
 		<!-- Raccourcis clavier : une ligne pour la carte, une pour la vue rapprochée. Chaque touche est
 		     aussi un bouton (souris) qui fait la même chose ; hors du parcours au clavier, qui a les vraies touches. -->
-		<div class={styles.keys} data-keys aria-hidden="true">
-			<span class={styles['keys-map']}>
-				<button type="button" class={styles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={styles.key} data-key="ArrowRight" tabindex="-1">→</button>
+		<div class={keyStyles.keys} data-keys aria-hidden="true">
+			<span class={keyStyles['keys-map']}>
+				<button type="button" class={keyStyles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={keyStyles.key} data-key="ArrowRight" tabindex="-1">→</button>
 				{t('map.keyNavigate')}
-				<button type="button" class={styles.key} data-key="Enter" tabindex="-1">↵</button>
+				<button type="button" class={keyStyles.key} data-key="Enter" tabindex="-1">↵</button>
 				{t('map.keyOpen')}
 			</span>
-			<span class={styles['keys-zoom']}>
-				<button type="button" class={styles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={styles.key} data-key="ArrowRight" tabindex="-1">→</button>
+			<span class={keyStyles['keys-zoom']}>
+				<button type="button" class={keyStyles.key} data-key="ArrowLeft" tabindex="-1">←</button><button type="button" class={keyStyles.key} data-key="ArrowRight" tabindex="-1">→</button>
 				{t('map.keyNavigate')}
-				<button type="button" class={styles.key} data-key="Enter" tabindex="-1">↵</button>
+				<button type="button" class={keyStyles.key} data-key="Enter" tabindex="-1">↵</button>
 				{t('map.keyViewProject')}
-				<button type="button" class:list={[styles.key, styles['key-word']]} data-key="Escape" tabindex="-1">esc</button>
+				<button type="button" class:list={[keyStyles.key, keyStyles['key-word']]} data-key="Escape" tabindex="-1">esc</button>
 				{t('map.keyClose')}
 			</span>
 		</div>
 	</div>
 
 	<!-- Overlay "Tout voir" -->
-	<div class={styles.overlay} data-overlay role="dialog" aria-modal="true" aria-labelledby="overlay-title" inert>
-		<div class={styles['overlay-inner']}>
-			<div class={styles['overlay-head']}>
-				<h2 class={styles['overlay-title']} id="overlay-title" set:html={t('map.allProjects')} />
-				<button class={styles['overlay-close']} type="button" data-list-close>{t('map.close')} ✕</button>
+	<div class={listStyles.overlay} data-overlay role="dialog" aria-modal="true" aria-labelledby="overlay-title" inert>
+		<div class={listStyles['overlay-inner']}>
+			<div class={listStyles['overlay-head']}>
+				<h2 class={listStyles['overlay-title']} id="overlay-title" set:html={t('map.allProjects')} />
+				<button class={listStyles['overlay-close']} type="button" data-list-close>{t('map.close')} ✕</button>
 			</div>
-			<div class={styles['overlay-filters']}>
+			<div class={listStyles['overlay-filters']}>
 				{filters.map((fl) => (
-					<button class={styles.chip} type="button" data-filter={fl.key}>
-						{fl.label} <span class={styles['chip-count']}>{fl.count}</span>
+					<button class={listStyles.chip} type="button" data-filter={fl.key}>
+						{fl.label} <span class={listStyles['chip-count']}>{fl.count}</span>
 					</button>
 				))}
 			</div>
-			<div class={styles['overlay-grid']}>
-				<div class={styles['overlay-rows']}>
+			<div class={listStyles['overlay-grid']}>
+				<div class={listStyles['overlay-rows']}>
 					{projects.map((p, i) => (
-						<button type="button" class={styles.row} data-row-idx={i} data-cat={p.category}>
-							<span class={styles['row-num']}>{pad(i + 1)}</span>
-							<span class={styles['row-main']}>
-								<span class={styles['row-title']}>{p.title}{p.inProgress && <InProgressBadge />}</span>
-								<span class={styles['row-tag']}>{p.tag}</span>
+						<button type="button" class={listStyles.row} data-row-idx={i} data-cat={p.category}>
+							<span class={listStyles['row-num']}>{pad(i + 1)}</span>
+							<span class={listStyles['row-main']}>
+								<span class={listStyles['row-title']}>{p.title}{p.inProgress && <InProgressBadge />}</span>
+								<span class={listStyles['row-tag']}>{p.tag}</span>
 							</span>
-							<span class={styles['row-year']}>{p.year} →</span>
+							<span class={listStyles['row-year']}>{p.year} →</span>
 						</button>
 					))}
 				</div>
-				<div class={styles['overlay-preview']}>
-					<div class={styles['preview-img']}><img data-preview-img src="" alt="" /></div>
-					<p class={styles['preview-desc']} data-preview-desc></p>
+				<div class={listStyles['overlay-preview']}>
+					<div class={listStyles['preview-img']}><img data-preview-img src="" alt="" /></div>
+					<p class={listStyles['preview-desc']} data-preview-desc></p>
 				</div>
 			</div>
 		</div>
