@@ -4,7 +4,7 @@
 // brumeuse (floutée à la génération), avec de légers filaments. Plus une texture « intérieur »
 // sans bord, pour le fond de la vue rapprochée (on est dans la nébuleuse).
 // Pas de DOM ici : uniquement du calcul sur des tableaux de pixels RGBA.
-import { smoothstep } from '../utils/math';
+import { smoothstep } from '../domain/math';
 
 export type Rgb = [number, number, number];
 export type NebulaJob = {

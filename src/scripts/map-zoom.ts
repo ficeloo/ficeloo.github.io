@@ -12,8 +12,8 @@
 import { createPlanet, type Planet } from './planet';
 import { frameGap } from './frame-pace';
 import { trapTab } from './focus-trap';
-import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../utils/math';
-import { f1 } from '../utils/format';
+import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../domain/math';
+import { f1 } from '../domain/format';
 
 /** Ce que la carte fournit au zoom. Coordonnées en px, dans le repère de l'écran de la carte. */
 export interface ZoomHost {

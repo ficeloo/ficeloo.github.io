@@ -4,7 +4,7 @@
 // Clic sur une vignette ou une flèche : saut puis pause de 8 s. Survol du média : pause.
 // Hors écran : pause. Animations réduites : pas de défilement automatique.
 
-import { pad } from '../utils/format';
+import { pad } from '../domain/format';
 
 const HOLD_MS = 8000;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;

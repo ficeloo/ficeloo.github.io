@@ -18,52 +18,8 @@ import pfCover from '../assets/portfolio/cover.png'
 import lbCover from '../assets/la-balise/cover.png'
 import gnlCover from '../assets/getnextlan/cover.png'
 
-import type { ImageMetadata } from 'astro';
-import { pick, type Lang, type Localized } from '../i18n';
-
-// Planète de la page projet. La technique de rendu vient du système (category) ;
-// la couleur vient de tokens.css (--planet-<slug>), le reste est l'« ADN » du projet.
-interface Planet {
-	seed: number; // place les cratères, plaques ou facettes : deux projets d'un même système ne se ressemblent pas
-	signature: 'ship' | 'teapot' | 'station' | 'beacon' | 'moon' | 'mic' | 'joystick'; // objet emblématique du projet, en orbite
-	retrograde?: boolean; // la signature tourne à contre-sens
-	belt?: boolean; // ceinture d'astéroïdes
-	rings?: number; // Web : 1 anneau par couche du projet (front, back, BDD…), 3 max
-	signs?: string[]; // IRL : enseignes au néon propres au projet (formes dans src/scripts/planet/neon-signs.ts)
-}
-
-interface Highlight<T = Localized> {
-	label: T; // catégorie courte (Physics, Flow…)
-	title: T;
-	text: T;
-}
-
-// Les textes (T) s'écrivent "en anglais seulement" ou { en: "…", fr: "…" } : voir src/i18n.
-// Les composants reçoivent un Project déjà traduit (getProjects / getMapOrder).
-interface ProjectData<T = Localized> {
-	slug: string; //identifiant URL
-	title: T;
-	description: T;
-	longDescription?: T; // HTML
-	category: string; // Système de la star map : les projets y sont regroupés par catégorie (clé, non traduite)
-	tag: T;
-	year: T;
-	pitch: T; // Une phrase sous le titre de la page projet
-	context: T; // Solo / équipe, cadre (42, jam…), rôle
-	duration?: T;
-	stack: string[]; // Technos principales (compétences pour un événement) : satellites de la planète + fiche technique
-	highlights?: Highlight<T>[];
-	planet: Planet;
-	inProgress?: boolean; // Projet pas encore terminé : badge « In progress » partout où il apparaît
-	ongoing?: boolean; // Engagement toujours actif (association…) : statut « Active » au lieu de « Done » / « Shipped »
-	image: ImageMetadata; // Image principale (un GIF reste animé, il n'est pas converti)
-	alt: T;
-	screenshots?: ImageMetadata[]; // Tableau de screenshots
-	links: { itch?: string; github?: string; gdd?: string; replay?: string; site?: string }; // replay : vidéo d'un événement ; site : site du projet
-	embedUrl?: string; // Pour les projets jouables sur navigateur (WASM)
-}
-// event : projet d'un système d'événements (EVENT_SYSTEMS), la fiche parle de compétences et de date
-type Project = ProjectData<string> & { event: boolean };
+import { pick, type Lang } from '../domain/language';
+import { isEventSystem, systemsOf, type Project, type ProjectData } from '../domain/project';
 
 // Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
 // (Game → Graphics → Web → IRL). Les numéros 01, 02… suivent cet ordre de parcours.
@@ -278,11 +234,7 @@ const projects: ProjectData[] = [
 ]
 
 // Systèmes de la star map, dans l'ordre d'apparition.
-export const systems = [...new Set(projects.map((p) => p.category))];
-
-// Systèmes dont les projets sont des événements ou des engagements (pas du code) :
-// stack → compétences, sortie → date.
-const EVENT_SYSTEMS = new Set(['IRL']);
+export const systems = systemsOf(projects);
 
 /** Les projets dans une langue (dans l'ordre du tableau). */
 export function getProjects(lang: Lang): Project[] {
@@ -298,7 +250,7 @@ export function getProjects(lang: Lang): Project[] {
 		duration: pick(p.duration, lang),
 		highlights: p.highlights?.map((h) => ({ label: pick(h.label, lang), title: pick(h.title, lang), text: pick(h.text, lang) })),
 		alt: pick(p.alt, lang),
-		event: EVENT_SYSTEMS.has(p.category),
+		event: isEventSystem(p.category),
 	}));
 }
 

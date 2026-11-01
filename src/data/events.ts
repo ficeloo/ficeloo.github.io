@@ -8,58 +8,12 @@ import xlanRack from '../assets/getnextlan/xlan-2026/rack.jpg'
 import xlanSwitcher from '../assets/getnextlan/xlan-2026/switcher.jpg'
 import xlanGreenScreen from '../assets/getnextlan/xlan-2026/green-screen.jpg'
 
-import type { ImageMetadata } from 'astro';
-import { pick, type Lang, type Localized } from '../i18n';
+import { pick, type Lang } from '../domain/language';
+import type { EventData, Photo, ProjectEvent } from '../domain/event';
 
 // Événements d'un projet IRL (une association et ses LAN…) : une page chacun,
 // sous celle du projet (/projects/<projet>/<événement>). Mêmes règles de texte que projects.ts.
-
-interface Photo<T = Localized> {
-	image: ImageMetadata;
-	alt: T;
-}
-
-interface Day<T = Localized> {
-	date: T; // « 18 Oct »
-	title: T;
-	text: T; // HTML : paragraphes <p>, <strong> pour les infos clés
-	photo?: Photo<T>; // à côté du récit
-}
-
-interface Card<T = Localized> {
-	label: T; // catégorie courte, comme les Highlights
-	title: T;
-	text: T;
-}
-
-interface Game<T = Localized> {
-	name: T;
-	note?: T; // précision sous le nom
-	mystery?: boolean; // carte « ? » mise en avant
-}
-
-interface EventData<T = Localized> {
-	slug: string; // identifiant URL
-	project: string; // slug du projet parent (projects.ts)
-	title: T;
-	description: T; // balise meta
-	tag: T;
-	date: T;
-	pitch: T; // une phrase sous le titre
-	overview?: T; // HTML, section Overview sous la fiche
-	place: T;
-	players: T;
-	games: Game<T>[]; // section des jeux, sous les jours
-	role: T; // pendant l'événement
-	prep: T; // pendant la préparation
-	cover: Photo<T>; // image à côté de la fiche
-	days: Day<T>[];
-	difficulties?: Card<T>[];
-	backstage?: Photo<T>[]; // mosaïque : une photo très large prend 2 colonnes, une photo en hauteur 2 rangées
-	crew?: Photo<T>;
-	thanks?: T; // HTML
-	links: { replay?: string; site?: string };
-}
+// Champs et règles : src/domain/event.ts.
 
 const events: EventData[] = [
 	{
@@ -170,4 +124,4 @@ export function getProjectEvents(project: string, lang: Lang): ProjectEvent[] {
 }
 
 export const eventPaths = events.map((e) => ({ slug: e.project, event: e.slug }));
-export type ProjectEvent = EventData<string>;
+export type { ProjectEvent };

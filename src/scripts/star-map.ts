@@ -5,8 +5,8 @@ import { INTERIOR_TEX, type NebulaJob, type NebulaLayers, type Rgb } from './neb
 import { createZoom } from './map-zoom';
 import { softwareRendering } from './render-mode';
 import { trapTab } from './focus-trap';
-import { clamp, easeInOutCubic, hash, lerp } from '../utils/math';
-import { f1, pad } from '../utils/format';
+import { clamp, easeInOutCubic, hash, lerp } from '../domain/math';
+import { f1, pad } from '../domain/format';
 import { nebulaRgb, systemColor, systemKey, systemRgb } from '../utils/system-colors';
 
 type Raw = {

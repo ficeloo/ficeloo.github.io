@@ -8,7 +8,7 @@
 
 import { C, TAU, WHITE, baseFill, fromLatLon, mix, pickFront, reduce, rgba, shade, sphere, spinOf, surfLine, token, view, type LatLon, type NeonSign, type PlanetSystem, type RGB, type Vec3 } from './kit';
 import { SIGNS, TEXT_SIGNS } from './neon-signs';
-import { clamp, hash } from '../../utils/math'; // hash : bruit stable (bégaiement des néons)
+import { clamp, hash } from '../../domain/math'; // hash : bruit stable (bégaiement des néons)
 
 const IRL = token('--system-irl');
 const TUBES = [token('--neon-cyan'), token('--neon-pink')];
