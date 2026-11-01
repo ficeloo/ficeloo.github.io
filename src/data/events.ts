@@ -8,8 +8,9 @@ import xlanRack from '../assets/getnextlan/xlan-2026/rack.jpg'
 import xlanSwitcher from '../assets/getnextlan/xlan-2026/switcher.jpg'
 import xlanGreenScreen from '../assets/getnextlan/xlan-2026/green-screen.jpg'
 
-import { pick, type Lang } from '../domain/language';
-import type { EventData, Photo, ProjectEvent } from '../domain/event';
+import type { Lang } from '../domain/language';
+import type { EventData, ProjectEvent } from '../domain/event';
+import { eventsOfProject, localizeEvent } from '../usecases/events';
 
 // Événements d'un projet IRL (une association et ses LAN…) : une page chacun,
 // sous celle du projet (/projects/<projet>/<événement>). Mêmes règles de texte que projects.ts.
@@ -95,32 +96,12 @@ const events: EventData[] = [
 
 /** Les événements dans une langue. */
 export function getEvents(lang: Lang): ProjectEvent[] {
-	const photo = (p: Photo) => ({ ...p, alt: pick(p.alt, lang) });
-	return events.map((e) => ({
-		...e,
-		title: pick(e.title, lang),
-		description: pick(e.description, lang),
-		tag: pick(e.tag, lang),
-		date: pick(e.date, lang),
-		pitch: pick(e.pitch, lang),
-		overview: pick(e.overview, lang),
-		place: pick(e.place, lang),
-		players: pick(e.players, lang),
-		games: e.games.map((g) => ({ ...g, name: pick(g.name, lang), note: pick(g.note, lang) })),
-		role: pick(e.role, lang),
-		prep: pick(e.prep, lang),
-		cover: photo(e.cover),
-		days: e.days.map((d) => ({ date: pick(d.date, lang), title: pick(d.title, lang), text: pick(d.text, lang), photo: d.photo && photo(d.photo) })),
-		difficulties: e.difficulties?.map((c) => ({ label: pick(c.label, lang), title: pick(c.title, lang), text: pick(c.text, lang) })),
-		backstage: e.backstage?.map(photo),
-		crew: e.crew && photo(e.crew),
-		thanks: pick(e.thanks, lang),
-	}));
+	return events.map((e) => localizeEvent(e, lang));
 }
 
 /** Les événements d'un projet, dans l'ordre du tableau. */
 export function getProjectEvents(project: string, lang: Lang): ProjectEvent[] {
-	return getEvents(lang).filter((e) => e.project === project);
+	return eventsOfProject(getEvents(lang), project);
 }
 
 export const eventPaths = events.map((e) => ({ slug: e.project, event: e.slug }));

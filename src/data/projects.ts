@@ -18,8 +18,9 @@ import pfCover from '../assets/portfolio/cover.png'
 import lbCover from '../assets/la-balise/cover.png'
 import gnlCover from '../assets/getnextlan/cover.png'
 
-import { pick, type Lang } from '../domain/language';
-import { isEventSystem, systemsOf, type Project, type ProjectData } from '../domain/project';
+import type { Lang } from '../domain/language';
+import { systemsOf, type Project, type ProjectData } from '../domain/project';
+import { inMapOrder, localizeProject } from '../usecases/projects';
 
 // Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
 // (Game → Graphics → Web → IRL). Les numéros 01, 02… suivent cet ordre de parcours.
@@ -238,26 +239,12 @@ export const systems = systemsOf(projects);
 
 /** Les projets dans une langue (dans l'ordre du tableau). */
 export function getProjects(lang: Lang): Project[] {
-	return projects.map((p) => ({
-		...p,
-		title: pick(p.title, lang),
-		description: pick(p.description, lang),
-		longDescription: pick(p.longDescription, lang),
-		tag: pick(p.tag, lang),
-		year: pick(p.year, lang),
-		pitch: pick(p.pitch, lang),
-		context: pick(p.context, lang),
-		duration: pick(p.duration, lang),
-		highlights: p.highlights?.map((h) => ({ label: pick(h.label, lang), title: pick(h.title, lang), text: pick(h.text, lang) })),
-		alt: pick(p.alt, lang),
-		event: isEventSystem(p.category),
-	}));
+	return projects.map((p) => localizeProject(p, lang));
 }
 
 /** Les projets dans l'ordre de la carte (système par système) : numéros 01, 02…, mini-carte, précédent / suivant. */
 export function getMapOrder(lang: Lang): Project[] {
-	const list = getProjects(lang);
-	return systems.flatMap((c) => list.filter((p) => p.category === c));
+	return inMapOrder(getProjects(lang));
 }
 
 export const slugs = projects.map((p) => p.slug);
