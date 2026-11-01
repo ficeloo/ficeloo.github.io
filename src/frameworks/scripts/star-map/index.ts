@@ -6,7 +6,7 @@ import { createZoom } from './zoom';
 import { attr, changed, css, txt } from './dom-writes';
 import { layoutMap, type Pt } from './layout';
 import { createScroller } from './scroller';
-import { softwareRendering } from '../render-mode';
+import { createStarfield } from './starfield';
 import { trapTab } from '../focus-trap';
 import { clamp, hash, lerp } from '../../../domain/math';
 import { f1, pad } from '../../../domain/format';
@@ -92,57 +92,9 @@ export function initStarMap(styles: Record<string, string>) {
 		vertical = portraitMq.matches;
 	};
 
-	// Étoiles de fond déterministes (140).
-	const starBase = (() => {
-		let s = 7;
-		const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
-		return Array.from({ length: 140 }, () => {
-			const q = r();
-			return {
-				x: r() * 100,
-				y: r() * 100,
-				d: r() < 0.85 ? 1 : 2,
-				o: +(0.2 + r() * 0.6).toFixed(2),
-				z: [0.3, 0.6, 1][Math.floor(r() * 3)],
-				c: q < 0.05 ? 'accent' : q < 0.16 ? 'secondary' : 'text', // token --rgb-* (alpha = o)
-			};
-		});
-	})();
-
 	// --- Construction du DOM (une seule fois) ---
-	// Scintillement par groupes : 8 calques animés au lieu de 140 étoiles (perf mobile).
-	// Chaque groupe a son rythme ; ses étoiles sont dispersées sur tout l'écran.
-	const TWINKLE_GROUPS = 8;
-	const starGroups = Array.from({ length: TWINKLE_GROUPS }, () => {
-		const g = document.createElement('div');
-		g.className = styles['star-group'];
-		g.style.animationDuration = (2 + Math.random() * 3).toFixed(2) + 's';
-		g.style.animationDelay = (-Math.random() * 5).toFixed(2) + 's';
-		starsLayer.appendChild(g);
-		return g;
-	});
-	const starEls = starBase.map((s, idx) => {
-		const d = document.createElement('div');
-		d.className = styles.star;
-		// Opacité propre portée par la couleur (le groupe anime sa propre opacité par-dessus).
-		// --warp : teinte posée sur le calque pendant un saut hyperspace (sinon couleur propre de l'étoile).
-		d.style.background = `rgba(var(--warp, var(--rgb-${s.c})), ${s.o})`;
-		d.style.width = s.d + 'px';
-		d.style.height = s.d + 'px';
-		starGroups[idx % TWINKLE_GROUPS].appendChild(d);
-		return d;
-	});
-	// Sans carte graphique, refusionner 8 calques plein écran à chaque image est très coûteux
-	// (21 i/s au lieu de 60 sur la carte) : chaque étoile scintille alors elle-même, au rythme
-	// de son groupe. Même rendu, mais seulement 140 petits points à refusionner (voir data-soft dans le CSS).
-	if (softwareRendering()) {
-		root.setAttribute('data-soft', '');
-		starEls.forEach((d, idx) => {
-			const g = starGroups[idx % TWINKLE_GROUPS];
-			d.style.animationDuration = g.style.animationDuration;
-			d.style.animationDelay = g.style.animationDelay;
-		});
-	}
+	// Étoiles de fond (scintillement, parallaxe, traînées des sauts).
+	const stars = createStarfield(starsLayer, root, styles);
 
 	const NS = 'http://www.w3.org/2000/svg';
 	const svg = document.createElementNS(NS, 'svg');
@@ -406,7 +358,7 @@ export function initStarMap(styles: Record<string, string>) {
 	function relayout() {
 		L = layout();
 		const { W, G, N } = L;
-		starEls.forEach((d, i) => (d.style.top = vertical ? '0' : starBase[i].y.toFixed(2) + '%'));
+		stars.place(vertical);
 		T = vh * 0.9;
 		STEP = vh * STEP_K;
 		Utot = L.U[N - 1] || 0;
@@ -734,25 +686,7 @@ export function initStarMap(styles: Record<string, string>) {
 		attr(sysTPath, 'd', sysT);
 		attr(legTPath, 'd', legT);
 
-		// Étoiles : parallaxe sur l'axe du parcours (x en horizontal, y en vertical).
-		// En horizontal, top fixe en % (relayout) ; en vertical, top: 0 et y via transform.
-		const W0 = vw * 1.1;
-		const H0 = vh * 1.1;
-		const wrap = (v: number, m: number) => ((v % m) + m) % m;
-		const rotS = `rotate(${f1(rot)}deg)`;
-		starBase.forEach((s, idx) => {
-			const zz = s.z;
-			const x = vertical ? (s.x / 100) * vw : wrap((s.x / 100) * W0 - cam.x * 0.08 * zz, W0) - vw * 0.05;
-			const y = vertical ? wrap((s.y / 100) * H0 - cam.y * 0.08 * zz, H0) - vh * 0.05 : 0;
-			const len = s.d + wave * (40 + s.o * 120) * zz * 1.4;
-			// Au repos : taille réelle, coin calé sur un pixel entier — une étoile étirée
-			// ou à cheval sur deux pixels est lissée et paraît bien plus terne.
-			// En saut : rotation + traînée (étirement depuis la taille réelle).
-			const tf = wave === 0 // sans traînée, la rotation d'un point est invisible
-				? `translate(${Math.round(x - s.d / 2)}px,${Math.round(y - s.d / 2)}px)`
-				: `translate(${f1(x)}px,${f1(y)}px) ${rotS} scaleX(${f1(len / s.d)}) translate(-50%,-50%)`;
-			css(starEls[idx], 'transform', tf);
-		});
+		stars.render({ vw, vh, vertical }, cam, wave, rot);
 		// Pendant un saut, les traînées prennent la teinte du système quitté, passent au blanc,
 		// puis prennent celle du système d'arrivée (dans le sens du trajet). Une seule variable
 		// sur le calque, arrondie au 20e pour ne réécrire que quand la teinte change vraiment.
