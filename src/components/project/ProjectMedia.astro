@@ -1,9 +1,9 @@
 ---
 import { pad } from '../../domain/format';
-import { webSrc } from '../../utils/images';
-import type { Project } from '../../data/projects';
+import { webSrc } from '../../adapters/images';
+import type { Project } from '../../domain/project';
 import styles from '../../styles/components/project/project-media.module.css';
-import { getLang, useTranslations } from '../../i18n';
+import { getLang, useTranslations } from '../../adapters/i18n';
 
 interface Props {
 	project: Project;

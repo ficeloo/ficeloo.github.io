@@ -1,5 +1,5 @@
 // Textes de l'interface en anglais : la langue de référence, toutes les clés sont ici.
-// {name} est remplacé à l'affichage (voir t() dans src/i18n/index.ts).
+// {name} est remplacé à l'affichage (voir t() dans src/adapters/i18n/index.ts).
 // Les valeurs qui contiennent du HTML (<span class="accent">…) sont affichées telles quelles.
 export const en = {
 	// Balises <title> et meta description

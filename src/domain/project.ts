@@ -20,7 +20,7 @@ export interface Highlight<T = Localized> {
 }
 
 // Les textes (T) s'écrivent "en anglais seulement" ou { en: "…", fr: "…" } : voir language.ts.
-// Les composants reçoivent un Project déjà traduit (src/usecases/projects.ts).
+// Les composants reçoivent un Project déjà traduit (src/adapters/catalog.ts).
 export interface ProjectData<T = Localized> {
 	slug: string; //identifiant URL
 	title: T;

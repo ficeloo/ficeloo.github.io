@@ -1,9 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { systemStyle } from '../utils/system-colors';
-import { getProjects } from '../data/projects';
-import { getEvents } from '../data/events';
-import { getLang, localizePath, useTranslations } from '../i18n';
+import { systemStyle } from '../adapters/system-colors';
+import { getProjects, getEvents } from '../adapters/catalog';
+import { getLang, localizePath, useTranslations } from '../adapters/i18n';
 import Highlights from '../components/project/Highlights.astro';
 import PhotoFrame from '../components/event/PhotoFrame.astro';
 import EventSpec from '../components/event/EventSpec.astro';

@@ -12,7 +12,7 @@
 
 import { frameGap } from '../frame-pace';
 import { C, TAU, proj, reduce, rgba, seeded, tokenOr, type PlanetSystem, type Scene, type Vec3 } from './kit';
-import { systemKey } from '../../utils/system-colors';
+import { systemKey } from '../../adapters/system-colors';
 import { HALO, atmoEdge, buildHalo, rim } from './atmosphere';
 import { drawBelt, drawSignature, orbitEllipse } from './orbit';
 import { drawBuilder, drawFreeDrone, droneUpdate, newDrone } from './drone';

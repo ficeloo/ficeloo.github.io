@@ -1,9 +1,9 @@
 ---
 import { Image } from 'astro:assets';
 import SectionHead from './SectionHead.astro';
-import type { ProjectEvent } from '../../data/events';
+import type { ProjectEvent } from '../../domain/event';
 import styles from '../../styles/components/project/project-events.module.css';
-import { getLang, localizePath, useTranslations } from '../../i18n';
+import { getLang, localizePath, useTranslations } from '../../adapters/i18n';
 
 interface Props {
 	project: string; // slug de l'association

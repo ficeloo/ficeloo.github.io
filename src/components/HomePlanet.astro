@@ -1,7 +1,7 @@
 ---
 import { pad } from '../domain/format';
-import { slugs } from '../data/projects';
-import { getLang, useTranslations } from '../i18n';
+import { slugs } from '../adapters/catalog';
+import { getLang, useTranslations } from '../adapters/i18n';
 import { TILT, FLAT, VIEWBOX, PLANET_R, RING_BANDS, projectSphere, latitudePath } from '../scripts/home-planet';
 import styles from '../styles/components/home-planet.module.css';
 

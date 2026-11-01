@@ -1,9 +1,9 @@
 ---
 import SectionHead from '../project/SectionHead.astro';
 import PhotoFrame from './PhotoFrame.astro';
-import type { ProjectEvent } from '../../data/events';
+import type { ProjectEvent } from '../../domain/event';
 import styles from '../../styles/components/event/crew.module.css';
-import { getLang, useTranslations } from '../../i18n';
+import { getLang, useTranslations } from '../../adapters/i18n';
 
 interface Props {
 	photo?: ProjectEvent['crew'];

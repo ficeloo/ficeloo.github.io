@@ -1,9 +1,9 @@
 ---
 import { pad } from '../domain/format';
-import { systemColor } from '../utils/system-colors';
-import { getMapOrder, systems as cats } from '../data/projects';
-import { getLang, localizePath, useTranslations } from '../i18n';
-import { webSrc } from '../utils/images';
+import { systemColor } from '../adapters/system-colors';
+import { getMapOrder, systems as cats } from '../adapters/catalog';
+import { getLang, localizePath, useTranslations } from '../adapters/i18n';
+import { webSrc } from '../adapters/images';
 import InProgressBadge from './InProgressBadge.astro';
 import MapZoom from './MapZoom.astro';
 import styles from '../styles/components/star-map.module.css';

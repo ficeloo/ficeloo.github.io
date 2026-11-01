@@ -8,15 +8,13 @@ import xlanRack from '../assets/getnextlan/xlan-2026/rack.jpg'
 import xlanSwitcher from '../assets/getnextlan/xlan-2026/switcher.jpg'
 import xlanGreenScreen from '../assets/getnextlan/xlan-2026/green-screen.jpg'
 
-import type { Lang } from '../domain/language';
-import type { EventData, ProjectEvent } from '../domain/event';
-import { eventsOfProject, localizeEvent } from '../usecases/events';
+import type { EventData } from '../domain/event';
 
 // Événements d'un projet IRL (une association et ses LAN…) : une page chacun,
 // sous celle du projet (/projects/<projet>/<événement>). Mêmes règles de texte que projects.ts.
 // Champs et règles : src/domain/event.ts.
 
-const events: EventData[] = [
+export const events: EventData[] = [
 	{
 		slug: "xlan-2026",
 		project: "getnextlan",
@@ -93,16 +91,3 @@ const events: EventData[] = [
 		links: { site: "https://getnextlan.fr" }, // TODO (Théophile) : lien du replay s'il existe (replay: "…")
 	},
 ]
-
-/** Les événements dans une langue. */
-export function getEvents(lang: Lang): ProjectEvent[] {
-	return events.map((e) => localizeEvent(e, lang));
-}
-
-/** Les événements d'un projet, dans l'ordre du tableau. */
-export function getProjectEvents(project: string, lang: Lang): ProjectEvent[] {
-	return eventsOfProject(getEvents(lang), project);
-}
-
-export const eventPaths = events.map((e) => ({ slug: e.project, event: e.slug }));
-export type { ProjectEvent };

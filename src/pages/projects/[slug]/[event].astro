@@ -1,6 +1,6 @@
 ---
 import EventFile from '../../../views/EventFile.astro';
-import { eventPaths } from '../../../data/events';
+import { eventPaths } from '../../../adapters/catalog';
 
 export function getStaticPaths() {
 	return eventPaths.map((params) => ({ params }));

@@ -1,9 +1,9 @@
 ---
 import { Image, getImage } from 'astro:assets';
 import SectionHead from '../project/SectionHead.astro';
-import type { ProjectEvent } from '../../data/events';
+import type { ProjectEvent } from '../../domain/event';
 import styles from '../../styles/components/event/backstage.module.css';
-import { getLang, useTranslations } from '../../i18n';
+import { getLang, useTranslations } from '../../adapters/i18n';
 
 interface Props {
 	photos: NonNullable<ProjectEvent['backstage']>;

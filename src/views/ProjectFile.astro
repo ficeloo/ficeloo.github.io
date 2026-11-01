@@ -1,9 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { systemStyle } from '../utils/system-colors';
-import { getMapOrder } from '../data/projects';
-import { getProjectEvents } from '../data/events';
-import { getLang, localizePath, useTranslations } from '../i18n';
+import { systemStyle } from '../adapters/system-colors';
+import { getMapOrder, getProjectEvents } from '../adapters/catalog';
+import { getLang, localizePath, useTranslations } from '../adapters/i18n';
 import InProgressBadge from '../components/InProgressBadge.astro';
 import SystemMap from '../components/project/SystemMap.astro';
 import PlanetScene from '../components/project/PlanetScene.astro';

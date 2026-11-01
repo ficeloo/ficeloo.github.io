@@ -1,8 +1,8 @@
 import { en, type UiKey } from './en';
 import { fr } from './fr';
-import { defaultLang, langs, type Lang } from '../domain/language';
+import { defaultLang, langs, type Lang } from '../../domain/language';
 
-export { defaultLang, langs, pick, type Lang, type Localized } from '../domain/language';
+export { defaultLang, langs, pick, type Lang, type Localized } from '../../domain/language';
 
 // Langues du site. L'anglais est à la racine (/), les autres sous /<code>/ (voir astro.config.mjs).
 // live: false → les pages de la langue sont générées (pour traduire en local), mais

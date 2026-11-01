@@ -1,8 +1,8 @@
 ---
-import type { ProjectEvent } from '../../data/events';
+import type { ProjectEvent } from '../../domain/event';
 import sheet from '../../styles/components/project/spec-sheet.module.css';
 import styles from '../../styles/components/event/event-spec.module.css';
-import { getLang, useTranslations } from '../../i18n';
+import { getLang, useTranslations } from '../../adapters/i18n';
 
 interface Props {
 	event: ProjectEvent;

@@ -1,7 +1,7 @@
 ---
-import type { Project } from '../../data/projects';
+import type { Project } from '../../domain/project';
 import styles from '../../styles/components/project/planet-scene.module.css';
-import { getLang, useTranslations } from '../../i18n';
+import { getLang, useTranslations } from '../../adapters/i18n';
 
 interface Props {
 	project: Project;

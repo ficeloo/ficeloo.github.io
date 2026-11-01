@@ -18,13 +18,11 @@ import pfCover from '../assets/portfolio/cover.png'
 import lbCover from '../assets/la-balise/cover.png'
 import gnlCover from '../assets/getnextlan/cover.png'
 
-import type { Lang } from '../domain/language';
-import { systemsOf, type Project, type ProjectData } from '../domain/project';
-import { inMapOrder, localizeProject } from '../usecases/projects';
+import type { ProjectData } from '../domain/project';
 
 // Ordre de la carte : les systèmes apparaissent dans l'ordre de leur premier projet
 // (Game → Graphics → Web → IRL). Les numéros 01, 02… suivent cet ordre de parcours.
-const projects: ProjectData[] = [
+export const projects: ProjectData[] = [
 	{
 		slug: "stellar-drift",
 		title: "Stellar Drift",
@@ -233,19 +231,3 @@ const projects: ProjectData[] = [
 		links: { site: "https://getnextlan.fr" },
 	},
 ]
-
-// Systèmes de la star map, dans l'ordre d'apparition.
-export const systems = systemsOf(projects);
-
-/** Les projets dans une langue (dans l'ordre du tableau). */
-export function getProjects(lang: Lang): Project[] {
-	return projects.map((p) => localizeProject(p, lang));
-}
-
-/** Les projets dans l'ordre de la carte (système par système) : numéros 01, 02…, mini-carte, précédent / suivant. */
-export function getMapOrder(lang: Lang): Project[] {
-	return inMapOrder(getProjects(lang));
-}
-
-export const slugs = projects.map((p) => p.slug);
-export type { Project };

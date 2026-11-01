@@ -1,8 +1,8 @@
 ---
 import { pad } from '../domain/format';
-import { webSrc } from '../utils/images';
-import type { Project } from '../data/projects';
-import { getLang, localizePath, useTranslations } from '../i18n';
+import { webSrc } from '../adapters/images';
+import type { Project } from '../domain/project';
+import { getLang, localizePath, useTranslations } from '../adapters/i18n';
 import InProgressBadge from './InProgressBadge.astro';
 import PlanetScene from './project/PlanetScene.astro';
 import styles from '../styles/components/map-zoom.module.css';

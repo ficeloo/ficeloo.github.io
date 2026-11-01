@@ -1,6 +1,6 @@
 ---
 import styles from '../styles/components/footer.module.css'
-import { getLang, localizePath, useTranslations } from '../i18n'
+import { getLang, localizePath, useTranslations } from '../adapters/i18n'
 
 const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);

@@ -1,7 +1,8 @@
 ---
 import { pad } from '../../domain/format';
-import { getMapOrder, systems, type Project } from '../../data/projects';
-import { getLang, localizePath, useTranslations } from '../../i18n';
+import { getMapOrder, systems } from '../../adapters/catalog';
+import type { Project } from '../../domain/project';
+import { getLang, localizePath, useTranslations } from '../../adapters/i18n';
 import styles from '../../styles/components/project/system-map.module.css';
 
 interface Props {

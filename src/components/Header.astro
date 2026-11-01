@@ -1,6 +1,6 @@
 ---
 import styles from '../styles/components/header.module.css'
-import { getLang, languages, langs, localizePath, switchPath, useTranslations } from '../i18n'
+import { getLang, languages, langs, localizePath, switchPath, useTranslations } from '../adapters/i18n'
 
 interface Props {
 	/** Présent sur une sous-page : nav « ← Back / Contact » et fil d'Ariane à droite. */
@@ -13,7 +13,7 @@ const lang = getLang(Astro.currentLocale);
 const t = useTranslations(lang);
 const { crumb, back = localizePath('/#work', lang) } = Astro.props;
 const currYear = new Date().getFullYear();
-// Sélecteur de langue : seulement vers les langues publiées (live dans src/i18n/index.ts).
+// Sélecteur de langue : seulement vers les langues publiées (live dans src/adapters/i18n/index.ts).
 const others = langs.filter((l) => l !== lang && languages[l].live);
 ---
 

@@ -1,7 +1,8 @@
 ---
-import { getProjectEvents, type ProjectEvent } from '../../data/events';
-import type { Project } from '../../data/projects';
-import { getLang, localizePath, useTranslations } from '../../i18n';
+import { getProjectEvents } from '../../adapters/catalog';
+import type { ProjectEvent } from '../../domain/event';
+import type { Project } from '../../domain/project';
+import { getLang, localizePath, useTranslations } from '../../adapters/i18n';
 import styles from '../../styles/components/project/project-pager.module.css';
 
 interface Props {

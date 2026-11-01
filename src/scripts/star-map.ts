@@ -7,7 +7,7 @@ import { softwareRendering } from './render-mode';
 import { trapTab } from './focus-trap';
 import { clamp, easeInOutCubic, hash, lerp } from '../domain/math';
 import { f1, pad } from '../domain/format';
-import { nebulaRgb, systemColor, systemKey, systemRgb } from '../utils/system-colors';
+import { nebulaRgb, systemColor, systemKey, systemRgb } from '../adapters/system-colors';
 
 type Raw = {
 	slug: string;
