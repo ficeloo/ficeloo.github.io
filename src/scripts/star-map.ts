@@ -558,7 +558,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const step = (t: number) => {
 			const q = clamp((t - t0) / dur, 0, 1);
 			const e = fast ? 1 - Math.pow(1 - q, 2) : easeInOutCubic(q);
-			window.scrollTo({ top: from + d * e, behavior: 'instant' as ScrollBehavior });
+			window.scrollTo({ top: from + d * e, behavior: 'instant' });
 			if (q < 1) sRaf = requestAnimationFrame(step);
 			else animating = false;
 		};
@@ -610,7 +610,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const m = metrics();
 		const k = Math.max(0, m.ord.indexOf(i));
 		const target = m.stageTop + m.T + m.U[k] * m.STEP;
-		if (instant) window.scrollTo({ top: target, behavior: 'instant' as ScrollBehavior });
+		if (instant) window.scrollTo({ top: target, behavior: 'instant' });
 		else animScroll(target);
 	}
 
@@ -678,7 +678,7 @@ export function initStarMap(styles: Record<string, string>) {
 		const mv = (ev: PointerEvent) => {
 			const dx = ev.clientX - startX;
 			if (Math.abs(dx) > 6) moved = true;
-			if (moved) window.scrollTo({ top: startS - dx * px, behavior: 'instant' as ScrollBehavior });
+			if (moved) window.scrollTo({ top: startS - dx * px, behavior: 'instant' });
 		};
 		const up = () => {
 			window.removeEventListener('pointermove', mv);
@@ -1011,7 +1011,7 @@ export function initStarMap(styles: Record<string, string>) {
 			const [a, b] = mapRange();
 			const edge = lastY <= a && y > a ? a : lastY >= b && y < b ? b : null;
 			if (edge !== null) {
-				window.scrollTo({ top: edge, behavior: 'instant' as ScrollBehavior });
+				window.scrollTo({ top: edge, behavior: 'instant' });
 				lastY = edge;
 				return;
 			}
